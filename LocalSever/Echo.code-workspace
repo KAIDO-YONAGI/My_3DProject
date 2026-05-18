@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../Echo"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"dotnet.defaultSolution": "Echo.sln"
+	}
+}
