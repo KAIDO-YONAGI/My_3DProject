@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Unity\\LocalSever\\LocalSever.csproj",
+      "projectUniqueName": "D:\\Unity\\Projects\\My_3DProject\\LocalSever\\LocalSever.csproj",
       "projectName": "LocalSever",
-      "projectPath": "D:\\Unity\\LocalSever\\LocalSever.csproj",
+      "projectPath": "D:\\Unity\\Projects\\My_3DProject\\LocalSever\\LocalSever.csproj",
       "packagesPath": "C:\\Users\\12248\\.nuget\\packages\\",
-      "outputPath": "D:\\Unity\\LocalSever\\obj\\",
+      "outputPath": "D:\\Unity\\Projects\\My_3DProject\\LocalSever\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\12248\\AppData\\Roaming\\NuGet\\NuGet.Config",
