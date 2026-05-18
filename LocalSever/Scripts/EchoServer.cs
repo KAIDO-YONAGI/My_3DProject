@@ -16,11 +16,8 @@ namespace EchoServer
         // 监听 socket，负责等待新客户端连接
         static Socket listenfd = null!;
         // 所有已连接的客户端集合。
-        // key 和 value 中的 socket 是同一个对象的引用，看似冗余，但用途不同：
         //   - key（clientfd）  ：用于快速查找/删除，比如客户端断开时 clients.Remove(clientfd)
         //   - value（ClientState）：把 socket 和 readBuffer 打包在一起，方便在回调间通过 AsyncState 传递
-        // 如果不存字典，回调里就需要同时持有字典引用和 socket 才能做增删，反而更麻烦
-        // 所以冗余一个引用（只是指针，不是复制 socket）是可接受的代价
         static Dictionary<Socket, ClientState> clients =
                 new Dictionary<Socket, ClientState>();
         public static void Main()
