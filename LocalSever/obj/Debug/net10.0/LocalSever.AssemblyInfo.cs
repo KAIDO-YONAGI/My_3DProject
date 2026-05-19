@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LocalSever")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fd0febbd1c059ae906aaaacb99a1ea1282bf02dd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d9882f744eebf8bb7ed3b8fa3436ff1a71f7603b")]
 [assembly: System.Reflection.AssemblyProductAttribute("LocalSever")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LocalSever")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
