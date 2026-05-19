@@ -59,7 +59,7 @@ namespace EchoServer
                 clients.Add(clientfd, clientState);
 
                 // 广播 Enter 消息给所有客户端
-                Broadcast("Enter|" + clientfd.RemoteEndPoint!.ToString() + "\n");
+                Broadcast(ServerProtocol.PackEnter(clientfd.RemoteEndPoint!.ToString()!));
 
                 // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
                 // clientState 作为 AsyncState 传入，回调中可取出缓冲区和 socket
@@ -98,7 +98,7 @@ namespace EchoServer
                 if (bytesRead == 0)
                 {
                     Console.WriteLine("Client Disconnected: " + clientfd.RemoteEndPoint!.ToString());
-                    Broadcast("Leave|" + clientfd.RemoteEndPoint!.ToString() + "\n");
+                    Broadcast(ServerProtocol.PackLeave(clientfd.RemoteEndPoint!.ToString()!));
                     clients.Remove(clientfd);
                     clientfd.Close();
                     return;

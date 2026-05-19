@@ -3,20 +3,13 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
 
-public enum MessageName
-{
-    Enter,
-    Move,
-    Leave,
-}
-
 public class NetManager : MonoBehaviour
 {
     static Socket socket;
     static byte[] readBuffer = new byte[1024];
 
     public delegate void MessageListener(string str);
-    private Dictionary<MessageName, MessageListener> listenerList = new();
+    private Dictionary<ClientMessageName, MessageListener> listenerList = new();
     List<string> messageList = new();
 
     public static NetManager Instance { get; private set; }
@@ -67,7 +60,7 @@ public class NetManager : MonoBehaviour
             int count = socket.EndReceive(ar);
             if (count <= 0) return;
             string recvStr = System.Text.Encoding.Default.GetString(readBuffer, 0, count);
-            string[] split = recvStr.Split('\n');
+            string[] split = recvStr.Split(ClientProtocol.LineEnd);
             for (int i = 0; i < split.Length - 1; i++)
             {
                 Instance.messageList.Add(split[i]);
@@ -107,17 +100,18 @@ public class NetManager : MonoBehaviour
         string messageStr = messageList[0];
         messageList.RemoveAt(0);
 
-        string[] split = messageStr.Split('|');//�򵥵��Զ���Э�飬��|�ָ�
+        string[] split = messageStr.Split(ClientProtocol.Separator);
         string messageNameStr = split[0];
         string messageArgs = split[1];
-        if (!Enum.TryParse<MessageName>(messageNameStr, out MessageName messageName)) return;
+
+        ClientMessageName messageName;
+        if (!Enum.TryParse(messageNameStr, out messageName)) return;
+        
         if (listenerList.ContainsKey(messageName))
-        {
-            listenerList[messageName](messageArgs);//���ö�Ӧ��ί�У�Բ�����ڴ���
-        }
+            listenerList[messageName](messageArgs);//索引对应的listener，圆括号传参调用事务
     }
 
-    public void AddListener(MessageName messageName, MessageListener listener)
+    public void AddListener(ClientMessageName messageName, MessageListener listener)
     {
         listenerList[messageName] = listener;
     }
