@@ -1,3 +1,5 @@
+//Received from 127.0.0.1:11042: Move|-27.47568,2.840125,-6.122546
+
 public enum ServerMessageName
 {
     Enter,

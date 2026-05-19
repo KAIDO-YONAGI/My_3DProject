@@ -1,3 +1,4 @@
+//OnMove -23.40294,4.271813,-41.18822
 public enum ClientMessageName
 {
     Enter,

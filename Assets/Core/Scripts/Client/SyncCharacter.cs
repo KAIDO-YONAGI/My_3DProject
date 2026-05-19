@@ -3,7 +3,7 @@ using UnityEngine;
 public class SyncCharacter : MonoBehaviour
 {
     public GameObject localCharacter;
-    public float sendInterval = 0.1f;
+    public float sendInterval = 1f;
 
     private float lastSendTime;
 
