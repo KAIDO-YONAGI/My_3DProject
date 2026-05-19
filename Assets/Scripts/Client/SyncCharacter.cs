@@ -18,8 +18,6 @@ public class SyncCharacter : MonoBehaviour
 
     void Update()
     {
-        NetManager.Instance.Update();
-
         if (localCharacter != null && Time.time - lastSendTime > sendInterval)
         {
             lastSendTime = Time.time;

@@ -10,7 +10,7 @@ public enum MessageName
     Leave,
 }
 
-public class NetManager
+public class NetManager : MonoBehaviour
 {
     static Socket socket;
     static byte[] readBuffer = new byte[1024];
@@ -19,7 +19,18 @@ public class NetManager
     private Dictionary<MessageName, MessageListener> listenerList = new();
     List<string> messageList = new();
 
-    public static NetManager Instance { get; } = new();
+    public static NetManager Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     public string GetDescribe()
     {
@@ -30,8 +41,22 @@ public class NetManager
     public void Connect(string ip, int port)
     {
         socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket.Connect(ip, port);
-        socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+        socket.BeginConnect(ip, port, ConnectCallback, socket);
+    }
+
+    private static void ConnectCallback(IAsyncResult ar)
+    {
+        try
+        {
+            Socket socket = (Socket)ar.AsyncState;
+            socket.EndConnect(ar);
+            Debug.Log("Connected to server");
+            socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+        }
+        catch (SocketException e)
+        {
+            Debug.Log("Socket Connect failed" + e.ToString());
+        }
     }
 
     private static void ReceiveCallback(IAsyncResult ar)
@@ -59,22 +84,36 @@ public class NetManager
     {
         if (socket == null || !socket.Connected) return;
         byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
-        socket.Send(sendBytes);
+        socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, socket);
     }
 
-    public void Update()
+    private static void SendCallback(IAsyncResult ar)
+    {
+        try
+        {
+            Socket socket = (Socket)ar.AsyncState;
+            int count = socket.EndSend(ar);
+            Debug.Log("Sent " + count + " bytes");
+        }
+        catch (SocketException e)
+        {
+            Debug.Log("Socket Send failed" + e.ToString());
+        }
+    }
+
+    void Update()
     {
         if (messageList.Count <= 0) return;
         string messageStr = messageList[0];
         messageList.RemoveAt(0);
 
-        string[] split = messageStr.Split('|');
+        string[] split = messageStr.Split('|');//�򵥵��Զ���Э�飬��|�ָ�
         string messageNameStr = split[0];
         string messageArgs = split[1];
         if (!Enum.TryParse<MessageName>(messageNameStr, out MessageName messageName)) return;
         if (listenerList.ContainsKey(messageName))
         {
-            listenerList[messageName](messageArgs);
+            listenerList[messageName](messageArgs);//���ö�Ӧ��ί�У�Բ�����ڴ���
         }
     }
 

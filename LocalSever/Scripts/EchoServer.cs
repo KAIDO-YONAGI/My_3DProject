@@ -152,11 +152,16 @@ namespace EchoServer
         {
             try
             {
-                // 取出 BeginSend 时传入的客户端 socket
                 Socket? clientfd = (Socket?)ar.AsyncState;
-                // EndSend 完成发送，返回实际发出的字节数
                 int bytesSent = clientfd!.EndSend(ar);
                 Console.WriteLine("Echoed " + bytesSent + " bytes to client.");
+            }
+            catch (SocketException)//如果已经断开链接，就让把客户端删除，防止无效广播
+            {
+                Socket? clientfd = (Socket?)ar.AsyncState;
+                Console.WriteLine("Client force closed: " + clientfd!.RemoteEndPoint);
+                clients.Remove(clientfd!);
+                clientfd!.Close();
             }
             catch (Exception e)
             {
