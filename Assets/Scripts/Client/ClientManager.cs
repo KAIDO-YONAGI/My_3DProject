@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Client : MonoBehaviour
+public class ClientManager : MonoBehaviour
 {
     Socket socket;
     // UI 组件：输入框、显示文本、连接按钮、发送按钮（在 Inspector 中拖拽赋值）
