@@ -34,12 +34,13 @@ public class SyncCharacter : MonoBehaviour
     void OnMove(string msg)
     {
         Debug.Log("OnMove " + msg);
-        if (!ClientProtocol.TryParseArg(msg, out float x, out float y, out float z)) return;
-        // TODO: 用 x, y, z 更新远程角色位置
+        if (!ClientProtocol.TryParseArg(msg, out string playerId, out float x, out float y, out float z)) return;
+        PlayerPositionManager.Instance.SetPosition(playerId, new Vector3(x, y, z));
     }
 
     void OnLeave(string msg)
     {
+        PlayerPositionManager.Instance.RemovePosition(msg);
         Debug.Log("OnLeave " + msg);
     }
 }

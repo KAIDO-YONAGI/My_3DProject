@@ -60,7 +60,9 @@ public class NetManager : MonoBehaviour
             int count = socket.EndReceive(ar);
             if (count <= 0) return;
             string recvStr = System.Text.Encoding.Default.GetString(readBuffer, 0, count);
-            string[] split = recvStr.Split(ClientProtocol.LineEnd);
+            string[] split = recvStr.Split(ClientProtocol.LineEnd);//得到协议条目
+
+            //TODO解析Enter，注册并且更新新加入用户
             for (int i = 0; i < split.Length - 1; i++)
             {
                 Instance.messageList.Add(split[i]);
@@ -100,15 +102,10 @@ public class NetManager : MonoBehaviour
         string messageStr = messageList[0];
         messageList.RemoveAt(0);
 
-        string[] split = messageStr.Split(ClientProtocol.Separator);
-        string messageNameStr = split[0];
-        string messageArgs = split[1];
+        if (!ClientProtocol.Unpack(messageStr, out ClientMessageName messageName, out string args)) return;
 
-        ClientMessageName messageName;
-        if (!Enum.TryParse(messageNameStr, out messageName)) return;
-        
         if (listenerList.ContainsKey(messageName))
-            listenerList[messageName](messageArgs);//索引对应的listener，圆括号传参调用事务
+            listenerList[messageName](args);
     }
 
     public void AddListener(ClientMessageName messageName, MessageListener listener)

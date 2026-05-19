@@ -1,4 +1,6 @@
-//Received from 127.0.0.1:11042: Move|-27.47568,2.840125,-6.122546
+//PackEnter: Enter|ip:port
+//PackLeave: Leave|ip:port
+//PackMove: Move|ip:port,x,y,z
 
 public enum ServerMessageName
 {
@@ -14,11 +16,16 @@ public class ServerProtocol
 
     public static string PackEnter(string address)
     {
-        return "Enter" + Separator + address + LineEnd;
+        return ServerMessageName.Enter.ToString() + Separator + address + LineEnd;
     }
 
     public static string PackLeave(string address)
     {
-        return "Leave" + Separator + address + LineEnd;
+        return ServerMessageName.Leave.ToString() + Separator + address + LineEnd;
+    }
+
+    public static string PackMove(string address, string moveArgs)
+    {
+        return ServerMessageName.Move.ToString() + Separator + address + "," + moveArgs + LineEnd;
     }
 }

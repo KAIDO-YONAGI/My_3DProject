@@ -120,7 +120,14 @@ namespace EchoServer
                 //     clientfd);
 
                 // 广播：发给所有已连接的客户端
-                byte[] sendBytes = System.Text.Encoding.Default.GetBytes(receiveStr);
+                string broadcastStr = receiveStr;
+                string[] parts = receiveStr.Split(ServerProtocol.Separator);
+                if (parts.Length == 2 && parts[0] == ServerMessageName.Move.ToString())
+                {
+                    string senderAddr = clientfd.RemoteEndPoint!.ToString()!;
+                    broadcastStr = ServerProtocol.PackMove(senderAddr, parts[1].TrimEnd(ServerProtocol.LineEnd));
+                }
+                byte[] sendBytes = System.Text.Encoding.Default.GetBytes(broadcastStr);
                 foreach (var pair in clients)
                 {
                     pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
@@ -139,6 +146,7 @@ namespace EchoServer
         public static void Broadcast(string sendStr)
         {
             byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+            //TODO检查已清除、异常终止的socket
             foreach (var pair in clients)
             {
                 pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
@@ -156,7 +164,7 @@ namespace EchoServer
                 int bytesSent = clientfd!.EndSend(ar);
                 Console.WriteLine("Echoed " + bytesSent + " bytes to client.");
             }
-            catch (SocketException)//如果已经断开链接，就让把客户端删除，防止无效广播
+            catch (SocketException)//TODO如果已经断开链接，就让把客户端删除，防止无效广播
             {
                 Socket? clientfd = (Socket?)ar.AsyncState;
                 Console.WriteLine("Client force closed: " + clientfd!.RemoteEndPoint);
