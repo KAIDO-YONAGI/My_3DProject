@@ -9,7 +9,6 @@ namespace EchoServer
     {
         public Socket socket = null!;
         public byte[] readBuffer = new byte[1024];
-        public string receiveStr = "";
     }
     class MainClass
     {
@@ -59,6 +58,9 @@ namespace EchoServer
                 clientState.socket = clientfd;
                 clients.Add(clientfd, clientState);
 
+                // 广播 Enter 消息给所有客户端
+                Broadcast("Enter|" + clientfd.RemoteEndPoint!.ToString() + "\n");
+
                 // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
                 // clientState 作为 AsyncState 传入，回调中可取出缓冲区和 socket
                 clientfd.BeginReceive
@@ -96,6 +98,7 @@ namespace EchoServer
                 if (bytesRead == 0)
                 {
                     Console.WriteLine("Client Disconnected: " + clientfd.RemoteEndPoint!.ToString());
+                    Broadcast("Leave|" + clientfd.RemoteEndPoint!.ToString() + "\n");
                     clients.Remove(clientfd);
                     clientfd.Close();
                     return;
@@ -130,6 +133,15 @@ namespace EchoServer
             catch (Exception e)
             {
                 Console.WriteLine(e);
+            }
+        }
+
+        public static void Broadcast(string sendStr)
+        {
+            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+            foreach (var pair in clients)
+            {
+                pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
             }
         }
 

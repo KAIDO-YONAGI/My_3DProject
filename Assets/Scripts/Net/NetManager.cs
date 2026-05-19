@@ -2,75 +2,83 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
+
 public enum MessageName
 {
     Enter,
     Move,
     Leave,
 }
+
 public class NetManager
 {
     static Socket socket;
     static byte[] readBuffer = new byte[1024];
 
     public delegate void MessageListener(string str);
-    private static Dictionary<MessageName, MessageListener> listenerList = new();
-    static List<string> messageList = new();
+    private Dictionary<MessageName, MessageListener> listenerList = new();
+    List<string> messageList = new();
 
-    public static string GetDescribe()
+    public static NetManager Instance { get; } = new();
+
+    public string GetDescribe()
     {
-        if(socket==null||!socket.Connected)return"";
+        if (socket == null || !socket.Connected) return "";
         return socket!.LocalEndPoint!.ToString()!;
-
     }
-    public static void Connect(string ip,int port)
+
+    public void Connect(string ip, int port)
     {
-        socket=new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
-
-        socket.Connect(ip,port);//暂时使用同步方法
-
-        //开始接收
-        socket.BeginReceive(readBuffer,0,readBuffer.Length,SocketFlags.None,ReceiveCallback,socket);
+        socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.Connect(ip, port);
+        socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
     }
 
     private static void ReceiveCallback(IAsyncResult ar)
     {
         try
         {
-            Socket socket=(Socket )ar.AsyncState;
-            int count =socket.EndReceive(ar);
-
-            
-        }catch(SocketException e)
+            Socket socket = (Socket)ar.AsyncState;
+            int count = socket.EndReceive(ar);
+            if (count <= 0) return;
+            string recvStr = System.Text.Encoding.Default.GetString(readBuffer, 0, count);
+            string[] split = recvStr.Split('\n');
+            for (int i = 0; i < split.Length - 1; i++)
+            {
+                Instance.messageList.Add(split[i]);
+            }
+            socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+        }
+        catch (SocketException e)
         {
-            Debug.Log("Socket Receive failed"+e.ToString());
+            Debug.Log("Socket Receive failed" + e.ToString());
         }
     }
-    public static void Send(string sendStr)
+
+    public void Send(string sendStr)
     {
-        if(socket==null||!socket.Connected)return;
-        byte[] sendBytes=System.Text.Encoding.Default.GetBytes(sendStr);
+        if (socket == null || !socket.Connected) return;
+        byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
         socket.Send(sendBytes);
     }
-    public static void Update()
+
+    public void Update()
     {
-        if(messageList.Count<=0)return;
-        string messageStr=messageList[0];
+        if (messageList.Count <= 0) return;
+        string messageStr = messageList[0];
         messageList.RemoveAt(0);
-        
-        string[] split=messageStr.Split('|');
-        string messageNameStr=split[0];
-        string messageArgs=split[1];
-        if(!Enum.TryParse<MessageName>(messageNameStr,out MessageName messageName))return;
-        //监听回调
+
+        string[] split = messageStr.Split('|');
+        string messageNameStr = split[0];
+        string messageArgs = split[1];
+        if (!Enum.TryParse<MessageName>(messageNameStr, out MessageName messageName)) return;
         if (listenerList.ContainsKey(messageName))
         {
-            listenerList[messageName](messageArgs);//找到对应的delegate并且传参
+            listenerList[messageName](messageArgs);
         }
-
     }
 
-    public static void AddListener(MessageName messageName, MessageListener listener)
+    public void AddListener(MessageName messageName, MessageListener listener)
     {
         listenerList[messageName] = listener;
     }
