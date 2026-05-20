@@ -58,9 +58,10 @@ namespace MultiplayerServer
                 clientState.socket = clientfd;
                 clients.Add(clientfd, clientState);
 
-                // 广播 Enter 消息给除自己外的所有客户端
-
+                // 广播新客户端的 Enter 给除自己以外的所有人
                 BroadcastExcept(ServerProtocol.PackEnter(clientfd.RemoteEndPoint!.ToString()!), clientfd);
+                // 将所有已在线客户端（含自己）的 Enter 发送给新客户端，使其能实例化老客户端
+                SyncExistingClientsTo(clientfd);
 
                 // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
                 // clientState 作为 AsyncState 传入，回调中可取出缓冲区和 socket
@@ -109,12 +110,27 @@ namespace MultiplayerServer
                 string receiveStr = System.Text.Encoding.Default.GetString(clientState.readBuffer, 0, bytesRead);
                 Console.WriteLine("Received from " + clientfd.RemoteEndPoint!.ToString() + ": " + receiveStr);
 
-                // 广播：发给所有已连接的客户端
-                string[] parts = receiveStr.Split(ServerProtocol.Separator);
-                if (parts.Length == 2 && parts[0] == ServerMessageName.Move.ToString())
-                    Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1].TrimEnd(ServerProtocol.LineEnd)));
-                else
-                    Broadcast(receiveStr);
+                // 按 LineEnd 拆分后逐条处理，避免 TCP 粘包/半包问题
+                string[] messages = receiveStr.Split(ServerProtocol.LineEnd);
+                for (int i = 0; i < messages.Length - 1; i++)
+                {
+                    string msg = messages[i];
+                    if (string.IsNullOrEmpty(msg)) continue;
+
+                    string[] parts = msg.Split(ServerProtocol.Separator);
+                    if (parts[0] == ServerMessageName.Move.ToString())
+                        // 客户端发来位置更新，附加发送者地址后广播给所有人
+                        Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
+                    else if (parts[0] == ServerMessageName.Leave.ToString())
+                    {
+                        // 客户端主动发送 Leave，广播给其他人后清理连接
+                        Broadcast(ServerProtocol.PackLeave(clientfd.RemoteEndPoint!.ToString()!));
+                        clients.Remove(clientfd);
+                        clientfd.Close();
+                        return;
+                    }
+
+                }
 
                 // 继续异步接收该客户端的下一条消息（形成循环）
                 clientfd.BeginReceive(clientState.readBuffer, 0,
@@ -126,8 +142,32 @@ namespace MultiplayerServer
             }
         }
 
+        /// <summary>
+        /// 将所有已在线客户端的 Enter 消息发送给指定目标（新连接的客户端）
+        /// </summary>
+        public static void SyncExistingClientsTo(Socket target)
+        {
+            foreach (var pair in clients)
+            {
+                SendTo(ServerProtocol.PackEnter(pair.Key.RemoteEndPoint!.ToString()!), target);
+            }
+        }
+
+        /// <summary>
+        /// 向单个客户端发送消息
+        /// </summary>
+        public static void SendTo(string sendStr, Socket target)
+        {
+            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+            target.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, target);
+        }
+
+        /// <summary>
+        /// 向所有已连接客户端广播消息
+        /// </summary>
         public static void Broadcast(string sendStr)
         {
+            Console.WriteLine("[Broadcast] " + sendStr.TrimEnd(ServerProtocol.LineEnd));
             byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
             //TODO检查已清除、异常终止的socket
             foreach (var pair in clients)
@@ -135,8 +175,12 @@ namespace MultiplayerServer
                 pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
             }
         }
+        /// <summary>
+        /// 向除指定客户端外的所有人广播消息
+        /// </summary>
         public static void BroadcastExcept(string sendStr, Socket exceptSocket)
         {
+            Console.WriteLine("[BroadcastExcept] to " + (clients.Count - 1) + " clients: " + sendStr.TrimEnd(ServerProtocol.LineEnd));
             byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
 
             foreach (var pair in clients)
@@ -161,12 +205,14 @@ namespace MultiplayerServer
             {
                 Socket? clientfd = (Socket?)ar.AsyncState;
                 int bytesSent = clientfd!.EndSend(ar);
-                Console.WriteLine("Echoed " + bytesSent + " bytes to client.");
+                Console.WriteLine("Sent " + bytesSent + " bytes to client.");
             }
-            catch (SocketException)//TODO如果已经断开链接，就让把客户端删除，防止无效广播
+            catch (SocketException)
             {
+                // 发送失败说明客户端已断开，广播 Leave 并清理
                 Socket? clientfd = (Socket?)ar.AsyncState;
                 Console.WriteLine("Client force closed: " + clientfd!.RemoteEndPoint);
+                Broadcast(ServerProtocol.PackLeave(clientfd!.RemoteEndPoint!.ToString()!));
                 clients.Remove(clientfd!);
                 clientfd!.Close();
             }

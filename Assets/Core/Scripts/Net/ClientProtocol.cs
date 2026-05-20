@@ -26,6 +26,12 @@ public class ClientProtocol
     {
         return ClientMessageName.Move.ToString() + Separator + x + "," + y + "," + z + LineEnd;
     }
+    //TODO添加销毁时逻辑，依赖心跳包发送Leave信号给服务端，并且由服务端同步给其它客户端，用于销毁模型等
+
+    public static string PackLeave()
+    {
+        return ClientMessageName.Leave.ToString() + Separator + LineEnd;
+    }
 
     public static bool Unpack(string rawMsg, out ParsedMessage msg)
     {

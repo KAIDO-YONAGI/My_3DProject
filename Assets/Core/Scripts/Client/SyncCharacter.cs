@@ -10,7 +10,7 @@ public class SyncCharacter : MonoBehaviour
     [SerializeField] float reconnectDelay = 3f;
     bool connectResolved;
     bool lastConnectResult;
-    string myPlayerId="";
+    string myPlayerId = "";
 
     void Start()
     {
@@ -24,6 +24,7 @@ public class SyncCharacter : MonoBehaviour
     void OnDestroy()
     {
         connectResultChannel.OnEventRaised -= OnConnectResult;
+        NetManager.Instance.Disconnect();
     }
 
     void OnConnectResult(bool success)
@@ -72,9 +73,9 @@ public class SyncCharacter : MonoBehaviour
 
     void OnMove(ParsedMessage msg)
     {
-        if (msg.playerId == myPlayerId) return;
+        if (msg.playerId == myPlayerId || string.IsNullOrEmpty(msg.playerId)) return;
         PlayerManager.Instance.SetPosition(msg.playerId, new Vector3(msg.x, msg.y, msg.z));
-        Debug.Log("OnMove " + PlayerManager.Instance.GetPosition(msg.playerId));
+        Debug.Log("OnMove " + "Meaasge: " + msg + "Setted: " + PlayerManager.Instance.GetPosition(msg.playerId));
     }
 
     void OnLeave(ParsedMessage msg)

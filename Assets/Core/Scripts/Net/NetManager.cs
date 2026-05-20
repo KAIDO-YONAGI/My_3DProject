@@ -83,6 +83,14 @@ public class NetManager : MonoBehaviour
         }
     }
 
+    public void Disconnect()
+    {
+        if (socket == null || !socket.Connected) return;
+        Send(ClientProtocol.PackLeave());
+        socket.Close();
+        Connected = false;
+    }
+
     public void Send(string sendStr)
     {
         if (socket == null || !socket.Connected) return;
