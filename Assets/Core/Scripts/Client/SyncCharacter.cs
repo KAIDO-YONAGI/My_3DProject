@@ -64,28 +64,23 @@ public class SyncCharacter : MonoBehaviour
             NetManager.Instance.Send(ClientProtocol.PackMove(pos.x, pos.y, pos.z));
         }
     }
-//TODO枚举类统一各个函数的入口
-    void OnEnter(string msg)
+    void OnEnter(ParsedMessage msg)
     {
-        if (!ClientProtocol.TryParseArg(msg, out string playerId, out float x, out float y, out float z)) return;
-        if (playerId == myPlayerId) return;
-        PlayerManager.Instance.InitPlayer(playerId, new Vector3(x, y, z));
-        Debug.Log("OnEnter " + PlayerManager.Instance.GetPosition(playerId));
-
+        if (msg.playerId == myPlayerId) return;
+        PlayerManager.Instance.InitPlayer(msg.playerId, Vector3.zero);
+        Debug.Log("OnEnter " + msg.playerId);
     }
 
-    void OnMove(string msg)
+    void OnMove(ParsedMessage msg)
     {
-        if (!ClientProtocol.TryParseArg(msg, out string playerId, out float x, out float y, out float z)) return;
-        if (playerId == myPlayerId) return;
-        PlayerManager.Instance.SetPosition(playerId, new Vector3(x, y, z));
-        Debug.Log("OnMove " + PlayerManager.Instance.GetPosition(playerId));
-
+        if (msg.playerId == myPlayerId) return;
+        PlayerManager.Instance.SetPosition(msg.playerId, new Vector3(msg.x, msg.y, msg.z));
+        Debug.Log("OnMove " + PlayerManager.Instance.GetPosition(msg.playerId));
     }
 
-    void OnLeave(string msg)
+    void OnLeave(ParsedMessage msg)
     {
-        PlayerManager.Instance.RemovePosition(msg);
-        Debug.Log("OnLeave " + msg);
+        PlayerManager.Instance.RemovePosition(msg.playerId);
+        Debug.Log("OnLeave " + msg.playerId);
     }
 }

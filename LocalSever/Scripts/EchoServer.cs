@@ -108,30 +108,12 @@ namespace EchoServer
                 string receiveStr = System.Text.Encoding.Default.GetString(clientState.readBuffer, 0, bytesRead);
                 Console.WriteLine("Received from " + clientfd.RemoteEndPoint!.ToString() + ": " + receiveStr);
 
-                // Echo：将收到的内容原样发回客户端
-                // byte[] sendBytes = System.Text.Encoding.Default.GetBytes(receiveStr);
-                // clientfd.BeginSend
-                // (
-                //     sendBytes,
-                //     0,
-                //     sendBytes.Length,
-                //     SocketFlags.None,
-                //     SendCallback,
-                //     clientfd);
-
                 // 广播：发给所有已连接的客户端
-                string broadcastStr = receiveStr;
                 string[] parts = receiveStr.Split(ServerProtocol.Separator);
                 if (parts.Length == 2 && parts[0] == ServerMessageName.Move.ToString())
-                {
-                    string senderAddr = clientfd.RemoteEndPoint!.ToString()!;
-                    broadcastStr = ServerProtocol.PackMove(senderAddr, parts[1].TrimEnd(ServerProtocol.LineEnd));
-                }
-                byte[] sendBytes = System.Text.Encoding.Default.GetBytes(broadcastStr);
-                foreach (var pair in clients)
-                {
-                    pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
-                }
+                    Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1].TrimEnd(ServerProtocol.LineEnd)));
+                else
+                    Broadcast(receiveStr);
 
                 // 继续异步接收该客户端的下一条消息（形成循环）
                 clientfd.BeginReceive(clientState.readBuffer, 0,

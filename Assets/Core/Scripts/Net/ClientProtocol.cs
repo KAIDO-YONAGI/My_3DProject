@@ -9,6 +9,13 @@ public enum ClientMessageName
     Leave,
 }
 
+public class ParsedMessage
+{
+    public ClientMessageName name;
+    public string playerId;
+    public float x, y, z;
+}
+
 public class ClientProtocol
 {
     public const char Separator = '|';
@@ -20,27 +27,35 @@ public class ClientProtocol
         return ClientMessageName.Move.ToString() + Separator + x + "," + y + "," + z + LineEnd;
     }
 
-    public static bool Unpack(string rawMsg, out ClientMessageName msgName, out string args)
+    public static bool Unpack(string rawMsg, out ParsedMessage msg)
     {
-        msgName = default;
-        args = null;
+        msg = new ParsedMessage();
         string[] split = rawMsg.Split(Separator);
         if (split.Length != 2) return false;
-        if (!System.Enum.TryParse(split[0], out msgName)) return false;//将字符串解析为对应类型的枚举
-        args = split[1];
-        return true;
+        if (!System.Enum.TryParse(split[0], out msg.name)) return false;
+
+        switch (msg.name)
+        {
+            case ClientMessageName.Move:
+                return ParseMoveArgs(split[1], msg);
+            case ClientMessageName.Enter:
+
+            case ClientMessageName.Leave:
+                msg.playerId = split[1];
+                return true;
+            default:
+                return false;
+        }
     }
 
-    public static bool TryParseArg(string args, out string playerId, out float x, out float y, out float z)
+    static bool ParseMoveArgs(string args, ParsedMessage msg)
     {
-        playerId = "";
-        x = y = z = 0;
         string[] parts = args.Split(ArgSeparator);
         if (parts.Length != 4) return false;
-        playerId = parts[0];
-        if (!float.TryParse(parts[1], out x)) return false;
-        if (!float.TryParse(parts[2], out y)) return false;
-        if (!float.TryParse(parts[3], out z)) return false;
+        msg.playerId = parts[0];
+        if (!float.TryParse(parts[1], out msg.x)) return false;
+        if (!float.TryParse(parts[2], out msg.y)) return false;
+        if (!float.TryParse(parts[3], out msg.z)) return false;
         return true;
     }
 }

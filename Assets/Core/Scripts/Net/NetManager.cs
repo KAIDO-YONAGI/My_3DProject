@@ -8,7 +8,7 @@ public class NetManager : MonoBehaviour
     static Socket socket;
     static byte[] readBuffer = new byte[1024];
 
-    public delegate void MessageListener(string str);
+    public delegate void MessageListener(ParsedMessage msg);
     private Dictionary<ClientMessageName, MessageListener> listenerList = new();
     private List<string> messageList = new();
 
@@ -110,10 +110,10 @@ public class NetManager : MonoBehaviour
         string messageStr = messageList[0];
         messageList.RemoveAt(0);
 
-        if (!ClientProtocol.Unpack(messageStr, out ClientMessageName messageName, out string args)) return;
+        if (!ClientProtocol.Unpack(messageStr, out ParsedMessage msg)) return;
 
-        if (listenerList.ContainsKey(messageName))
-            listenerList[messageName](args);
+        if (listenerList.ContainsKey(msg.name))
+            listenerList[msg.name](msg);
     }
 
     public void AddListener(ClientMessageName messageName, MessageListener listener)
