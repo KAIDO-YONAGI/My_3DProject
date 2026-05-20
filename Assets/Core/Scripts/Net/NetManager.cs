@@ -10,7 +10,7 @@ public class NetManager : MonoBehaviour
 
     public delegate void MessageListener(string str);
     private Dictionary<ClientMessageName, MessageListener> listenerList = new();
-    List<string> messageList = new();
+    private List<string> messageList = new();
 
     public static NetManager Instance { get; private set; }
 
@@ -37,7 +37,7 @@ public class NetManager : MonoBehaviour
         socket.BeginConnect(ip, port, ConnectCallback, socket);
     }
 
-    private static void ConnectCallback(IAsyncResult ar)
+    private void ConnectCallback(IAsyncResult ar)
     {
         try
         {
@@ -45,6 +45,7 @@ public class NetManager : MonoBehaviour
             socket.EndConnect(ar);
             Debug.Log("Connected to server");
             socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+            return;
         }
         catch (SocketException e)
         {
@@ -52,7 +53,7 @@ public class NetManager : MonoBehaviour
         }
     }
 
-    private static void ReceiveCallback(IAsyncResult ar)
+    private void ReceiveCallback(IAsyncResult ar)
     {
         try
         {
@@ -82,7 +83,7 @@ public class NetManager : MonoBehaviour
         socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, socket);
     }
 
-    private static void SendCallback(IAsyncResult ar)
+    private void SendCallback(IAsyncResult ar)
     {
         try
         {

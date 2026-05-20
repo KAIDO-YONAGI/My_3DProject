@@ -13,7 +13,7 @@ public class SyncCharacter : MonoBehaviour
         NetManager.Instance.AddListener(ClientMessageName.Enter, OnEnter);
         NetManager.Instance.AddListener(ClientMessageName.Move, OnMove);
         NetManager.Instance.AddListener(ClientMessageName.Leave, OnLeave);
-        NetManager.Instance.Connect("127.0.0.1", 8888);
+        NetManager.Instance.Connect("127.0.0.1", 8888);//TODO多次尝试链接
     }
 
     void Update()
@@ -33,9 +33,10 @@ public class SyncCharacter : MonoBehaviour
 
     void OnMove(string msg)
     {
-        Debug.Log("OnMove " + msg);
         if (!ClientProtocol.TryParseArg(msg, out string playerId, out float x, out float y, out float z)) return;
         PlayerPositionManager.Instance.SetPosition(playerId, new Vector3(x, y, z));
+        Debug.Log("OnMove " + PlayerPositionManager.Instance.GetPosition(playerId));
+
     }
 
     void OnLeave(string msg)
