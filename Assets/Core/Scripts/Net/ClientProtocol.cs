@@ -1,7 +1,8 @@
-//PackMove: Move|x,y,z
-//PackEnter: Enter|ip:port
-//PackLeave: Leave|ip:port
-//Unpack: Move|ip:port,x,y,z
+//PackMove:  Move|x,y,z\n
+//PackLeave: Leave|\n
+//Unpack Move:    Move|ip:port,x,y,z
+//Unpack Enter:   Enter|ip:port
+//Unpack Leave:   Leave|ip:port
 public enum ClientMessageName
 {
     Enter,
@@ -26,7 +27,7 @@ public class ClientProtocol
     {
         return ClientMessageName.Move.ToString() + Separator + x + "," + y + "," + z + LineEnd;
     }
-    //TODOÌí¼ÓÏú»ÙÊ±Âß¼­£¬ÒÀÀµĞÄÌø°ü·¢ËÍLeaveĞÅºÅ¸ø·şÎñ¶Ë£¬²¢ÇÒÓÉ·şÎñ¶ËÍ¬²½¸øÆäËü¿Í»§¶Ë£¬ÓÃÓÚÏú»ÙÄ£ĞÍµÈ
+    //TODOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Leaveï¿½ÅºÅ¸ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É·ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½Íµï¿½
 
     public static string PackLeave()
     {

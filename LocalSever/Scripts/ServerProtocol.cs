@@ -1,6 +1,6 @@
-//PackEnter: Enter|ip:port
-//PackLeave: Leave|ip:port
-//PackMove: Move|ip:port,x,y,z
+//PackEnter:  Enter|ip:port\n
+//PackLeave:  Leave|ip:port\n
+//PackMove:   Move|ip:port,x,y,z\n
 
 public enum ServerMessageName
 {
