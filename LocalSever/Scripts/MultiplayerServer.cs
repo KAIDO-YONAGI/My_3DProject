@@ -2,7 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace EchoServer
+namespace MultiplayerServer
 {
     // 每个客户端对应一个状态对象，保存该客户端的 socket、接收缓冲区、已接收字符串
     class ClientState
@@ -58,8 +58,9 @@ namespace EchoServer
                 clientState.socket = clientfd;
                 clients.Add(clientfd, clientState);
 
-                // 广播 Enter 消息给所有客户端
-                Broadcast(ServerProtocol.PackEnter(clientfd.RemoteEndPoint!.ToString()!));
+                // 广播 Enter 消息给除自己外的所有客户端
+
+                BroadcastExcept(ServerProtocol.PackEnter(clientfd.RemoteEndPoint!.ToString()!), clientfd);
 
                 // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
                 // clientState 作为 AsyncState 传入，回调中可取出缓冲区和 socket
@@ -134,7 +135,23 @@ namespace EchoServer
                 pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
             }
         }
+        public static void BroadcastExcept(string sendStr, Socket exceptSocket)
+        {
+            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
 
+            foreach (var pair in clients)
+            {
+                if (pair.Key == exceptSocket) continue;
+
+                pair.Value.socket.BeginSend(
+                    sendBytes,
+                    0,
+                    sendBytes.Length,
+                    SocketFlags.None,
+                    SendCallback,
+                    pair.Value.socket);
+            }
+        }
         /// <summary>
         /// Echo 数据发送完成后被调用，仅用于确认发送字节数
         /// </summary>

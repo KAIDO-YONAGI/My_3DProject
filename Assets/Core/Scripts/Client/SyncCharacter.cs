@@ -4,13 +4,13 @@ using UnityEngine;
 public class SyncCharacter : MonoBehaviour
 {
     public GameObject localCharacter;
-    public float sendInterval = 1f;
+    private float sendInterval = .05f;
     private float lastSendTime;
     [SerializeField] BoolEventChannelSO connectResultChannel;
     [SerializeField] float reconnectDelay = 3f;
     bool connectResolved;
     bool lastConnectResult;
-    string myPlayerId;
+    string myPlayerId="";
 
     void Start()
     {
@@ -44,7 +44,7 @@ public class SyncCharacter : MonoBehaviour
             if (lastConnectResult)
             {
                 myPlayerId = NetManager.Instance.GetDescribe();
-                //初始化本地端口，用于拒绝一些更新逻辑，
+                //初始化本地端口，用于拒绝一些更新逻辑
                 // TODO不过以后可能会有用（比如判断是否开G等非法手段修改客户端）
                 Debug.Log("Connect succeeded, myPlayerId: " + myPlayerId);
                 yield break;
@@ -66,7 +66,6 @@ public class SyncCharacter : MonoBehaviour
     }
     void OnEnter(ParsedMessage msg)
     {
-        if (msg.playerId == myPlayerId) return;
         PlayerManager.Instance.InitPlayer(msg.playerId, Vector3.zero);
         Debug.Log("OnEnter " + msg.playerId);
     }

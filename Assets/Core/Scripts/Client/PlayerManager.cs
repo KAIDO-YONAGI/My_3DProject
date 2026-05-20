@@ -43,6 +43,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (!players.TryGetValue(playerId, out var info)) return;
         info.position = position;
+        playerToRefreshList.Add(playerId);
     }
 
     public Vector3 GetPosition(string playerId)
@@ -61,9 +62,11 @@ public class PlayerManager : MonoBehaviour
     {
         if (playerToRefreshList.Count <= 0) return;
 
-        foreach (var player in playerToRefreshList)
+        foreach (var playerId in playerToRefreshList)
         {
             // TODO: 刷新玩家显示
+            players[playerId].instance.transform.position =
+            players.TryGetValue(playerId, out var info) ? info.position : Vector3.zero;
         }
         playerToRefreshList.Clear();
     }
