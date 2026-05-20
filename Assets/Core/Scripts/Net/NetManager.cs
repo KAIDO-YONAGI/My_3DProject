@@ -13,6 +13,9 @@ public class NetManager : MonoBehaviour
     private List<string> messageList = new();
 
     public static NetManager Instance { get; private set; }
+    public bool Connected { get; private set; } = false;
+
+    [SerializeField] BoolEventChannelSO connectResultChannel;
 
     void Awake()
     {
@@ -44,12 +47,16 @@ public class NetManager : MonoBehaviour
             Socket socket = (Socket)ar.AsyncState;
             socket.EndConnect(ar);
             Debug.Log("Connected to server");
+            Connected = true;
+            connectResultChannel.Raise(true);
             socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
             return;
         }
         catch (SocketException e)
         {
             Debug.Log("Socket Connect failed" + e.ToString());
+            Connected = false;
+            connectResultChannel.Raise(false);
         }
     }
 
