@@ -71,6 +71,24 @@ namespace MultiplayerServer
         }
 
         /// <summary>
+        /// 处理客户端发来的消息，根据消息类型进行分发
+        /// </summary>
+        public static bool HandleMessage(string msg, Socket clientfd)
+        {
+            string[] parts = msg.Split(ServerProtocol.Separator);
+            if (parts[0] == ServerMessageType.Move.ToString())
+                // 客户端发来位置更新，附加发送者地址后广播给所有人
+                Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
+            else if (parts[0] == ServerMessageType.Leave.ToString())
+            {
+                // 客户端主动发送 Leave，广播给其他人后清理连接
+                RemoveClient(clientfd);
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// 发送完成后被调用，用于确认发送字节数或处理发送失败
         /// </summary>
         public static void SendCallback(IAsyncResult ar)

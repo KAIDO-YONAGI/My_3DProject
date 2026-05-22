@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.Numerics;
+
+namespace MultiplayerServer
+{
 public class PlayerInfoManager
 {
 
@@ -44,5 +47,6 @@ public class PlayerInfoManager
 
     public void RemovePlayer(string playerId) => playerInfo.Remove(playerId);
 
-    
+
+}
 }

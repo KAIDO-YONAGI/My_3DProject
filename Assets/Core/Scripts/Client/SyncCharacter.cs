@@ -14,9 +14,9 @@ public class SyncCharacter : MonoBehaviour
 
     void Start()
     {
-        NetManager.Instance.AddListener(ClientMessageType.Enter, OnEnter);
-        NetManager.Instance.AddListener(ClientMessageType.Move, OnMove);
-        NetManager.Instance.AddListener(ClientMessageType.Leave, OnLeave);
+        NetManager.Instance.AddListener(ClientMessageType.Enter, ClientMessageHandler.OnEnter);
+        NetManager.Instance.AddListener(ClientMessageType.Move, msg => ClientMessageHandler.OnMove(msg, myPlayerId));
+        NetManager.Instance.AddListener(ClientMessageType.Leave, ClientMessageHandler.OnLeave);
         connectResultChannel.OnEventRaised += OnConnectResult;
         StartCoroutine(ConnectWithRetry());
     }
@@ -65,25 +65,5 @@ public class SyncCharacter : MonoBehaviour
             NetManager.Instance.Send(ClientProtocol.PackMove(pos.x, pos.y, pos.z));
         }
     }
-    //On*系列函数，用于处理服务端返回信息
-    void OnEnter(ParsedMessage msg)
-    {
-        // if (msg.playerId == myPlayerId || string.IsNullOrEmpty(msg.playerId)) return;
-        //服务端已经排除重复enter
-        PlayerManager.Instance.InitPlayer(msg.playerId, Vector3.zero);
-        Debug.Log("OnEnter " + msg.playerId);
-    }
 
-    void OnMove(ParsedMessage msg)
-    {
-        if (msg.playerId == myPlayerId || string.IsNullOrEmpty(msg.playerId)) return;
-        PlayerManager.Instance.SetPosition(msg.playerId, new Vector3(msg.x, msg.y, msg.z));
-        Debug.Log("OnMove " + "Meaasge: " + msg + "Setted: " + PlayerManager.Instance.GetPosition(msg.playerId));
-    }
-
-    void OnLeave(ParsedMessage msg)
-    {
-        PlayerManager.Instance.RemovePosition(msg.playerId);
-        Debug.Log("OnLeave " + msg.playerId);
-    }
 }
