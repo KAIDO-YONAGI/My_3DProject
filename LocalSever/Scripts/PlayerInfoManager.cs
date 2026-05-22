@@ -2,20 +2,35 @@ using System.Collections.Generic;
 using System.Numerics;
 public class PlayerInfoManager
 {
-    public class PlayerState
-    {
-        public int Health { get; set; } = 100;
-        public int Damage { get; set; } = 0;
-    }
+
     public class PlayerInfo
     {
-        public Vector3 Position { get; set; } = Vector3.Zero;
-        public int ModelID { get; set; } = 0;
-        public string State { get; set; } = "idle";
-        public PlayerState PlayerState { get; set; } = new();
-    }
+        public Vector3 Position;
+        public int ModelID;
+        public string State;
+        public PlayerState PlayerState;
 
-    private readonly Dictionary<string, PlayerInfo> playerInfo = [];
+        public PlayerInfo(Vector3 position, int modelID, string state, PlayerState playerState)
+        {
+            Position = position;
+            ModelID = modelID;
+            State = state;
+            PlayerState = playerState;
+        }
+    }
+    public class PlayerState
+    {
+        public int Health;
+        public int Damage;
+
+        public PlayerState(int health, int damage)
+        {
+            Health = health;
+            Damage = damage;
+        }
+    }
+    private readonly Dictionary<string, PlayerInfo> playerInfo = new();
+
 
     public Dictionary<string, PlayerInfo> GetAllPlayerInfo() => playerInfo;
 

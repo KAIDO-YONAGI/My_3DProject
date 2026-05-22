@@ -20,10 +20,16 @@ public class PlayerManager : MonoBehaviour
     }
     private Dictionary<string, OtherPlayerInfo> players = new();
 
-    class PlayerState
+    public class PlayerState
     {
-        public int health;
-        public int damage;
+        public int Health;
+        public int Damage;
+
+        public PlayerState(int health, int damage)
+        {
+            Health = health;
+            Damage = damage;
+        }
     }
     void Awake()
     {

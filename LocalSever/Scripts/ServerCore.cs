@@ -106,10 +106,10 @@ namespace MultiplayerServer
                     if (string.IsNullOrEmpty(msg)) continue;
 
                     string[] parts = msg.Split(ServerProtocol.Separator);
-                    if (parts[0] == ServerMessageName.Move.ToString())
+                    if (parts[0] == ServerMessageType.Move.ToString())
                         // 客户端发来位置更新，附加发送者地址后广播给所有人
                         ServerNetHandler.Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
-                    else if (parts[0] == ServerMessageName.Leave.ToString())
+                    else if (parts[0] == ServerMessageType.Leave.ToString())
                     {
                         // 客户端主动发送 Leave，广播给其他人后清理连接
                         ServerNetHandler.RemoveClient(clientfd);

@@ -3,7 +3,7 @@
 //Unpack Move:    Move|ip:port,x,y,z
 //Unpack Enter:   Enter|ip:port
 //Unpack Leave:   Leave|ip:port
-public enum ClientMessageName
+public enum ClientMessageType
 {
     Enter,
     Move,
@@ -13,7 +13,7 @@ public enum ClientMessageName
 
 public class ParsedMessage
 {
-    public ClientMessageName name;
+    public ClientMessageType name;
     public string playerId;
     public float x, y, z;
 }
@@ -25,20 +25,20 @@ public class ClientProtocol
     public const char ArgSeparator = ',';
     public static string PackEnter(string address, int modelID)
     {
-        return ClientMessageName.Enter.ToString() + Separator + address + Separator + modelID + LineEnd;
+        return ClientMessageType.Enter.ToString() + Separator + address + Separator + modelID + LineEnd;
     }
     public static string PackMove(float x, float y, float z)
     {
-        return ClientMessageName.Move.ToString() + Separator + x + "," + y + "," + z + LineEnd;
+        return ClientMessageType.Move.ToString() + Separator + x + ArgSeparator + y + ArgSeparator + z + LineEnd;
     }
 
     public static string PackLeave()
     {
-        return ClientMessageName.Leave.ToString() + Separator + LineEnd;
+        return ClientMessageType.Leave.ToString() + Separator + LineEnd;
     }
     public static string PackAttack(string address)//球形区域搜索到敌人，发送敌人信息到服务端，请求攻击
     {
-        return ClientMessageName.Attack.ToString() + Separator + address + LineEnd;
+        return ClientMessageType.Attack.ToString() + Separator + address + LineEnd;
     }
     public static bool Unpack(string rawMsg, out ParsedMessage msg)
     {
@@ -49,14 +49,14 @@ public class ClientProtocol
 
         switch (msg.name)
         {
-            case ClientMessageName.Move:
+            case ClientMessageType.Move:
                 return ParseMoveArgs(split[1], msg);
-            case ClientMessageName.Enter:
+            case ClientMessageType.Enter:
 
-            case ClientMessageName.Leave:
+            case ClientMessageType.Leave:
                 msg.playerId = split[1];
                 return true;
-            case ClientMessageName.Attack:
+            case ClientMessageType.Attack:
                 ParseAttackArgs(split[1], msg);
                 return true;
             default:

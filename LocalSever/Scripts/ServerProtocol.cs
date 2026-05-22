@@ -2,7 +2,7 @@
 //PackLeave:  Leave|ip:port\n
 //PackMove:   Move|ip:port,x,y,z\n
 
-public enum ServerMessageName
+public enum ServerMessageType
 {
     Enter,
     Move,
@@ -14,20 +14,21 @@ public class ServerProtocol
 {
     public const char Separator = '|';
     public const char LineEnd = '\n';
+    public const char ArgSeparator = ',';
 
     public static string PackEnter(string address)
     {
-        return ServerMessageName.Enter.ToString() + Separator + address + LineEnd;
+        return ServerMessageType.Enter.ToString() + Separator + address + LineEnd;
     }
 
     public static string PackLeave(string address)
     {
-        return ServerMessageName.Leave.ToString() + Separator + address + LineEnd;
+        return ServerMessageType.Leave.ToString() + Separator + address + LineEnd;
     }
 
     public static string PackMove(string address, string moveArgs)
     {
-        return ServerMessageName.Move.ToString() + Separator + address + "," + moveArgs + LineEnd;
+        return ServerMessageType.Move.ToString() + Separator + address + ArgSeparator + moveArgs + LineEnd;
     }
     public static string PackAttacked(string address, int damage)
     //返回处理结果，并且需要广播血量，
@@ -46,6 +47,6 @@ public class ServerProtocol
     //TODO血量、位置、攻击力、攻击距离（缓存）在注册后由服务端统一管理
 
     {
-        return ServerMessageName.Attack.ToString() + Separator + address + damage.ToString() + LineEnd;
+        return ServerMessageType.Attack.ToString() + Separator + address + damage.ToString() + LineEnd;
     }
 }

@@ -14,9 +14,9 @@ public class SyncCharacter : MonoBehaviour
 
     void Start()
     {
-        NetManager.Instance.AddListener(ClientMessageName.Enter, OnEnter);
-        NetManager.Instance.AddListener(ClientMessageName.Move, OnMove);
-        NetManager.Instance.AddListener(ClientMessageName.Leave, OnLeave);
+        NetManager.Instance.AddListener(ClientMessageType.Enter, OnEnter);
+        NetManager.Instance.AddListener(ClientMessageType.Move, OnMove);
+        NetManager.Instance.AddListener(ClientMessageType.Leave, OnLeave);
         connectResultChannel.OnEventRaised += OnConnectResult;
         StartCoroutine(ConnectWithRetry());
     }
@@ -65,6 +65,7 @@ public class SyncCharacter : MonoBehaviour
             NetManager.Instance.Send(ClientProtocol.PackMove(pos.x, pos.y, pos.z));
         }
     }
+    //On*系列函数，用于处理服务端返回信息
     void OnEnter(ParsedMessage msg)
     {
         // if (msg.playerId == myPlayerId || string.IsNullOrEmpty(msg.playerId)) return;

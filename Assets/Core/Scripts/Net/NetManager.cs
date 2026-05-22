@@ -9,7 +9,7 @@ public class NetManager : MonoBehaviour
     static byte[] readBuffer = new byte[1024];
 
     public delegate void MessageListener(ParsedMessage msg);
-    private Dictionary<ClientMessageName, MessageListener> listenerList = new();
+    private Dictionary<ClientMessageType, MessageListener> listenerList = new();
     private List<string> messageList = new();
 
     public static NetManager Instance { get; private set; }
@@ -120,11 +120,11 @@ public class NetManager : MonoBehaviour
 
         if (!ClientProtocol.Unpack(messageStr, out ParsedMessage msg)) return;
 
-        if (listenerList.ContainsKey(msg.name))
+        if (listenerList.ContainsKey(msg.name))//调用对应事务
             listenerList[msg.name](msg);
     }
 
-    public void AddListener(ClientMessageName messageName, MessageListener listener)
+    public void AddListener(ClientMessageType messageName, MessageListener listener)
     {
         listenerList[messageName] = listener;
     }
