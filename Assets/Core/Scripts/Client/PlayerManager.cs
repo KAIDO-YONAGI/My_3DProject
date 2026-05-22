@@ -13,11 +13,18 @@ public class PlayerManager : MonoBehaviour
     {
         public Vector3 position;
         public int modelID = 0;
-        public string state;
+        public SimpleCharacterAnimationState animationState =
+            SimpleCharacterAnimationState.Land;
         public GameObject instance;
+        public PlayerState playerState;
     }
     private Dictionary<string, OtherPlayerInfo> players = new();
 
+    class PlayerState
+    {
+        public int health;
+        public int damage;
+    }
     void Awake()
     {
         if (Instance != null && Instance != this)

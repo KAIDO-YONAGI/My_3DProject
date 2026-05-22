@@ -8,6 +8,7 @@ public enum ClientMessageName
     Enter,
     Move,
     Leave,
+    Attack,
 }
 
 public class ParsedMessage
@@ -22,18 +23,23 @@ public class ClientProtocol
     public const char Separator = '|';
     public const char LineEnd = '\n';
     public const char ArgSeparator = ',';
-
+    public static string PackEnter(string address, int modelID)
+    {
+        return ClientMessageName.Enter.ToString() + Separator + address + Separator + modelID + LineEnd;
+    }
     public static string PackMove(float x, float y, float z)
     {
         return ClientMessageName.Move.ToString() + Separator + x + "," + y + "," + z + LineEnd;
     }
-    //TODOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Leaveï¿½ÅºÅ¸ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É·ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½Íµï¿½
 
     public static string PackLeave()
     {
         return ClientMessageName.Leave.ToString() + Separator + LineEnd;
     }
-
+    public static string PackAttack(string address)//ÇòÐÎÇøÓòËÑË÷µ½µÐÈË£¬·¢ËÍµÐÈËÐÅÏ¢µ½·þÎñ¶Ë£¬ÇëÇó¹¥»÷
+    {
+        return ClientMessageName.Attack.ToString() + Separator + address + LineEnd;
+    }
     public static bool Unpack(string rawMsg, out ParsedMessage msg)
     {
         msg = new ParsedMessage();
@@ -50,6 +56,9 @@ public class ClientProtocol
             case ClientMessageName.Leave:
                 msg.playerId = split[1];
                 return true;
+            case ClientMessageName.Attack:
+                ParseAttackArgs(split[1], msg);
+                return true;
             default:
                 return false;
         }
@@ -65,4 +74,11 @@ public class ClientProtocol
         if (!float.TryParse(parts[3], out msg.z)) return false;
         return true;
     }
+    static bool ParseAttackArgs(string args, ParsedMessage msg)
+    {
+
+
+        return true;
+    }
+
 }
