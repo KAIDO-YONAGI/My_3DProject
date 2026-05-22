@@ -2248,6 +2248,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 492739617}
     m_Modifications:
+    - target: {fileID: 9481629088135245, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
+      propertyPath: playerInitData.damage
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 9481629088135245, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
+      propertyPath: playerInitData.health
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 2843079830418118944, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.63

@@ -32,7 +32,7 @@ public class PlayerInfoManager
             Damage = damage;
         }
     }
-    private readonly Dictionary<string, PlayerInfo> playerInfo = new();
+    private Dictionary<string, PlayerInfo> playerInfo = new();
 
 
     public Dictionary<string, PlayerInfo> GetAllPlayerInfo() => playerInfo;

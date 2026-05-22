@@ -9,17 +9,19 @@ public class SyncCharacter : MonoBehaviour
     private float lastSendTime;
     [SerializeField] BoolEventChannelSO connectResultChannel;
     [SerializeField] float reconnectDelay = 3f;
+    [SerializeField] PlayerInitData playerInitData = new();
     bool connectResolved;
     bool lastConnectResult;
     string myPlayerId = "";
 
     void Start()
     {
-        NetManager.Instance.AddListener(ClientMessageType.Enter,
+        NetManager.Instance.AddListenerIntoList(ClientMessageType.Enter,
             ClientMessageHandler.OnEnter);
-        NetManager.Instance.AddListener(ClientMessageType.Move,
+        NetManager.Instance.AddListenerIntoList(ClientMessageType.Move,
             msg => ClientMessageHandler.OnMove(msg, myPlayerId));
-        NetManager.Instance.AddListener(ClientMessageType.Leave,
+        //利用lambda包装为OnMove传入了Id引用，并且只向委托暴露指定的msg变量
+        NetManager.Instance.AddListenerIntoList(ClientMessageType.Leave,
             ClientMessageHandler.OnLeave);
         connectResultChannel.OnEventRaised += OnConnectResult;
         StartCoroutine(ConnectWithRetry());
@@ -44,6 +46,7 @@ public class SyncCharacter : MonoBehaviour
         {
             connectResolved = false;
             NetManager.Instance.Connect("127.0.0.1", 8888);
+
             yield return new WaitUntil(() => connectResolved);
 
             if (lastConnectResult)
@@ -52,6 +55,7 @@ public class SyncCharacter : MonoBehaviour
                 //初始化本地端口，用于拒绝一些更新逻辑
                 // TODO不过以后可能会有用（比如判断是否开G等非法手段修改客户端）
                 Debug.Log("Connect succeeded, myPlayerId: " + myPlayerId);
+                NetManager.Instance.Send(Protocol.PackEnter(playerInitData));
                 yield break;
             }
 

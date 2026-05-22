@@ -30,7 +30,10 @@ namespace MultiplayerServer
             foreach (var pair in clients)
             {
                 if (pair.Key == target) continue;
-                SendTo(ServerProtocol.PackEnter(pair.Key.RemoteEndPoint!.ToString()!), target);
+                if (!pair.Value.entered) continue;
+                SendTo(ServerProtocol.PackEnter(
+                    pair.Key.RemoteEndPoint!.ToString()!,
+                    pair.Value.modelID, pair.Value.health, pair.Value.damage), target);
             }
         }
 
@@ -76,6 +79,7 @@ namespace MultiplayerServer
         public static bool HandleMessage(string msg, Socket clientfd)
         {
             string[] parts = msg.Split(ServerProtocol.Separator);
+
             if (parts[0] == ServerMessageType.Move.ToString())
                 // 客户端发来位置更新，附加发送者地址后广播给所有人
                 Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
@@ -83,7 +87,24 @@ namespace MultiplayerServer
             {
                 // 客户端主动发送 Leave，广播给其他人后清理连接
                 RemoveClient(clientfd);
-                return false;
+                return false;//表示消息流结束了
+            }
+            else if(parts[0] == ServerMessageType.Enter.ToString())
+            {
+                if (parts.Length != 2) return true;
+                string[] args = parts[1].Split(ServerProtocol.ArgSeparator);
+                if (args.Length != 3) return true;
+                if (!clients.TryGetValue(clientfd, out var state)) return true;
+                if (!int.TryParse(args[0], out state.modelID)) return true;
+                if (!int.TryParse(args[1], out state.health)) return true;
+                if (!int.TryParse(args[2], out state.damage)) return true;
+                state.entered = true;
+
+                string address = clientfd.RemoteEndPoint!.ToString()!;
+                // 广播新客户端的 Enter 给除自己以外的所有人
+                BroadcastExcept(ServerProtocol.PackEnter(address, state.modelID, state.health, state.damage), clientfd);
+                // 将所有已在线客户端的 Enter 发送给新客户端
+                SyncExistingClientsTo(clientfd);
             }
             return true;
         }

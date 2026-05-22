@@ -17,9 +17,10 @@ namespace MultiplayerServer
         public const char LineEnd = '\n';
         public const char ArgSeparator = ',';
 
-        public static string PackEnter(string address)
+        public static string PackEnter(string address, int modelID, int health, int damage)
         {
-            return ServerMessageType.Enter.ToString() + Separator + address + LineEnd;
+            return ServerMessageType.Enter.ToString() + Separator + address + ArgSeparator
+                + modelID + ArgSeparator + health + ArgSeparator + damage + LineEnd;
         }
 
         public static string PackLeave(string address)
@@ -28,6 +29,8 @@ namespace MultiplayerServer
         }
 
         public static string PackMove(string address, string moveArgs)
+        //另外，像move这种高频通信，可以使用udp协议
+        //传移动状态，初步构思为：客户端等待一次收包时间，如果收到的状态回报依旧，那就继续播放动画，否则切出动画
         {
             return ServerMessageType.Move.ToString() + Separator + address + ArgSeparator + moveArgs + LineEnd;
         }

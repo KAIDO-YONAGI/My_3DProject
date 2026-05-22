@@ -17,6 +17,7 @@ public class NetManager : MonoBehaviour
     public bool Connected { get; private set; } = false;
 
     [SerializeField] BoolEventChannelSO connectResultChannel;
+    //目前用来处理断线问题，会在Sync里更新Bool变量
 
     void Awake()
     {
@@ -72,9 +73,12 @@ public class NetManager : MonoBehaviour
             string[] split = recvStr.Split(Protocol.LineEnd);//得到协议条目
 
             //TODO解析Enter，注册并且更新新加入用户
-            for (int i = 0; i < split.Length - 1; i++)
+
+            foreach (string msg in split[0..^1])
+            //范围表达式，表示从索引零到倒数，跳过最后一个元素
+            //因为如果末尾有end标记，那split得到的最后一个元素就是空的
             {
-                Instance.messageList.Add(split[i]);
+                Instance.messageList.Add(msg);//会在update中消费消息队列
             }
             socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
         }
@@ -121,11 +125,11 @@ public class NetManager : MonoBehaviour
 
         if (!Protocol.Unpack(messageStr, out ParsedMessage msg)) return;
 
-        if (listenerList.ContainsKey(msg.name))//调用对应事务
-            listenerList[msg.name](msg);
+        if (listenerList.ContainsKey(msg.clientMessageType))//调用对应事务
+            listenerList[msg.clientMessageType](msg);
     }
 
-    public void AddListener(ClientMessageType messageName, MessageListener listener)
+    public void AddListenerIntoList(ClientMessageType messageName, MessageListener listener)
     {
         listenerList[messageName] = listener;
     }

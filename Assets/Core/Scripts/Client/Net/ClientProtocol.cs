@@ -18,21 +18,19 @@ namespace ClientProtocol
 
     public class ParsedMessage
     {
-        public ClientMessageType name;
+        public ClientMessageType clientMessageType;
         public string playerId;
-        public float x, y, z;
+        public PlayerInfo playerInfo = new();
     }
-
     public class PlayerInfo
     {
         public Vector3 position;
-        public int modelID = 0;
-        public SimpleCharacterAnimationState animationState =
-            SimpleCharacterAnimationState.Land;
         public GameObject instance;
         public PlayerState playerState;
+        public int modelID = 0;
+        public SimpleCharacterAnimationState animationState =
+                SimpleCharacterAnimationState.Land;
     }
-
     public class PlayerState
     {
         public int Health;
@@ -45,15 +43,45 @@ namespace ClientProtocol
         }
     }
 
+    public interface IProtocolSerializable
+    {
+        string Serialize();
+        bool Deserialize(string data);
+    }
+
+    [System.Serializable]
+    public class PlayerInitData : IProtocolSerializable
+    {
+        public int modelID;
+        public int health;
+        public int damage;
+        const char ArgSeparator = ',';
+
+        public string Serialize()
+        {
+            return modelID.ToString() + ArgSeparator + health + ArgSeparator + damage;
+        }
+
+        public bool Deserialize(string data)
+        {
+            string[] parts = data.Split(ArgSeparator);
+            if (parts.Length != 3) return false;
+            if (!int.TryParse(parts[0], out modelID)) return false;
+            if (!int.TryParse(parts[1], out health)) return false;
+            if (!int.TryParse(parts[2], out damage)) return false;
+            return true;
+        }
+
+    }
     public static class Protocol
     {
         public const char Separator = '|';
         public const char LineEnd = '\n';
         public const char ArgSeparator = ',';
 
-        public static string PackEnter(string address, int modelID, string playerInfo)
+        public static string PackEnter(PlayerInitData initData)
         {
-            return ClientMessageType.Enter.ToString() + Separator + address + Separator + modelID + LineEnd;
+            return ClientMessageType.Enter.ToString() + Separator + initData.Serialize() + LineEnd;
         }
 
         public static string PackMove(float x, float y, float z)
@@ -76,40 +104,51 @@ namespace ClientProtocol
             msg = new ParsedMessage();
             string[] split = rawMsg.Split(Separator);
             if (split.Length != 2) return false;
-            if (!System.Enum.TryParse(split[0], out msg.name)) return false;
+            if (!System.Enum.TryParse(split[0], out msg.clientMessageType)) return false;
 
-            switch (msg.name)
+            switch (msg.clientMessageType)
             {
+                case ClientMessageType.Enter:
+                    return ParseEnterArgs(split[1], msg);
                 case ClientMessageType.Move:
                     return ParseMoveArgs(split[1], msg);
-                case ClientMessageType.Enter:
-                    msg.playerId = split[1];
-                    return true;
+                case ClientMessageType.Attack:
+                    return ParseAttackArgs(split[1], msg);
+
                 case ClientMessageType.Leave:
                     msg.playerId = split[1];
                     return true;
-                case ClientMessageType.Attack:
-                    return ParseAttackArgs(split[1], msg);
                 default:
                     return false;
             }
         }
 
+        static bool ParseEnterArgs(string args, ParsedMessage msg)
+        {
+            string[] parts = args.Split(ArgSeparator);
+            if (parts.Length != 4) return false;
+            msg.playerId = parts[0];
+            var initData = new PlayerInitData();
+            if (!initData.Deserialize(parts[1] + ArgSeparator + parts[2] + ArgSeparator + parts[3])) return false;
+            msg.playerInfo.modelID = initData.modelID;
+            msg.playerInfo.playerState = new PlayerState(initData.health, initData.damage);
+            return true;
+        }
         static bool ParseMoveArgs(string args, ParsedMessage msg)
         {
             string[] parts = args.Split(ArgSeparator);
             if (parts.Length != 4) return false;
             msg.playerId = parts[0];
-            if (!float.TryParse(parts[1], out msg.x)) return false;
-            if (!float.TryParse(parts[2], out msg.y)) return false;
-            if (!float.TryParse(parts[3], out msg.z)) return false;
+            if (!float.TryParse(parts[1], out msg.playerInfo.position.x)) return false;
+            if (!float.TryParse(parts[2], out msg.playerInfo.position.y)) return false;
+            if (!float.TryParse(parts[3], out msg.playerInfo.position.z)) return false;
             return true;
         }
-
         static bool ParseAttackArgs(string args, ParsedMessage msg)
         {
             msg.playerId = args.TrimEnd(LineEnd);
             return !string.IsNullOrEmpty(msg.playerId);
         }
+
     }
 }

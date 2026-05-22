@@ -19,18 +19,10 @@ public class PlayerManager : MonoBehaviour
         }
         Instance = this;
     }
-    public string SerializePlayerInfo(PlayerInfo playerInfo)
-    {
-        
-        return "";
-    }
-    public void InitPlayer(string playerId, Vector3 position)
+    public void InitPlayer(string playerId, PlayerInfo info)
     {
         if (players.ContainsKey(playerId)) return;
-        var info = new PlayerInfo();
-        info.position = position;
-        info.modelID = 0;
-        info.instance = Instantiate(models[info.modelID], position, Quaternion.identity);
+        info.instance = Instantiate(models[info.modelID], Vector3.zero, Quaternion.identity);
         players[playerId] = info;
         playerToRefreshList.Add(playerId);
     }

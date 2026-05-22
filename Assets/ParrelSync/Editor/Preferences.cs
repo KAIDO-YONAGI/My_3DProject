@@ -61,17 +61,17 @@ namespace ParrelSync
         }
         public List<string> GetStoredValue()
         {
-            return this.Deserialize(EditorPrefs.GetString(Key));
+            return this.DeserializePlayerInfo(EditorPrefs.GetString(Key));
         }
         public void SetStoredValue(List<string> strings)
         {
-            EditorPrefs.SetString(Key, this.Serialize(strings));
+            EditorPrefs.SetString(Key, this.SerializePlayerInfo(strings));
         }
         public void ClearStoredValue()
         {
             EditorPrefs.DeleteKey(Key);
         }
-        public string Serialize(List<string> data)
+        public string SerializePlayerInfo(List<string> data)
         {
             string result = string.Empty;
             foreach (var item in data)
@@ -86,7 +86,7 @@ namespace ParrelSync
             }
             return result;
         }
-        public List<string> Deserialize(string data)
+        public List<string> DeserializePlayerInfo(string data)
         {
             return data.Split(new string[] { serializationToken }, System.StringSplitOptions.None).ToList();
         }

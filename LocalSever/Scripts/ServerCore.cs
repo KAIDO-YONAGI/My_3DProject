@@ -9,6 +9,10 @@ namespace MultiplayerServer
     {
         public Socket socket = null!;
         public byte[] readBuffer = new byte[1024];
+        public int modelID;
+        public int health;
+        public int damage;
+        public bool entered = false;
     }
 
     class ServerCore
@@ -51,10 +55,7 @@ namespace MultiplayerServer
                 clientState.socket = clientfd;
                 ServerNetHandler.clients.Add(clientfd, clientState);
 
-                // 广播新客户端的 Enter 给除自己以外的所有人
-                ServerNetHandler.BroadcastExcept(ServerProtocol.PackEnter(clientfd.RemoteEndPoint!.ToString()!), clientfd);
-                // 将所有已在线客户端的 Enter 发送给新客户端，使其能实例化老客户端
-                ServerNetHandler.SyncExistingClientsTo(clientfd);
+                // 等待客户端发送 Enter 包后再广播，不再在此处自动广播
 
                 // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
                 clientfd.BeginReceive
@@ -104,7 +105,7 @@ namespace MultiplayerServer
                 {
                     string msg = messages[i];
                     if (string.IsNullOrEmpty(msg)) continue;
-                    if (!ServerNetHandler.HandleMessage(msg, clientfd)) return;
+                    if (!ServerNetHandler.HandleMessage(msg, clientfd)) return;//消费消息
                 }
 
                 // 继续异步接收该客户端的下一条消息（形成循环）
