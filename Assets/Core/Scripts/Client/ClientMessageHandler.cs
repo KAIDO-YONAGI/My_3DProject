@@ -1,4 +1,5 @@
 using UnityEngine;
+using ClientProtocol;
 
 public class ClientMessageHandler
 {

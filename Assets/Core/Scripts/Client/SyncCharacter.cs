@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using ClientProtocol;
 
 public class SyncCharacter : MonoBehaviour
 {
@@ -14,9 +15,12 @@ public class SyncCharacter : MonoBehaviour
 
     void Start()
     {
-        NetManager.Instance.AddListener(ClientMessageType.Enter, ClientMessageHandler.OnEnter);
-        NetManager.Instance.AddListener(ClientMessageType.Move, msg => ClientMessageHandler.OnMove(msg, myPlayerId));
-        NetManager.Instance.AddListener(ClientMessageType.Leave, ClientMessageHandler.OnLeave);
+        NetManager.Instance.AddListener(ClientMessageType.Enter,
+            ClientMessageHandler.OnEnter);
+        NetManager.Instance.AddListener(ClientMessageType.Move,
+            msg => ClientMessageHandler.OnMove(msg, myPlayerId));
+        NetManager.Instance.AddListener(ClientMessageType.Leave,
+            ClientMessageHandler.OnLeave);
         connectResultChannel.OnEventRaised += OnConnectResult;
         StartCoroutine(ConnectWithRetry());
     }
@@ -62,7 +66,7 @@ public class SyncCharacter : MonoBehaviour
         {
             lastSendTime = Time.time;
             Vector3 pos = localCharacter.transform.position;
-            NetManager.Instance.Send(ClientProtocol.PackMove(pos.x, pos.y, pos.z));
+            NetManager.Instance.Send(Protocol.PackMove(pos.x, pos.y, pos.z));
         }
     }
 

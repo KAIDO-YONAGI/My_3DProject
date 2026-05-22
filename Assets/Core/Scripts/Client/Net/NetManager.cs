@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using UnityEngine;
+using ClientProtocol;
 
 public class NetManager : MonoBehaviour
 {
@@ -68,7 +69,7 @@ public class NetManager : MonoBehaviour
             int count = socket.EndReceive(ar);
             if (count <= 0) return;
             string recvStr = System.Text.Encoding.Default.GetString(readBuffer, 0, count);
-            string[] split = recvStr.Split(ClientProtocol.LineEnd);//得到协议条目
+            string[] split = recvStr.Split(Protocol.LineEnd);//得到协议条目
 
             //TODO解析Enter，注册并且更新新加入用户
             for (int i = 0; i < split.Length - 1; i++)
@@ -86,7 +87,7 @@ public class NetManager : MonoBehaviour
     public void Disconnect()
     {
         if (socket == null || !socket.Connected) return;
-        Send(ClientProtocol.PackLeave());
+        Send(Protocol.PackLeave());
         socket.Close();
         Connected = false;
     }
@@ -118,7 +119,7 @@ public class NetManager : MonoBehaviour
         string messageStr = messageList[0];
         messageList.RemoveAt(0);
 
-        if (!ClientProtocol.Unpack(messageStr, out ParsedMessage msg)) return;
+        if (!Protocol.Unpack(messageStr, out ParsedMessage msg)) return;
 
         if (listenerList.ContainsKey(msg.name))//调用对应事务
             listenerList[msg.name](msg);

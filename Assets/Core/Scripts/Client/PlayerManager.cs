@@ -1,36 +1,15 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
-
+using ClientProtocol;
 public class PlayerManager : MonoBehaviour
 {
 
     public List<GameObject> models;
 
     public static PlayerManager Instance { get; private set; }
-    private List<string> playerToRefreshList = new();
-    class OtherPlayerInfo
-    {
-        public Vector3 position;
-        public int modelID = 0;
-        public SimpleCharacterAnimationState animationState =
-            SimpleCharacterAnimationState.Land;
-        public GameObject instance;
-        public PlayerState playerState;
-    }
-    private Dictionary<string, OtherPlayerInfo> players = new();
+    private List<string> playerToRefreshList = new();    private Dictionary<string, PlayerInfo> players = new();
 
-    public class PlayerState
-    {
-        public int Health;
-        public int Damage;
-
-        public PlayerState(int health, int damage)
-        {
-            Health = health;
-            Damage = damage;
-        }
-    }
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -40,11 +19,15 @@ public class PlayerManager : MonoBehaviour
         }
         Instance = this;
     }
-
+    public string SerializePlayerInfo(PlayerInfo playerInfo)
+    {
+        
+        return "";
+    }
     public void InitPlayer(string playerId, Vector3 position)
     {
         if (players.ContainsKey(playerId)) return;
-        var info = new OtherPlayerInfo();
+        var info = new PlayerInfo();
         info.position = position;
         info.modelID = 0;
         info.instance = Instantiate(models[info.modelID], position, Quaternion.identity);
