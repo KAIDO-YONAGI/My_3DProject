@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +18,12 @@ public class ChatManager : MonoBehaviour
     public Button connectButton;
     public Button sendButton;
     // 接收缓冲区，内核收到数据后直接写入这里
-    byte[] readBuffer = new byte[1024];
+    const int BufferSize = 1024;
+    readonly ConcurrentQueue<string> receivedMessages = new();
+    readonly SemaphoreSlim sendLock = new(1, 1);
+    readonly object pendingReceiveLock = new();
+    CancellationTokenSource receiveCancellationTokenSource;
+    string pendingReceive = "";
     // 累积收到的所有服务端回传字符串，用于界面显示
     string receiveStr = "";
 
@@ -34,7 +43,17 @@ public class ChatManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        while (receivedMessages.TryDequeue(out string msg))
+        {
+            receiveStr += '\n' + msg;
+        }
+
         text.text = "\nReceived: " + receiveStr;
+    }
+
+    void OnDestroy()
+    {
+        CloseSocket();
     }
 
     /// <summary>
@@ -42,11 +61,18 @@ public class ChatManager : MonoBehaviour
     /// </summary>
     public void OnClickConnectButton()
     {
+        CloseSocket();
+        receiveStr = "";
+        lock (pendingReceiveLock)
+        {
+            pendingReceive = "";
+        }
+
         // 创建 TCP socket（IPv4, 流式, TCP）
         socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         // 异步连接服务端 127.0.0.1:8888，连接成功后回调 ConnectCallback
         // socket 作为 AsyncState 传入，回调中可通过 ar.AsyncState 取回
-        socket.BeginConnect("127.0.0.1", 8888, ConnectCallback, socket);
+        _ = ConnectCallback(socket);
     }
 
     /// <summary>
@@ -54,77 +80,169 @@ public class ChatManager : MonoBehaviour
     /// </summary>
     public void OnClickSendButton()
     {
+        if (socket == null || !socket.Connected) return;
+
         string sendStr = inputField.text;
-        byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+        byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
         // 异步发送，发送完成后回调 SendCallback
         // 不能在发送后马上 Close()，否则异步操作还没完成就被终止
-        socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, socket);
+        _ = SendCallback(sendBytes, socket);
     }
 
     /// <summary>
     /// 发送完成后被调用。确认发送了多少字节。
     /// </summary>
-    private void SendCallback(IAsyncResult ar)
+    private async Task SendCallback(byte[] sendBytes, Socket currentSocket)
     {
+        bool lockTaken = false;
+
         try
         {
+            if (currentSocket == null || !currentSocket.Connected) return;
+
             // 取出 BeginSend 时传入的 socket
-            Socket socket = (Socket)ar.AsyncState;
+            await sendLock.WaitAsync().ConfigureAwait(false);
+            lockTaken = true;
+
             // EndSend 完成发送操作，返回实际发出的字节数
-            int bytesSent = socket.EndSend(ar);
-            Debug.Log("Sent " + bytesSent + " bytes to server.");
+            int totalSent = 0;
+            while (totalSent < sendBytes.Length)
+            {
+                int bytesSent = await currentSocket.SendAsync(
+                    new ArraySegment<byte>(sendBytes, totalSent, sendBytes.Length - totalSent),
+                    SocketFlags.None).ConfigureAwait(false);
+                if (bytesSent <= 0)
+                    throw new SocketException((int)SocketError.ConnectionReset);
+                totalSent += bytesSent;
+            }
+
+            Debug.Log("Sent " + totalSent + " bytes to server.");
+        }
+        catch (ObjectDisposedException)
+        {
         }
         catch (Exception e)
         {
             Debug.Log(e);
+        }
+        finally
+        {
+            if (lockTaken)
+                sendLock.Release();
         }
     }
 
     /// <summary>
     /// 连接成功后被调用。完成连接并开始异步接收服务端数据。
     /// </summary>
-    private void ConnectCallback(IAsyncResult ar)
+    private async Task ConnectCallback(Socket currentSocket)
     {
         try
         {
-            Socket socket = (Socket)ar.AsyncState;
             // EndConnect 完成连接握手
-            socket.EndConnect(ar);
+            await currentSocket.ConnectAsync("127.0.0.1", 8888).ConfigureAwait(false);
+            if (!ReferenceEquals(socket, currentSocket))
+            {
+                currentSocket.Close();
+                return;
+            }
+
             Debug.Log("Connected to server");
             // 连接成功后立即注册异步接收，等待服务端回传数据
             // readBuffer 作为缓冲区，收到数据后内核直接写入
-            socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+            receiveCancellationTokenSource = new CancellationTokenSource();
+            _ = ReceiveCallback(currentSocket, receiveCancellationTokenSource.Token);
         }
         catch (Exception e)
         {
             Debug.Log(e);
+        }
+    }
+
+    void AppendMessages(string recvStr)
+    {
+        lock (pendingReceiveLock)
+        {
+            pendingReceive += recvStr;
+            string[] split = pendingReceive.Split('\n');
+            for (int i = 0; i < split.Length - 1; i++)
+            {
+                string msg = split[i];
+                if (string.IsNullOrEmpty(msg)) continue;
+                receivedMessages.Enqueue(msg);
+            }
+
+            pendingReceive = split[^1];
         }
     }
 
     /// <summary>
     /// 收到服务端数据时被调用。读取内容拼接到 receiveStr，然后继续注册接收。
     /// </summary>
-    private void ReceiveCallback(IAsyncResult ar)
+    private async Task ReceiveCallback(Socket currentSocket, CancellationToken cancellationToken)
     {
+        byte[] readBuffer = new byte[BufferSize];
+
         try
         {
-            Socket socket = (Socket)ar.AsyncState;
-            // EndReceive 完成接收，返回实际读取的字节数
-            int bytesRead = socket.EndReceive(ar);
-            if (bytesRead > 0)
+            while (!cancellationToken.IsCancellationRequested)
             {
+                // EndReceive 完成接收，返回实际读取的字节数
+                int bytesRead = await currentSocket.ReceiveAsync(
+                    new ArraySegment<byte>(readBuffer),
+                    SocketFlags.None).ConfigureAwait(false);
+                if (bytesRead <= 0) return;
+
                 // 将字节解码为字符串，拼接到累积字符串中
                 // 这里用 += 是因为 TCP 是字节流，一条消息可能分多次到达（拆包）
-                receiveStr += '\n' + System.Text.Encoding.Default.GetString(readBuffer, 0, bytesRead);
+                AppendMessages(Encoding.Default.GetString(readBuffer, 0, bytesRead));
                 // 继续异步接收下一段数据（形成循环）
-                socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
             }
             // bytesRead == 0 表示服务端主动断开连接（TCP FIN），这里不做处理
+        }
+        catch (ObjectDisposedException)
+        {
         }
         catch (Exception e)
         {
             Debug.Log(e);
         }
+        finally
+        {
+            if (ReferenceEquals(socket, currentSocket))
+                CloseSocket();
+        }
     }
 
+    void CloseSocket()
+    {
+        if (receiveCancellationTokenSource != null)
+        {
+            receiveCancellationTokenSource.Cancel();
+            receiveCancellationTokenSource.Dispose();
+            receiveCancellationTokenSource = null;
+        }
+
+        if (socket == null) return;
+
+        try
+        {
+            if (socket.Connected)
+                socket.Shutdown(SocketShutdown.Both);
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            socket.Close();
+        }
+        catch
+        {
+        }
+
+        socket = null;
+    }
 }
+

@@ -1,6 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MultiplayerServer
 {
@@ -13,13 +16,15 @@ namespace MultiplayerServer
         public int health;
         public int damage;
         public bool entered = false;
+        public readonly StringBuilder pendingMessages = new();
+        public readonly SemaphoreSlim sendLock = new(1, 1);
     }
 
     class ServerCore
     {
         static Socket listenfd = null!;
 
-        public static void Main()
+        public static async Task Main()
         {
             // 创建 TCP 监听 socket（IPv4, 流式, TCP）
             listenfd = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -34,87 +39,101 @@ namespace MultiplayerServer
             Console.WriteLine("Server ON");
 
             // 异步等待客户端连接，连接成功后回调 AcceptCallback
-            listenfd.BeginAccept(AcceptCallback, listenfd);
-            // 阻塞主线程，防止程序退出
-            Console.ReadLine();
+            await AcceptCallback();
         }
 
         /// <summary>
         /// 有新客户端连接时被调用。负责：接受连接 → 建档 → 注册接收 → 继续等待下一个连接
         /// </summary>
-        public static void AcceptCallback(IAsyncResult ar)
+        public static async Task AcceptCallback()
         {
-            try
+            while (true)
             {
-                Socket? listenfd = (Socket?)ar.AsyncState;
-                Socket clientfd = listenfd!.EndAccept(ar);
-                Console.WriteLine("Client Connected: " + clientfd.RemoteEndPoint!.ToString());
+                try
+                {
+                    Socket clientfd = await listenfd.AcceptAsync();
+                    Console.WriteLine("Client Connected: " + clientfd.RemoteEndPoint!.ToString());
 
-                // 为该客户端创建状态对象并存入字典，即注册
-                ClientState clientState = new ClientState();
-                clientState.socket = clientfd;
-                ServerNetHandler.clients.Add(clientfd, clientState);
+                    ClientState clientState = new ClientState();
+                    clientState.socket = clientfd;
+                    if (!ServerNetHandler.clients.TryAdd(clientfd, clientState))
+                    {
+                        clientfd.Close();
+                        continue;
+                    }
 
-                // 等待客户端发送 Enter 包后再广播，不再在此处自动广播
-
-                // 异步接收该客户端的数据，数据到达后回调 ReceiveCallback
-                clientfd.BeginReceive
-                (
-                    clientState.readBuffer,
-                    0,
-                    clientState.readBuffer.Length,
-                    SocketFlags.None,
-                    ReceiveCallback,
-                    clientState);
-
-                // 继续异步等待下一个客户端连接（形成循环）
-                listenfd!.BeginAccept(AcceptCallback, listenfd);
+                    _ = ReceiveCallback(clientState);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
-            catch (Exception e)
+        }
+
+        static bool TryReadMessage(StringBuilder pendingMessages, out string message)
+        {
+            for (int i = 0; i < pendingMessages.Length; i++)
             {
-                Console.WriteLine(e);
+                if (pendingMessages[i] != ServerProtocol.LineEnd) continue;
+                message = pendingMessages.ToString(0, i);
+                pendingMessages.Remove(0, i + 1);
+                return true;
             }
+
+            message = string.Empty;
+            return false;
         }
 
         /// <summary>
         /// 某个客户端发来数据时被调用。负责：读取数据 → 解析 → 广播 → 继续监听
         /// </summary>
-        public static void ReceiveCallback(IAsyncResult ar)
+        public static async Task ReceiveCallback(ClientState clientState)
         {
+            Socket clientfd = clientState.socket;
             try
             {
-                ClientState? clientState = (ClientState?)ar.AsyncState;
-                Socket clientfd = clientState!.socket;
-                int bytesRead = clientfd.EndReceive(ar);
-
-                // bytesRead==0 表示客户端主动断开连接
-                if (bytesRead == 0)
+                while (true)
                 {
-                    Console.WriteLine("Client Disconnected: " + clientfd.RemoteEndPoint!.ToString());
-                    ServerNetHandler.RemoveClient(clientfd);
-                    return;
+                    int bytesRead = await clientfd.ReceiveAsync(
+                        new ArraySegment<byte>(clientState.readBuffer),
+                        SocketFlags.None);
+
+                    if (bytesRead == 0)
+                    {
+                        Console.WriteLine("Client Disconnected: " + clientfd.RemoteEndPoint!.ToString());
+                        await ServerNetHandler.RemoveClient(clientfd);
+                        return;
+                    }
+
+                    string receiveStr = Encoding.Default.GetString(clientState.readBuffer, 0, bytesRead);
+                    Console.WriteLine("Received from " + clientfd.RemoteEndPoint!.ToString() + ": " + receiveStr);
+
+                    clientState.pendingMessages.Append(receiveStr);
+                    while (TryReadMessage(clientState.pendingMessages, out string msg))
+                    {
+                        if (string.IsNullOrEmpty(msg)) continue;
+                        if (!await ServerNetHandler.HandleMessage(msg, clientfd)) return;//消费消息
+                    }
                 }
-
-                // 将收到的字节解码为字符串并打印
-                string receiveStr = System.Text.Encoding.Default.GetString(clientState.readBuffer, 0, bytesRead);
-                Console.WriteLine("Received from " + clientfd.RemoteEndPoint!.ToString() + ": " + receiveStr);
-
-                // 按 LineEnd 拆分后逐条处理，避免 TCP 粘包/半包问题
-                string[] messages = receiveStr.Split(ServerProtocol.LineEnd);
-                for (int i = 0; i < messages.Length - 1; i++)
-                {
-                    string msg = messages[i];
-                    if (string.IsNullOrEmpty(msg)) continue;
-                    if (!ServerNetHandler.HandleMessage(msg, clientfd)) return;//消费消息
-                }
-
-                // 继续异步接收该客户端的下一条消息（形成循环）
-                clientfd.BeginReceive(clientState.readBuffer, 0,
-                    clientState.readBuffer.Length, SocketFlags.None, ReceiveCallback, clientState);
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine(e);
+                await ServerNetHandler.RemoveClient(clientfd);
+            }
+            catch (ObjectDisposedException)
+            {
+                await ServerNetHandler.RemoveClient(clientfd);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                await ServerNetHandler.RemoveClient(clientfd);
             }
         }
     }

@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MultiplayerServer
 {
@@ -10,88 +13,125 @@ namespace MultiplayerServer
     class ServerNetHandler
     {
         // 所有已连接的客户端集合
-        public static Dictionary<Socket, ClientState> clients = new();
+        public static ConcurrentDictionary<Socket, ClientState> clients = new();
+
+        static string GetRemoteAddress(Socket socket)
+        {
+            try
+            {
+                return socket.RemoteEndPoint?.ToString() ?? string.Empty;
+            }
+            catch (ObjectDisposedException)
+            {
+                return string.Empty;
+            }
+        }
 
         /// <summary>
         /// 广播 Leave 并移除客户端连接
         /// </summary>
-        public static void RemoveClient(Socket clientfd)
+        public static async Task RemoveClient(Socket clientfd)
         {
-            Broadcast(ServerProtocol.PackLeave(clientfd.RemoteEndPoint!.ToString()!));
-            clients.Remove(clientfd);
-            clientfd.Close();
+            if (!clients.TryRemove(clientfd, out _)) return;
+
+            string address = GetRemoteAddress(clientfd);
+            try
+            {
+                clientfd.Shutdown(SocketShutdown.Both);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                clientfd.Close();
+            }
+            catch
+            {
+            }
+
+            if (!string.IsNullOrEmpty(address))
+                await Broadcast(ServerProtocol.PackLeave(address));
         }
 
         /// <summary>
         /// 将所有已在线客户端的 Enter 消息发送给指定目标（新连接的客户端）
         /// </summary>
-        public static void SyncExistingClientsTo(Socket target)
+        public static async Task SyncExistingClientsTo(Socket target)
         {
+            List<Task> sendTasks = new();
             foreach (var pair in clients)
             {
                 if (pair.Key == target) continue;
                 if (!pair.Value.entered) continue;
-                SendTo(ServerProtocol.PackEnter(
+                sendTasks.Add(SendTo(ServerProtocol.PackEnter(
                     pair.Key.RemoteEndPoint!.ToString()!,
-                    pair.Value.modelID, pair.Value.health, pair.Value.damage), target);
+                    pair.Value.modelID, pair.Value.health, pair.Value.damage), target));
             }
+
+            await Task.WhenAll(sendTasks);
         }
 
         /// <summary>
         /// 向单个客户端发送消息
         /// </summary>
-        public static void SendTo(string sendStr, Socket target)
+        public static async Task SendTo(string sendStr, Socket target)
         {
-            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
-            target.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, target);
+            byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
+            await SendCallback(sendBytes, target);
         }
 
         /// <summary>
         /// 向所有已连接客户端广播消息
         /// </summary>
-        public static void Broadcast(string sendStr)
+        public static async Task Broadcast(string sendStr)
         {
             Console.WriteLine("[Broadcast] " + sendStr.TrimEnd(ServerProtocol.LineEnd));
-            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+            List<Task> sendTasks = new();
             foreach (var pair in clients)
             {
-                pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
+                sendTasks.Add(SendTo(sendStr, pair.Value.socket));
             }
+
+            await Task.WhenAll(sendTasks);
         }
 
         /// <summary>
         /// 向除指定客户端外的所有人广播消息
         /// </summary>
-        public static void BroadcastExcept(string sendStr, Socket exceptSocket)
+        public static async Task BroadcastExcept(string sendStr, Socket exceptSocket)
         {
             Console.WriteLine("[BroadcastExcept] to " + (clients.Count - 1) + " clients: " + sendStr.TrimEnd(ServerProtocol.LineEnd));
-            byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
+            List<Task> sendTasks = new();
             foreach (var pair in clients)
             {
                 if (pair.Key == exceptSocket) continue;
-                pair.Value.socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, pair.Value.socket);
+                sendTasks.Add(SendTo(sendStr, pair.Value.socket));
             }
+
+            await Task.WhenAll(sendTasks);
         }
 
         /// <summary>
         /// 处理客户端发来的消息，根据消息类型进行分发
         /// </summary>
-        public static bool HandleMessage(string msg, Socket clientfd)
+        public static async Task<bool> HandleMessage(string msg, Socket clientfd)
         {
             string[] parts = msg.Split(ServerProtocol.Separator);
+            if (parts.Length != 2) return true;
 
             if (parts[0] == ServerMessageType.Move.ToString())
                 // 客户端发来位置更新，附加发送者地址后广播给所有人
-                Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
+                await Broadcast(ServerProtocol.PackMove(clientfd.RemoteEndPoint!.ToString()!, parts[1]));
             else if (parts[0] == ServerMessageType.Leave.ToString())
             {
                 // 客户端主动发送 Leave，广播给其他人后清理连接
-                RemoveClient(clientfd);
+                await RemoveClient(clientfd);
                 return false;//表示消息流结束了
             }
             else if(parts[0] == ServerMessageType.Enter.ToString())
             {
-                if (parts.Length != 2) return true;
                 string[] args = parts[1].Split(ServerProtocol.ArgSeparator);
                 if (args.Length != 3) return true;
                 if (!clients.TryGetValue(clientfd, out var state)) return true;
@@ -102,9 +142,9 @@ namespace MultiplayerServer
 
                 string address = clientfd.RemoteEndPoint!.ToString()!;
                 // 广播新客户端的 Enter 给除自己以外的所有人
-                BroadcastExcept(ServerProtocol.PackEnter(address, state.modelID, state.health, state.damage), clientfd);
+                await BroadcastExcept(ServerProtocol.PackEnter(address, state.modelID, state.health, state.damage), clientfd);
                 // 将所有已在线客户端的 Enter 发送给新客户端
-                SyncExistingClientsTo(clientfd);
+                await SyncExistingClientsTo(clientfd);
             }
             return true;
         }
@@ -112,24 +152,48 @@ namespace MultiplayerServer
         /// <summary>
         /// 发送完成后被调用，用于确认发送字节数或处理发送失败
         /// </summary>
-        public static void SendCallback(IAsyncResult ar)
+        public static async Task SendCallback(byte[] sendBytes, Socket target)
         {
+            if (!clients.TryGetValue(target, out var state)) return;
+
+            bool lockTaken = false;
             try
             {
-                Socket? clientfd = (Socket?)ar.AsyncState;
-                int bytesSent = clientfd!.EndSend(ar);
-                Console.WriteLine("Sent " + bytesSent + " bytes to client.");
+                await state.sendLock.WaitAsync();
+                lockTaken = true;
+
+                int totalSent = 0;
+                while (totalSent < sendBytes.Length)
+                {
+                    int bytesSent = await target.SendAsync(
+                        new ArraySegment<byte>(sendBytes, totalSent, sendBytes.Length - totalSent),
+                        SocketFlags.None);
+                    if (bytesSent <= 0)
+                        throw new SocketException((int)SocketError.ConnectionReset);
+                    totalSent += bytesSent;
+                }
+
+                Console.WriteLine("Sent " + totalSent + " bytes to client.");
             }
             catch (SocketException)
             {
                 // 发送失败说明客户端已断开，广播 Leave 并清理
-                Socket? clientfd = (Socket?)ar.AsyncState;
-                Console.WriteLine("Client force closed: " + clientfd!.RemoteEndPoint);
-                RemoveClient(clientfd!);
+                Console.WriteLine("Client force closed: " + GetRemoteAddress(target));
+                await RemoveClient(target);
+            }
+            catch (ObjectDisposedException)
+            {
+                await RemoveClient(target);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                await RemoveClient(target);
+            }
+            finally
+            {
+                if (lockTaken)
+                    state.sendLock.Release();
             }
         }
     }

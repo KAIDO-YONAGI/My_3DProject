@@ -1,17 +1,26 @@
-using System;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using ClientProtocol;
 
 public class NetManager : MonoBehaviour
 {
     static Socket socket;
-    static byte[] readBuffer = new byte[1024];
+    const int BufferSize = 1024;
 
     public delegate void MessageListener(ParsedMessage msg);
     private Dictionary<ClientMessageType, MessageListener> listenerList = new();
-    private List<string> messageList = new();
+    private readonly ConcurrentQueue<string> messageList = new();
+    private readonly ConcurrentQueue<bool> connectResultList = new();
+    private readonly SemaphoreSlim sendLock = new(1, 1);
+    private readonly object pendingReceiveLock = new();
+    private CancellationTokenSource receiveCancellationTokenSource;
+    private string pendingReceive = string.Empty;
 
     public static NetManager Instance { get; private set; }
     public bool Connected { get; private set; } = false;
@@ -30,103 +39,249 @@ public class NetManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void OnDestroy()
+    {
+        CloseSocket();
+    }
+
     public string GetDescribe()
     {
         if (socket == null || !socket.Connected) return "";
-        return socket!.LocalEndPoint!.ToString()!;
+        return socket.LocalEndPoint!.ToString()!;
     }
 
     public void Connect(string ip, int port)
     {
-        socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket.BeginConnect(ip, port, ConnectCallback, socket);
+        _ = ConnectCallback(ip, port);
     }
 
-    private void ConnectCallback(IAsyncResult ar)
+    private async Task ConnectCallback(string ip, int port)
     {
+        CloseSocket();
+        lock (pendingReceiveLock)
+        {
+            pendingReceive = string.Empty;
+        }
+
+        Socket currentSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket = currentSocket;
+
         try
         {
-            Socket socket = (Socket)ar.AsyncState;
-            socket.EndConnect(ar);
+            await currentSocket.ConnectAsync(ip, port).ConfigureAwait(false);
+            if (!ReferenceEquals(socket, currentSocket))
+            {
+                currentSocket.Close();
+                return;
+            }
+
             Debug.Log("Connected to server");
             Connected = true;
-            connectResultChannel.Raise(true);
-            socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
-            return;
+            connectResultList.Enqueue(true);
+            receiveCancellationTokenSource = new CancellationTokenSource();
+            _ = ReceiveCallback(currentSocket, receiveCancellationTokenSource.Token);
         }
         catch (SocketException e)
         {
             Debug.Log("Socket Connect failed" + e.ToString());
+            if (!ReferenceEquals(socket, currentSocket))
+            {
+                currentSocket.Close();
+                return;
+            }
+
             Connected = false;
-            connectResultChannel.Raise(false);
+            connectResultList.Enqueue(false);
+            CloseSocket();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Socket Connect failed" + e.ToString());
+            if (!ReferenceEquals(socket, currentSocket))
+            {
+                currentSocket.Close();
+                return;
+            }
+
+            Connected = false;
+            connectResultList.Enqueue(false);
+            CloseSocket();
         }
     }
 
-    private void ReceiveCallback(IAsyncResult ar)
+    private void AppendMessages(string recvStr)
     {
-        try
+        lock (pendingReceiveLock)
         {
-            Socket socket = (Socket)ar.AsyncState;
-            int count = socket.EndReceive(ar);
-            if (count <= 0) return;
-            string recvStr = System.Text.Encoding.Default.GetString(readBuffer, 0, count);
-            string[] split = recvStr.Split(Protocol.LineEnd);//得到协议条目
+            pendingReceive += recvStr;
+            string[] split = pendingReceive.Split(Protocol.LineEnd);//得到协议条目
 
             //TODO解析Enter，注册并且更新新加入用户
 
-            foreach (string msg in split[0..^1])
+            for (int i = 0; i < split.Length - 1; i++)
             //范围表达式，表示从索引零到倒数，跳过最后一个元素
             //因为如果末尾有end标记，那split得到的最后一个元素就是空的
             {
-                Instance.messageList.Add(msg);//会在update中消费消息队列
+                string msg = split[i];
+                if (string.IsNullOrEmpty(msg)) continue;
+                messageList.Enqueue(msg);//会在update中消费消息队列
             }
-            socket.BeginReceive(readBuffer, 0, readBuffer.Length, SocketFlags.None, ReceiveCallback, socket);
+
+            pendingReceive = split[^1];
+        }
+    }
+
+    private async Task ReceiveCallback(Socket currentSocket, CancellationToken cancellationToken)
+    {
+        byte[] readBuffer = new byte[BufferSize];
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                int count = await currentSocket.ReceiveAsync(
+                    new ArraySegment<byte>(readBuffer),
+                    SocketFlags.None).ConfigureAwait(false);
+                if (count <= 0) return;
+
+                string recvStr = Encoding.Default.GetString(readBuffer, 0, count);
+                AppendMessages(recvStr);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
         }
         catch (SocketException e)
         {
             Debug.Log("Socket Receive failed" + e.ToString());
         }
+        catch (Exception e)
+        {
+            Debug.Log("Socket Receive failed" + e.ToString());
+        }
+        finally
+        {
+            if (ReferenceEquals(socket, currentSocket))
+            {
+                Connected = false;
+                CloseSocket();
+            }
+        }
     }
 
     public void Disconnect()
     {
-        if (socket == null || !socket.Connected) return;
-        Send(Protocol.PackLeave());
-        socket.Close();
+        _ = DisconnectAsync();
+    }
+
+    private async Task DisconnectAsync()
+    {
+        if (socket == null) return;
+
+        if (socket.Connected)
+            await SendCallback(Protocol.PackLeave()).ConfigureAwait(false);
+
         Connected = false;
+        CloseSocket();
     }
 
     public void Send(string sendStr)
     {
-        if (socket == null || !socket.Connected) return;
-        byte[] sendBytes = System.Text.Encoding.Default.GetBytes(sendStr);
-        socket.BeginSend(sendBytes, 0, sendBytes.Length, SocketFlags.None, SendCallback, socket);
+        _ = SendCallback(sendStr);
     }
 
-    private void SendCallback(IAsyncResult ar)
+    private async Task SendCallback(string sendStr)
     {
+        if (socket == null || !socket.Connected) return;
+
+        byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
+        bool lockTaken = false;
+
         try
         {
-            Socket socket = (Socket)ar.AsyncState;
-            int count = socket.EndSend(ar);
-            Debug.Log("Sent " + count + " bytes");
+            await sendLock.WaitAsync().ConfigureAwait(false);
+            lockTaken = true;
+
+            int totalSent = 0;
+            while (totalSent < sendBytes.Length)
+            {
+                int count = await socket.SendAsync(
+                    new ArraySegment<byte>(sendBytes, totalSent, sendBytes.Length - totalSent),
+                    SocketFlags.None).ConfigureAwait(false);
+                if (count <= 0)
+                    throw new SocketException((int)SocketError.ConnectionReset);
+                totalSent += count;
+            }
+
+            Debug.Log("Sent " + totalSent + " bytes");
+        }
+        catch (ObjectDisposedException)
+        {
         }
         catch (SocketException e)
         {
             Debug.Log("Socket Send failed" + e.ToString());
+            Connected = false;
+            CloseSocket();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Socket Send failed" + e.ToString());
+            Connected = false;
+            CloseSocket();
+        }
+        finally
+        {
+            if (lockTaken)
+                sendLock.Release();
         }
     }
 
     void Update()
     {
-        if (messageList.Count <= 0) return;
-        string messageStr = messageList[0];
-        messageList.RemoveAt(0);
+        while (connectResultList.TryDequeue(out bool connectResult))
+        {
+            connectResultChannel.Raise(connectResult);
+        }
 
-        if (!Protocol.Unpack(messageStr, out ParsedMessage msg)) return;
+        while (messageList.TryDequeue(out string messageStr))
+        {
+            if (!Protocol.Unpack(messageStr, out ParsedMessage msg)) continue;
 
-        if (listenerList.ContainsKey(msg.clientMessageType))//调用对应事务
-            listenerList[msg.clientMessageType](msg);
+            if (listenerList.ContainsKey(msg.clientMessageType))//调用对应事务
+                listenerList[msg.clientMessageType](msg);
+        }
+    }
+
+    void CloseSocket()
+    {
+        if (receiveCancellationTokenSource != null)
+        {
+            receiveCancellationTokenSource.Cancel();
+            receiveCancellationTokenSource.Dispose();
+            receiveCancellationTokenSource = null;
+        }
+
+        if (socket == null) return;
+
+        try
+        {
+            if (socket.Connected)
+                socket.Shutdown(SocketShutdown.Both);
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            socket.Close();
+        }
+        catch
+        {
+        }
+
+        socket = null;
     }
 
     public void AddListenerIntoList(ClientMessageType messageName, MessageListener listener)
