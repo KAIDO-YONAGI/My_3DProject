@@ -79,7 +79,7 @@ namespace MultiplayerServer
         public static async Task SendTo(string sendStr, Socket target)
         {
             byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
-            await SendCallback(sendBytes, target);
+            await SendAllAsync(sendBytes, target);
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace MultiplayerServer
         /// <summary>
         /// 发送完成后被调用，用于确认发送字节数或处理发送失败
         /// </summary>
-        public static async Task SendCallback(byte[] sendBytes, Socket target)
+        public static async Task SendAllAsync(byte[] sendBytes, Socket target)
         {
             if (!clients.TryGetValue(target, out var state)) return;
 

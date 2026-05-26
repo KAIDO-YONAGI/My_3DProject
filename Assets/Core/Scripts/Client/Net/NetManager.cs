@@ -15,7 +15,7 @@ public class NetManager : MonoBehaviour
 
     public delegate void MessageListener(ParsedMessage msg);
     private Dictionary<ClientMessageType, MessageListener> listenerList = new();
-    private readonly ConcurrentQueue<string> messageList = new();
+    private readonly ConcurrentQueue<string> messageList = new();//线程安全队列
     private readonly ConcurrentQueue<bool> connectResultList = new();
     private readonly SemaphoreSlim sendLock = new(1, 1);
     private readonly object pendingReceiveLock = new();
@@ -52,10 +52,10 @@ public class NetManager : MonoBehaviour
 
     public void Connect(string ip, int port)
     {
-        _ = ConnectCallback(ip, port);
+        _ = ConnectAsyncInternal(ip, port);
     }
 
-    private async Task ConnectCallback(string ip, int port)
+    private async Task ConnectAsyncInternal(string ip, int port)
     {
         CloseSocket();
         lock (pendingReceiveLock)
@@ -79,7 +79,7 @@ public class NetManager : MonoBehaviour
             Connected = true;
             connectResultList.Enqueue(true);
             receiveCancellationTokenSource = new CancellationTokenSource();
-            _ = ReceiveCallback(currentSocket, receiveCancellationTokenSource.Token);
+            _ = ReceiveLoopAsync(currentSocket, receiveCancellationTokenSource.Token);
         }
         catch (SocketException e)
         {
@@ -131,7 +131,7 @@ public class NetManager : MonoBehaviour
         }
     }
 
-    private async Task ReceiveCallback(Socket currentSocket, CancellationToken cancellationToken)
+    private async Task ReceiveLoopAsync(Socket currentSocket, CancellationToken cancellationToken)
     {
         byte[] readBuffer = new byte[BufferSize];
 
@@ -171,7 +171,7 @@ public class NetManager : MonoBehaviour
 
     public void Disconnect()
     {
-        _ = DisconnectAsync();
+        _ = DisconnectAsync();//fire-and-forget模式，丢弃Task，不等
     }
 
     private async Task DisconnectAsync()
@@ -179,7 +179,7 @@ public class NetManager : MonoBehaviour
         if (socket == null) return;
 
         if (socket.Connected)
-            await SendCallback(Protocol.PackLeave()).ConfigureAwait(false);
+            await SendAllAsync(Protocol.PackLeave()).ConfigureAwait(false);
 
         Connected = false;
         CloseSocket();
@@ -187,10 +187,10 @@ public class NetManager : MonoBehaviour
 
     public void Send(string sendStr)
     {
-        _ = SendCallback(sendStr);
+        _ = SendAllAsync(sendStr);
     }
 
-    private async Task SendCallback(string sendStr)
+    private async Task SendAllAsync(string sendStr)
     {
         if (socket == null || !socket.Connected) return;
 
@@ -204,6 +204,7 @@ public class NetManager : MonoBehaviour
 
             int totalSent = 0;
             while (totalSent < sendBytes.Length)
+            //由于TCP是字节流，可能不完整发包，所以要while
             {
                 int count = await socket.SendAsync(
                     new ArraySegment<byte>(sendBytes, totalSent, sendBytes.Length - totalSent),

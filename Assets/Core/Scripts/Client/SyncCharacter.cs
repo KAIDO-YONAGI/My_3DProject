@@ -53,7 +53,6 @@ public class SyncCharacter : MonoBehaviour
             {
                 myPlayerId = NetManager.Instance.GetDescribe();
                 //初始化本地端口，用于拒绝一些更新逻辑
-                // TODO不过以后可能会有用（比如判断是否开G等非法手段修改客户端）
                 Debug.Log("Connect succeeded, myPlayerId: " + myPlayerId);
                 NetManager.Instance.Send(Protocol.PackEnter(playerInitData));
                 yield break;

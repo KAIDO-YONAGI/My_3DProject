@@ -39,13 +39,13 @@ namespace MultiplayerServer
             Console.WriteLine("Server ON");
 
             // 异步等待客户端连接，连接成功后回调 AcceptCallback
-            await AcceptCallback();
+            await AcceptLoopAsync();
         }
 
         /// <summary>
         /// 有新客户端连接时被调用。负责：接受连接 → 建档 → 注册接收 → 继续等待下一个连接
         /// </summary>
-        public static async Task AcceptCallback()
+        public static async Task AcceptLoopAsync()
         {
             while (true)
             {
@@ -62,7 +62,7 @@ namespace MultiplayerServer
                         continue;
                     }
 
-                    _ = ReceiveCallback(clientState);
+                    _ = ReceiveLoopAsync(clientState);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -92,7 +92,7 @@ namespace MultiplayerServer
         /// <summary>
         /// 某个客户端发来数据时被调用。负责：读取数据 → 解析 → 广播 → 继续监听
         /// </summary>
-        public static async Task ReceiveCallback(ClientState clientState)
+        public static async Task ReceiveLoopAsync(ClientState clientState)
         {
             Socket clientfd = clientState.socket;
             try

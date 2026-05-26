@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text;
@@ -11,35 +11,35 @@ using UnityEngine.UI;
 public class ChatManager : MonoBehaviour
 {
     Socket socket;
-    // UI ×é¼ş£ºÊäÈë¿ò¡¢ÏÔÊ¾ÎÄ±¾¡¢Á¬½Ó°´Å¥¡¢·¢ËÍ°´Å¥£¨ÔÚ Inspector ÖĞÍÏ×§¸³Öµ£©
+    // UI ç»„ä»¶ï¼šè¾“å…¥æ¡†ã€æ˜¾ç¤ºæ–‡æœ¬ã€è¿æ¥æŒ‰é’®ã€å‘é€æŒ‰é’®ï¼ˆåœ¨ Inspector ä¸­æ‹–æ‹½èµ‹å€¼ï¼‰
     public TMP_InputField inputField;
     public TMP_Text text;
 
     public Button connectButton;
     public Button sendButton;
-    // ½ÓÊÕ»º³åÇø£¬ÄÚºËÊÕµ½Êı¾İºóÖ±½ÓĞ´ÈëÕâÀï
+    // æ¥æ”¶ç¼“å†²åŒºï¼Œå†…æ ¸æ”¶åˆ°æ•°æ®åç›´æ¥å†™å…¥è¿™é‡Œ
     const int BufferSize = 1024;
     readonly ConcurrentQueue<string> receivedMessages = new();
     readonly SemaphoreSlim sendLock = new(1, 1);
     readonly object pendingReceiveLock = new();
     CancellationTokenSource receiveCancellationTokenSource;
     string pendingReceive = "";
-    // ÀÛ»ıÊÕµ½µÄËùÓĞ·şÎñ¶Ë»Ø´«×Ö·û´®£¬ÓÃÓÚ½çÃæÏÔÊ¾
+    // ç´¯ç§¯æ”¶åˆ°çš„æ‰€æœ‰æœåŠ¡ç«¯å›ä¼ å­—ç¬¦ä¸²ï¼Œç”¨äºç•Œé¢æ˜¾ç¤º
     string receiveStr = "";
 
     /// <summary>
-    /// Unity ÉúÃüÖÜÆÚ£¬ÔÚÓÎÏ·¿ªÊ¼Ê±µ÷ÓÃÒ»´Î¡£×¢²á°´Å¥µã»÷ÊÂ¼ş¡£
+    /// Unity ç”Ÿå‘½å‘¨æœŸï¼Œåœ¨æ¸¸æˆå¼€å§‹æ—¶è°ƒç”¨ä¸€æ¬¡ã€‚æ³¨å†ŒæŒ‰é’®ç‚¹å‡»äº‹ä»¶ã€‚
     /// </summary>
     void Start()
     {
-        // onClick.AddListener ×¢²áµÄÊÇ»Øµ÷£¬µã»÷Ê±ÓÉ Unity ÊÂ¼şÏµÍ³µ÷ÓÃ
+        // onClick.AddListener æ³¨å†Œçš„æ˜¯å›è°ƒï¼Œç‚¹å‡»æ—¶ç”± Unity äº‹ä»¶ç³»ç»Ÿè°ƒç”¨
         connectButton.onClick.AddListener(OnClickConnectButton);
         sendButton.onClick.AddListener(OnClickSendButton);
     }
 
     /// <summary>
-    /// Ã¿Ö¡µ÷ÓÃ£¬½«ÊÕµ½µÄÄÚÈİË¢ĞÂµ½ UI ÎÄ±¾ÉÏ¡£
-    /// receiveStr ÔÚÒì²½»Øµ÷£¨×ÓÏß³Ì£©ÖĞĞŞ¸Ä£¬ÕâÀï£¨Ö÷Ïß³Ì£©¶ÁÈ¡ÏÔÊ¾£¬ÊµÏÖ¿çÏß³ÌÊı¾İ´«µİ¡£
+    /// æ¯å¸§è°ƒç”¨ï¼Œå°†æ”¶åˆ°çš„å†…å®¹åˆ·æ–°åˆ° UI æ–‡æœ¬ä¸Šã€‚
+    /// receiveStr åœ¨å¼‚æ­¥å›è°ƒï¼ˆå­çº¿ç¨‹ï¼‰ä¸­ä¿®æ”¹ï¼Œè¿™é‡Œï¼ˆä¸»çº¿ç¨‹ï¼‰è¯»å–æ˜¾ç¤ºï¼Œå®ç°è·¨çº¿ç¨‹æ•°æ®ä¼ é€’ã€‚
     /// </summary>
     private void Update()
     {
@@ -57,7 +57,7 @@ public class ChatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// µã»÷Á¬½Ó°´Å¥Ê±µ÷ÓÃ¡£´´½¨ TCP socket ²¢·¢ÆğÒì²½Á¬½Ó¡£
+    /// ç‚¹å‡»è¿æ¥æŒ‰é’®æ—¶è°ƒç”¨ã€‚åˆ›å»º TCP socket å¹¶å‘èµ·å¼‚æ­¥è¿æ¥ã€‚
     /// </summary>
     public void OnClickConnectButton()
     {
@@ -68,15 +68,15 @@ public class ChatManager : MonoBehaviour
             pendingReceive = "";
         }
 
-        // ´´½¨ TCP socket£¨IPv4, Á÷Ê½, TCP£©
+        // åˆ›å»º TCP socketï¼ˆIPv4, æµå¼, TCPï¼‰
         socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        // Òì²½Á¬½Ó·şÎñ¶Ë 127.0.0.1:8888£¬Á¬½Ó³É¹¦ºó»Øµ÷ ConnectCallback
-        // socket ×÷Îª AsyncState ´«Èë£¬»Øµ÷ÖĞ¿ÉÍ¨¹ı ar.AsyncState È¡»Ø
-        _ = ConnectCallback(socket);
+        // å¼‚æ­¥è¿æ¥æœåŠ¡ç«¯ 127.0.0.1:8888ï¼Œè¿æ¥æˆåŠŸåå›è°ƒ ConnectCallback
+        // socket ä½œä¸º AsyncState ä¼ å…¥ï¼Œå›è°ƒä¸­å¯é€šè¿‡ ar.AsyncState å–å›
+        _ = ConnectAsyncInternal(socket);
     }
 
     /// <summary>
-    /// µã»÷·¢ËÍ°´Å¥Ê±µ÷ÓÃ¡£½«ÊäÈë¿òÄÚÈİ±àÂëºóÒì²½·¢ËÍ¸ø·şÎñ¶Ë¡£
+    /// ç‚¹å‡»å‘é€æŒ‰é’®æ—¶è°ƒç”¨ã€‚å°†è¾“å…¥æ¡†å†…å®¹ç¼–ç åå¼‚æ­¥å‘é€ç»™æœåŠ¡ç«¯ã€‚
     /// </summary>
     public void OnClickSendButton()
     {
@@ -84,15 +84,15 @@ public class ChatManager : MonoBehaviour
 
         string sendStr = inputField.text;
         byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
-        // Òì²½·¢ËÍ£¬·¢ËÍÍê³Éºó»Øµ÷ SendCallback
-        // ²»ÄÜÔÚ·¢ËÍºóÂíÉÏ Close()£¬·ñÔòÒì²½²Ù×÷»¹Ã»Íê³É¾Í±»ÖÕÖ¹
-        _ = SendCallback(sendBytes, socket);
+        // å¼‚æ­¥å‘é€ï¼Œå‘é€å®Œæˆåå›è°ƒ SendCallback
+        // ä¸èƒ½åœ¨å‘é€åé©¬ä¸Š Close()ï¼Œå¦åˆ™å¼‚æ­¥æ“ä½œè¿˜æ²¡å®Œæˆå°±è¢«ç»ˆæ­¢
+        _ = SendAllAsync(sendBytes, socket);
     }
 
     /// <summary>
-    /// ·¢ËÍÍê³Éºó±»µ÷ÓÃ¡£È·ÈÏ·¢ËÍÁË¶àÉÙ×Ö½Ú¡£
+    /// å‘é€å®Œæˆåè¢«è°ƒç”¨ã€‚ç¡®è®¤å‘é€äº†å¤šå°‘å­—èŠ‚ã€‚
     /// </summary>
-    private async Task SendCallback(byte[] sendBytes, Socket currentSocket)
+    private async Task SendAllAsync(byte[] sendBytes, Socket currentSocket)
     {
         bool lockTaken = false;
 
@@ -100,11 +100,11 @@ public class ChatManager : MonoBehaviour
         {
             if (currentSocket == null || !currentSocket.Connected) return;
 
-            // È¡³ö BeginSend Ê±´«ÈëµÄ socket
+            // å–å‡º BeginSend æ—¶ä¼ å…¥çš„ socket
             await sendLock.WaitAsync().ConfigureAwait(false);
             lockTaken = true;
 
-            // EndSend Íê³É·¢ËÍ²Ù×÷£¬·µ»ØÊµ¼Ê·¢³öµÄ×Ö½ÚÊı
+            // EndSend å®Œæˆå‘é€æ“ä½œï¼Œè¿”å›å®é™…å‘å‡ºçš„å­—èŠ‚æ•°
             int totalSent = 0;
             while (totalSent < sendBytes.Length)
             {
@@ -133,13 +133,13 @@ public class ChatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Á¬½Ó³É¹¦ºó±»µ÷ÓÃ¡£Íê³ÉÁ¬½Ó²¢¿ªÊ¼Òì²½½ÓÊÕ·şÎñ¶ËÊı¾İ¡£
+    /// è¿æ¥æˆåŠŸåè¢«è°ƒç”¨ã€‚å®Œæˆè¿æ¥å¹¶å¼€å§‹å¼‚æ­¥æ¥æ”¶æœåŠ¡ç«¯æ•°æ®ã€‚
     /// </summary>
-    private async Task ConnectCallback(Socket currentSocket)
+    private async Task ConnectAsyncInternal(Socket currentSocket)
     {
         try
         {
-            // EndConnect Íê³ÉÁ¬½ÓÎÕÊÖ
+            // EndConnect å®Œæˆè¿æ¥æ¡æ‰‹
             await currentSocket.ConnectAsync("127.0.0.1", 8888).ConfigureAwait(false);
             if (!ReferenceEquals(socket, currentSocket))
             {
@@ -148,10 +148,10 @@ public class ChatManager : MonoBehaviour
             }
 
             Debug.Log("Connected to server");
-            // Á¬½Ó³É¹¦ºóÁ¢¼´×¢²áÒì²½½ÓÊÕ£¬µÈ´ı·şÎñ¶Ë»Ø´«Êı¾İ
-            // readBuffer ×÷Îª»º³åÇø£¬ÊÕµ½Êı¾İºóÄÚºËÖ±½ÓĞ´Èë
+            // è¿æ¥æˆåŠŸåç«‹å³æ³¨å†Œå¼‚æ­¥æ¥æ”¶ï¼Œç­‰å¾…æœåŠ¡ç«¯å›ä¼ æ•°æ®
+            // readBuffer ä½œä¸ºç¼“å†²åŒºï¼Œæ”¶åˆ°æ•°æ®åå†…æ ¸ç›´æ¥å†™å…¥
             receiveCancellationTokenSource = new CancellationTokenSource();
-            _ = ReceiveCallback(currentSocket, receiveCancellationTokenSource.Token);
+            _ = ReceiveLoopAsync(currentSocket, receiveCancellationTokenSource.Token);
         }
         catch (Exception e)
         {
@@ -177,9 +177,9 @@ public class ChatManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÊÕµ½·şÎñ¶ËÊı¾İÊ±±»µ÷ÓÃ¡£¶ÁÈ¡ÄÚÈİÆ´½Óµ½ receiveStr£¬È»ºó¼ÌĞø×¢²á½ÓÊÕ¡£
+    /// æ”¶åˆ°æœåŠ¡ç«¯æ•°æ®æ—¶è¢«è°ƒç”¨ã€‚è¯»å–å†…å®¹æ‹¼æ¥åˆ° receiveStrï¼Œç„¶åç»§ç»­æ³¨å†Œæ¥æ”¶ã€‚
     /// </summary>
-    private async Task ReceiveCallback(Socket currentSocket, CancellationToken cancellationToken)
+    private async Task ReceiveLoopAsync(Socket currentSocket, CancellationToken cancellationToken)
     {
         byte[] readBuffer = new byte[BufferSize];
 
@@ -187,18 +187,18 @@ public class ChatManager : MonoBehaviour
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                // EndReceive Íê³É½ÓÊÕ£¬·µ»ØÊµ¼Ê¶ÁÈ¡µÄ×Ö½ÚÊı
+                // EndReceive å®Œæˆæ¥æ”¶ï¼Œè¿”å›å®é™…è¯»å–çš„å­—èŠ‚æ•°
                 int bytesRead = await currentSocket.ReceiveAsync(
                     new ArraySegment<byte>(readBuffer),
                     SocketFlags.None).ConfigureAwait(false);
                 if (bytesRead <= 0) return;
 
-                // ½«×Ö½Ú½âÂëÎª×Ö·û´®£¬Æ´½Óµ½ÀÛ»ı×Ö·û´®ÖĞ
-                // ÕâÀïÓÃ += ÊÇÒòÎª TCP ÊÇ×Ö½ÚÁ÷£¬Ò»ÌõÏûÏ¢¿ÉÄÜ·Ö¶à´Îµ½´ï£¨²ğ°ü£©
+                // å°†å­—èŠ‚è§£ç ä¸ºå­—ç¬¦ä¸²ï¼Œæ‹¼æ¥åˆ°ç´¯ç§¯å­—ç¬¦ä¸²ä¸­
+                // è¿™é‡Œç”¨ += æ˜¯å› ä¸º TCP æ˜¯å­—èŠ‚æµï¼Œä¸€æ¡æ¶ˆæ¯å¯èƒ½åˆ†å¤šæ¬¡åˆ°è¾¾ï¼ˆæ‹†åŒ…ï¼‰
                 AppendMessages(Encoding.Default.GetString(readBuffer, 0, bytesRead));
-                // ¼ÌĞøÒì²½½ÓÊÕÏÂÒ»¶ÎÊı¾İ£¨ĞÎ³ÉÑ­»·£©
+                // ç»§ç»­å¼‚æ­¥æ¥æ”¶ä¸‹ä¸€æ®µæ•°æ®ï¼ˆå½¢æˆå¾ªç¯ï¼‰
             }
-            // bytesRead == 0 ±íÊ¾·şÎñ¶ËÖ÷¶¯¶Ï¿ªÁ¬½Ó£¨TCP FIN£©£¬ÕâÀï²»×ö´¦Àí
+            // bytesRead == 0 è¡¨ç¤ºæœåŠ¡ç«¯ä¸»åŠ¨æ–­å¼€è¿æ¥ï¼ˆTCP FINï¼‰ï¼Œè¿™é‡Œä¸åšå¤„ç†
         }
         catch (ObjectDisposedException)
         {
@@ -245,4 +245,3 @@ public class ChatManager : MonoBehaviour
         socket = null;
     }
 }
-
