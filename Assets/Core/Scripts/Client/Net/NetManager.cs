@@ -139,9 +139,16 @@ public class NetManager : MonoBehaviour
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                int count = await currentSocket.ReceiveAsync(
+                int count = await currentSocket.ReceiveAsync
+                (
                     new ArraySegment<byte>(readBuffer),
-                    SocketFlags.None).ConfigureAwait(false);
+                    SocketFlags.None
+                ).ConfigureAwait(false);
+                // 不回到 Unity 主线程：默认 await 会通过 UnitySynchronizationContext
+                // 在下一帧 PlayerLoop 阶段回到主线程恢复执行，这里用 false 跳过这个调度，
+                // 直接在完成异步操作的线程池线程上继续，因为后续 AppendMessages 只操作
+                // lock 和 ConcurrentQueue，不需要主线程，避免每帧排队开销
+
                 if (count <= 0) return;
 
                 string recvStr = Encoding.Default.GetString(readBuffer, 0, count);
@@ -256,33 +263,25 @@ public class NetManager : MonoBehaviour
 
     void CloseSocket()
     {
+        // 1. 取消接收循环：通知 ReceiveLoopAsync 退出 while 循环
         if (receiveCancellationTokenSource != null)
         {
-            receiveCancellationTokenSource.Cancel();
-            receiveCancellationTokenSource.Dispose();
-            receiveCancellationTokenSource = null;
+            receiveCancellationTokenSource.Cancel();  // 将 Token.IsCancellationRequested 置为 true
+            receiveCancellationTokenSource.Dispose(); // 释放 Token 内部资源
+            receiveCancellationTokenSource = null;    // 防止重复操作已释放的对象
         }
 
         if (socket == null) return;
 
-        try
-        {
-            if (socket.Connected)
-                socket.Shutdown(SocketShutdown.Both);
-        }
-        catch
-        {
-        }
+        // 2. 发送 FIN 包通知对方"我不再收发了"，避免对方收到连接重置异常
 
-        try
-        {
-            socket.Close();
-        }
-        catch
-        {
-        }
+        if (socket.Connected)
+            socket.Shutdown(SocketShutdown.Both);
 
-        socket = null;
+        // 3. 释放底层资源（端口、缓冲区、OS 句柄）
+        socket.Close();
+
+        socket = null; // 回到初始状态，为下次 Connect 做准备
     }
 
     public void AddListenerIntoList(ClientMessageType messageName, MessageListener listener)

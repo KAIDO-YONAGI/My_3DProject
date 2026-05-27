@@ -8,7 +8,8 @@ public class PlayerManager : MonoBehaviour
     public List<GameObject> models;
 
     public static PlayerManager Instance { get; private set; }
-    private List<string> playerToRefreshList = new();    private Dictionary<string, PlayerInfo> players = new();
+    private List<string> playerToRefreshList = new();    
+    private Dictionary<string, PlayerInfo> players = new();
 
     void Awake()
     {
