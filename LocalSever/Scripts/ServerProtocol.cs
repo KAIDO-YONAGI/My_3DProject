@@ -29,6 +29,7 @@ namespace MultiplayerServer
         }
 
         public static string PackMove(string address, string moveArgs)
+        //线性插值+预测回滚解决带宽问题
         //另外，像move这种高频通信，可以使用udp协议
         //传移动状态，初步构思为：客户端等待一次收包时间，如果收到的状态回报依旧，那就继续播放动画，否则切出动画
         {

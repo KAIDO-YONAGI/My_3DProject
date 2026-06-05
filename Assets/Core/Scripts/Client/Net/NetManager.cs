@@ -15,9 +15,17 @@ public class NetManager : MonoBehaviour
 
     public delegate void MessageListener(ParsedMessage msg);
     private Dictionary<ClientMessageType, MessageListener> listenerList = new();
-    private readonly ConcurrentQueue<string> messageList = new();//线程安全队列
+
+
+    // 跨线程消息队列：线程池线程 Enqueue，Unity 主线程 TryDequeue，无需加锁
+    private readonly ConcurrentQueue<string> messageList = new();
+    // 跨线程连接结果队列：异步连接完成后 Enqueue，主线程 Update 中消费
     private readonly ConcurrentQueue<bool> connectResultList = new();
+
+
+    // 异步发送锁：SemaphoreSlim 支持跨 await 持有，保证同一 socket 不会并发发送
     private readonly SemaphoreSlim sendLock = new(1, 1);
+    
     private readonly object pendingReceiveLock = new();
     private CancellationTokenSource receiveCancellationTokenSource;
     private string pendingReceive = string.Empty;
@@ -78,8 +86,8 @@ public class NetManager : MonoBehaviour
             Debug.Log("Connected to server");
             Connected = true;
             connectResultList.Enqueue(true);
-            receiveCancellationTokenSource = new CancellationTokenSource();
-            _ = ReceiveLoopAsync(currentSocket, receiveCancellationTokenSource.Token);
+            receiveCancellationTokenSource = new CancellationTokenSource(); // 持有 Source：可 Cancel（下命令）
+            _ = ReceiveLoopAsync(currentSocket, receiveCancellationTokenSource.Token); // 传 Token：只能检查（听命令），不能 Cancel
         }
         catch (SocketException e)
         {
@@ -137,7 +145,7 @@ public class NetManager : MonoBehaviour
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested) // 协作式取消：检查 Token 标志位，Cancel() 调用后变为 true 退出循环
             {
                 int count = await currentSocket.ReceiveAsync
                 (
