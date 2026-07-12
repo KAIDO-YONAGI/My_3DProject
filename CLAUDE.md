@@ -15,8 +15,8 @@
 - 事件资产: `Assets/Core/EventSOs/`
 
 ### 服务端 (独立 C# 项目)
-- 路径: `LocalSever/`
-- 脚本: `LocalSever/Scripts/`
+- 路径: `LocalServer/`
+- 脚本: `LocalServer/Scripts/`
   - `EchoServer.cs` — 服务器主逻辑
   - `ServerProtocol.cs` — 通信协议定义
 
