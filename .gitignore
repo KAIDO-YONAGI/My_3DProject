@@ -36,3 +36,4 @@ Thumbs.db
 
 # Local-only push helper (lives outside the repo on each machine)
 scripts/push.sh
+/push.sh
