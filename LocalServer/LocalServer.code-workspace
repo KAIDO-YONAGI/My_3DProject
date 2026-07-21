@@ -1,6 +1,15 @@
 {
 	"folders": [
 		{
+			"name": "bin",
+			"path": "bin"
+		},
+		{
+			"name": "obj",
+			"path": "obj"
+		},
+		{
+			"name": "LocalServer",
 			"path": "."
 		}
 	],
