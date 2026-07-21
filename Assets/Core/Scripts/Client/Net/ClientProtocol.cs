@@ -28,8 +28,8 @@ namespace ClientProtocol
         public GameObject instance;
         public PlayerState playerState;
         public int modelID = 0;
-        public SimpleCharacterAnimationState animationState =
-                SimpleCharacterAnimationState.Land;
+        public CharacterAnimationState animationState =
+                CharacterAnimationState.Grounded;
     }
     public class PlayerState
     {

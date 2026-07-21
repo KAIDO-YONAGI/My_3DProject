@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public readonly struct CharacterInputFrame
+public readonly struct CharacterInput
 {
-    public CharacterInputFrame(Vector2 moveInput, bool sprintHeld, bool jumpPressed)
+    public CharacterInput(Vector2 moveInput, bool sprintHeld, bool jumpPressed)
     {
         MoveInput = moveInput;
         SprintHeld = sprintHeld;

@@ -1082,14 +1082,6 @@ MonoBehaviour:
     jumpStartClip: {fileID: 0}
     jumpUpLoopClip: {fileID: 0}
     jumpDownLoopClip: {fileID: 0}
-    jumpLandIdleClip: {fileID: 0}
-    jumpLandMoveClip: {fileID: 7400000, guid: 1530a2e25190482b844191fd16d316c4, type: 3}
-  animationSettings:
-    jumpStartExitNormalizedTime: 0.55
-    stateFadeDuration: 0.1
-    landLockTime: 0.18
-    airVerticalBlendRange: 1.5
-    fullJumpGroundedExitNormalizedTime: 0.92
   ponytailFollower:
     enabled: 1
     headBone: {fileID: 5418918230854163198}

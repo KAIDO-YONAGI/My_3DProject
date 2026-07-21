@@ -11,47 +11,45 @@ public sealed class DirectionalAnimationSet
     public string Label => label;
     public IReadOnlyList<DirectionalAnimationSample> Samples => samples;
 
-    public int ValidSampleCount
+    public bool HasValidSamples
     {
         get
         {
-            int count = 0;
             for (int index = 0; index < samples.Count; index++)
             {
                 if (samples[index] != null && samples[index].IsValid)
                 {
-                    count++;
+                    return true;
                 }
             }
 
-            return count;
+            return false;
         }
     }
 
-    public bool HasValidSamples => ValidSampleCount > 0;
-
-    public void SetLabel(string newLabel)
+    public AnimationClip FindClosestClip(Vector2 direction, AnimationClip fallback = null)
     {
-        label = newLabel;
-    }
+        AnimationClip closestClip = fallback;
+        float closestDistance = float.PositiveInfinity;
 
-    public void ReplaceSamples(IReadOnlyList<DirectionalAnimationSample> newSamples)
-    {
-        samples.Clear();
-        if (newSamples == null)
+        for (int index = 0; index < samples.Count; index++)
         {
-            return;
-        }
-
-        for (int index = 0; index < newSamples.Count; index++)
-        {
-            DirectionalAnimationSample source = newSamples[index];
-            if (source == null)
+            DirectionalAnimationSample sample = samples[index];
+            if (sample == null || !sample.IsValid)
             {
                 continue;
             }
 
-            samples.Add(new DirectionalAnimationSample(source.Label, source.Position, source.Clip));
+            float distance = (sample.Position - direction).sqrMagnitude;
+            if (distance >= closestDistance)
+            {
+                continue;
+            }
+
+            closestDistance = distance;
+            closestClip = sample.Clip;
         }
+
+        return closestClip;
     }
 }

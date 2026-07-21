@@ -1,15 +1,15 @@
 using UnityEngine;
 
-public sealed class SimpleCharacterMotor
+public sealed class CharacterMotor
 {
     private readonly Transform owner;
     private readonly CharacterController characterController;
-    private readonly SimpleCharacterMovementSettings settings;
+    private readonly CharacterMovementSettings settings;
 
     private Vector3 planarVelocity;
     private float verticalVelocity;
 
-    public SimpleCharacterMotor(Transform owner, CharacterController characterController, SimpleCharacterMovementSettings settings)
+    public CharacterMotor(Transform owner, CharacterController characterController, CharacterMovementSettings settings)
     {
         this.owner = owner;
         this.characterController = characterController;
@@ -17,7 +17,7 @@ public sealed class SimpleCharacterMotor
         verticalVelocity = settings.GroundedPull;
     }
 
-    public SimpleCharacterMotorFrame Tick(CharacterInputFrame input, Transform inputSpace, float deltaTime)
+    public CharacterMotion Tick(CharacterInput input, Transform inputSpace, float deltaTime)
     {
         bool hasMoveInput = input.HasMoveInput;
         Vector3 desiredMoveDirection = ResolveMoveDirection(input.MoveInput, inputSpace);
@@ -58,7 +58,6 @@ public sealed class SimpleCharacterMotor
         }
 
         bool groundedAfterMove = (collisionFlags & CollisionFlags.Below) != 0;
-        bool landedThisFrame = !groundedBeforeMove && groundedAfterMove && verticalVelocity <= 0f;
         if (groundedAfterMove && verticalVelocity < 0f)
         {
             verticalVelocity = settings.GroundedPull;
@@ -69,14 +68,12 @@ public sealed class SimpleCharacterMotor
         Vector2 localDirection = localPlanarVelocity.sqrMagnitude > 0.0001f ? localPlanarVelocity.normalized : Vector2.zero;
 
         float moveMagnitude01 = Mathf.Clamp01(planarVelocity.magnitude / settings.GetReferenceSpeed(input.SprintHeld));
-        return new SimpleCharacterMotorFrame(
+        return new CharacterMotion(
             groundedAfterMove,
             jumpStarted,
-            landedThisFrame,
             input.SprintHeld && hasMoveInput,
             localDirection,
-            moveMagnitude01,
-            verticalVelocity);
+            moveMagnitude01);
     }
 
     private Vector3 ResolveMoveDirection(Vector2 moveInput, Transform inputSpace)
