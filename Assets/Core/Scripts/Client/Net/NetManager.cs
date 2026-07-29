@@ -1,37 +1,27 @@
-﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using ClientProtocol;
 
+// NetManager 只处理 Unity 生命周期、事件分发和当前连接的协调。
+// Socket 的连接生命周期与收发逻辑由 TcpConnection 独立管理。
 public class NetManager : MonoBehaviour
 {
-    static Socket socket;
-    const int BufferSize = 1024;
-
     public delegate void MessageListener(ParsedMessage msg);
-    private Dictionary<ClientMessageType, MessageListener> listenerList = new();
-
+    private readonly Dictionary<ClientMessageType, MessageListener> listenerList = new();
 
     // 跨线程消息队列：线程池线程 Enqueue，Unity 主线程 TryDequeue，无需加锁
-    private readonly ConcurrentQueue<string> messageList = new();
+    private readonly ConcurrentQueue<ReceivedMessage> messageList = new();
     // 跨线程连接结果队列：异步连接完成后 Enqueue，主线程 Update 中消费
-    private readonly ConcurrentQueue<bool> connectResultList = new();
-
-
-    // 异步发送锁：SemaphoreSlim 支持跨 await 持有，保证同一 socket 不会并发发送
-    private readonly SemaphoreSlim sendLock = new(1, 1);
-    
-    private readonly object pendingReceiveLock = new();
-    private CancellationTokenSource receiveCancellationTokenSource;
-    private string pendingReceive = string.Empty;
+    private readonly ConcurrentQueue<ConnectionResult> connectResultList = new();
+    private readonly ConcurrentQueue<string> logList = new();
+    private TcpConnection connection;
+    private int lastConnectionId;
+    private int activeConnectionId;
 
     public static NetManager Instance { get; private set; }
-    public bool Connected { get; private set; } = false;
+    public bool Connected => connection != null && connection.IsConnected;
 
     [SerializeField] BoolEventChannelSO connectResultChannel;
     //目前用来处理断线问题，会在Sync里更新Bool变量
@@ -49,251 +39,131 @@ public class NetManager : MonoBehaviour
 
     void OnDestroy()
     {
-        CloseSocket();
-    }
-
-    public string GetDescribe()
-    {
-        if (socket == null || !socket.Connected) return "";
-        return socket.LocalEndPoint!.ToString()!;
-    }
-
-    public void Connect(string ip, int port)
-    {
-        _ = ConnectAsyncInternal(ip, port);
-    }
-
-    private async Task ConnectAsyncInternal(string ip, int port)
-    {
-        CloseSocket();
-        lock (pendingReceiveLock)
+        CloseCurrentConnection();
+        if (Instance == this)
         {
-            pendingReceive = string.Empty;
-        }
-
-        Socket currentSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        socket = currentSocket;
-
-        try
-        {
-            await currentSocket.ConnectAsync(ip, port).ConfigureAwait(false);
-            if (!ReferenceEquals(socket, currentSocket))
-            {
-                currentSocket.Close();
-                return;
-            }
-
-            Debug.Log("Connected to server");
-            Connected = true;
-            connectResultList.Enqueue(true);
-            receiveCancellationTokenSource = new CancellationTokenSource(); // 持有 Source：可 Cancel（下命令）
-            _ = ReceiveLoopAsync(currentSocket, receiveCancellationTokenSource.Token); // 传 Token：只能检查（听命令），不能 Cancel
-        }
-        catch (SocketException e)
-        {
-            Debug.Log("Socket Connect failed" + e.ToString());
-            if (!ReferenceEquals(socket, currentSocket))
-            {
-                currentSocket.Close();
-                return;
-            }
-
-            Connected = false;
-            connectResultList.Enqueue(false);
-            CloseSocket();
-        }
-        catch (Exception e)
-        {
-            Debug.Log("Socket Connect failed" + e.ToString());
-            if (!ReferenceEquals(socket, currentSocket))
-            {
-                currentSocket.Close();
-                return;
-            }
-
-            Connected = false;
-            connectResultList.Enqueue(false);
-            CloseSocket();
-        }
-    }
-
-    private void AppendMessages(string recvStr)
-    {
-        lock (pendingReceiveLock)
-        {
-            pendingReceive += recvStr;
-            string[] split = pendingReceive.Split(Protocol.LineEnd);//得到协议条目
-
-            //TODO解析Enter，注册并且更新新加入用户
-
-            for (int i = 0; i < split.Length - 1; i++)
-            //范围表达式，表示从索引零到倒数，跳过最后一个元素
-            //因为如果末尾有end标记，那split得到的最后一个元素就是空的
-            {
-                string msg = split[i];
-                if (string.IsNullOrEmpty(msg)) continue;
-                messageList.Enqueue(msg);//会在update中消费消息队列
-            }
-
-            pendingReceive = split[^1];
-        }
-    }
-
-    private async Task ReceiveLoopAsync(Socket currentSocket, CancellationToken cancellationToken)
-    {
-        byte[] readBuffer = new byte[BufferSize];
-
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested) // 协作式取消：检查 Token 标志位，Cancel() 调用后变为 true 退出循环
-            {
-                int count = await currentSocket.ReceiveAsync
-                (
-                    new ArraySegment<byte>(readBuffer),
-                    SocketFlags.None
-                ).ConfigureAwait(false);
-                // 不回到 Unity 主线程：默认 await 会通过 UnitySynchronizationContext
-                // 在下一帧 PlayerLoop 阶段回到主线程恢复执行，这里用 false 跳过这个调度，
-                // 直接在完成异步操作的线程池线程上继续，因为后续 AppendMessages 只操作
-                // lock 和 ConcurrentQueue，不需要主线程，避免每帧排队开销
-
-                if (count <= 0) return;
-
-                string recvStr = Encoding.Default.GetString(readBuffer, 0, count);
-                AppendMessages(recvStr);
-            }
-        }
-        catch (ObjectDisposedException)
-        {
-        }
-        catch (SocketException e)
-        {
-            Debug.Log("Socket Receive failed" + e.ToString());
-        }
-        catch (Exception e)
-        {
-            Debug.Log("Socket Receive failed" + e.ToString());
-        }
-        finally
-        {
-            if (ReferenceEquals(socket, currentSocket))
-            {
-                Connected = false;
-                CloseSocket();
-            }
-        }
-    }
-
-    public void Disconnect()
-    {
-        _ = DisconnectAsync();//fire-and-forget模式，丢弃Task，不等
-    }
-
-    private async Task DisconnectAsync()
-    {
-        if (socket == null) return;
-
-        if (socket.Connected)
-            await SendAllAsync(Protocol.PackLeave()).ConfigureAwait(false);
-
-        Connected = false;
-        CloseSocket();
-    }
-
-    public void Send(string sendStr)
-    {
-        _ = SendAllAsync(sendStr);
-    }
-
-    private async Task SendAllAsync(string sendStr)
-    {
-        if (socket == null || !socket.Connected) return;
-
-        byte[] sendBytes = Encoding.Default.GetBytes(sendStr);
-        bool lockTaken = false;
-
-        try
-        {
-            await sendLock.WaitAsync().ConfigureAwait(false);
-            lockTaken = true;
-
-            int totalSent = 0;
-            while (totalSent < sendBytes.Length)
-            //由于TCP是字节流，可能不完整发包，所以要while
-            {
-                int count = await socket.SendAsync(
-                    new ArraySegment<byte>(sendBytes, totalSent, sendBytes.Length - totalSent),
-                    SocketFlags.None).ConfigureAwait(false);
-                if (count <= 0)
-                    throw new SocketException((int)SocketError.ConnectionReset);
-                totalSent += count;
-            }
-
-            Debug.Log("Sent " + totalSent + " bytes");
-        }
-        catch (ObjectDisposedException)
-        {
-        }
-        catch (SocketException e)
-        {
-            Debug.Log("Socket Send failed" + e.ToString());
-            Connected = false;
-            CloseSocket();
-        }
-        catch (Exception e)
-        {
-            Debug.Log("Socket Send failed" + e.ToString());
-            Connected = false;
-            CloseSocket();
-        }
-        finally
-        {
-            if (lockTaken)
-                sendLock.Release();
+            Instance = null;
         }
     }
 
     void Update()
     {
-        while (connectResultList.TryDequeue(out bool connectResult))
+        while (logList.TryDequeue(out string logMessage))
         {
-            connectResultChannel.Raise(connectResult);
+            Debug.Log(logMessage);
         }
 
-        while (messageList.TryDequeue(out string messageStr))
+        // 消费连接结果队列：把每次连接的成功/失败通过事件通道发出去
+        while (connectResultList.TryDequeue(out ConnectionResult connectResult))
         {
-            if (!Protocol.Unpack(messageStr, out ParsedMessage msg)) continue;
+            if (connectResult.connectionId != activeConnectionId)
+            {
+                continue;
+            }
 
-            if (listenerList.ContainsKey(msg.clientMessageType))//调用对应事务
-                listenerList[msg.clientMessageType](msg);
+            connectResultChannel.Raise(connectResult.success);
+        }
+
+        // 消费消息队列：逐条解析并分发给对应类型的监听器
+        while (messageList.TryDequeue(out ReceivedMessage receivedMessage))
+        {
+            if (receivedMessage.connectionId != activeConnectionId)
+            {
+                continue;
+            }
+
+            //TODO解析Enter，注册并且更新新加入用户
+            if (!Protocol.Unpack(receivedMessage.message, out ParsedMessage msg)) continue;
+
+            //调用对应事务
+            if (listenerList.TryGetValue(msg.clientMessageType, out MessageListener listener))
+            {
+                listener(msg);
+            }
         }
     }
 
-    void CloseSocket()
+    public void Connect(string ip, int port)
     {
-        // 1. 取消接收循环：通知 ReceiveLoopAsync 退出 while 循环
-        if (receiveCancellationTokenSource != null)
-        {
-            receiveCancellationTokenSource.Cancel();  // 将 Token.IsCancellationRequested 置为 true
-            receiveCancellationTokenSource.Dispose(); // 释放 Token 内部资源
-            receiveCancellationTokenSource = null;    // 防止重复操作已释放的对象
-        }
+        CloseCurrentConnection();
 
-        if (socket == null) return;
+        int connectionId = ++lastConnectionId;
+        activeConnectionId = connectionId;
+        TcpConnection newConnection = new TcpConnection(
+            ip,
+            port,
+            message => messageList.Enqueue(new ReceivedMessage(connectionId, message)),
+            success => connectResultList.Enqueue(new ConnectionResult(connectionId, success)),
+            logMessage => logList.Enqueue(logMessage));
 
-        // 2. 发送 FIN 包通知对方"我不再收发了"，避免对方收到连接重置异常
+        connection = newConnection;
+        newConnection.Connect();
+    }
 
-        if (socket.Connected)
-            socket.Shutdown(SocketShutdown.Both);
+    public void Disconnect()
+    {
+        TcpConnection connectionToClose = connection;
+        if (connectionToClose == null) return;
 
-        // 3. 释放底层资源（端口、缓冲区、OS 句柄）
-        socket.Close();
+        connection = null;
+        activeConnectionId = 0;
+        _ = DisconnectAsync(connectionToClose);
+    }
 
-        socket = null; // 回到初始状态，为下次 Connect 做准备
+    private async Task DisconnectAsync(TcpConnection connectionToClose)
+    {
+        // 断开前先发 Leave 通知服务端，再关 socket
+        await connectionToClose.DisconnectAsync(Protocol.PackLeave()).ConfigureAwait(false);
+    }
+
+    public void Send(string sendStr)
+    {
+        TcpConnection currentConnection = connection;
+        if (currentConnection == null) return;
+
+        currentConnection.Send(sendStr);
+    }
+
+    public string GetDescribe()
+    {
+        TcpConnection currentConnection = connection;
+        return currentConnection == null ? string.Empty : currentConnection.GetLocalEndPoint();
     }
 
     public void AddListenerIntoList(ClientMessageType messageName, MessageListener listener)
     {
         listenerList[messageName] = listener;
+    }
+
+    private void CloseCurrentConnection()
+    {
+        TcpConnection connectionToClose = connection;
+        connection = null;
+        activeConnectionId = 0;
+        connectionToClose?.Close();
+    }
+
+    private sealed class ConnectionResult
+    {
+        public readonly int connectionId;
+        public readonly bool success;
+
+        public ConnectionResult(int connectionId, bool success)
+        {
+            this.connectionId = connectionId;
+            this.success = success;
+        }
+    }
+
+    private sealed class ReceivedMessage
+    {
+        public readonly int connectionId;
+        public readonly string message;
+
+        public ReceivedMessage(int connectionId, string message)
+        {
+            this.connectionId = connectionId;
+            this.message = message;
+        }
     }
 }

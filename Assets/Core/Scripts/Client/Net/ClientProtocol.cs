@@ -20,7 +20,7 @@ namespace ClientProtocol
     {
         public ClientMessageType clientMessageType;
         public string playerId;
-        public PlayerInfo playerInfo = new();
+        public PlayerInfo playerInfo = new PlayerInfo();
     }
     public class PlayerInfo
     {
@@ -55,7 +55,7 @@ namespace ClientProtocol
         public int modelID;
         public int health;
         public int damage;
-        const char ArgSeparator = ',';
+        private const char ArgSeparator = ',';
 
         public string Serialize()
         {
@@ -104,6 +104,9 @@ namespace ClientProtocol
             msg = new ParsedMessage();
             string[] split = rawMsg.Split(Separator);
             if (split.Length != 2) return false;
+
+            // Enum.TryParse：把字符串（如 "Move"）解析成枚举值。
+            // 解析失败（类型名拼错或不存在）时返回 false，不抛异常。
             if (!System.Enum.TryParse(split[0], out msg.clientMessageType)) return false;
 
             switch (msg.clientMessageType)
