@@ -30,7 +30,13 @@ public class SyncCharacter : MonoBehaviour
     void OnDestroy()
     {
         connectResultChannel.OnEventRaised -= OnConnectResult;
-        NetManager.Instance.Disconnect();
+
+        // 场景销毁时 NetManager 可能已先销毁，其 OnDestroy 会负责关闭连接。
+        NetManager netManager = NetManager.Instance;
+        if (netManager != null)
+        {
+            netManager.Disconnect();
+        }
     }
 
     void OnConnectResult(bool success)
