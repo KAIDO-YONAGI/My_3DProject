@@ -1,25 +1,21 @@
 # CLAUDE.md
 
-## 项目概述
+## 必须先读
 
-基于 Unity 的多人联机 3D 项目，客户端和服务端在同一仓库中。
+- 先读取并遵守根目录 `AGENTS.md`。
+- 再读取 `Y_MultipleAgentWorkflow/Router.md`，按任务进入对应知识域。
+- 原有 `docs/` 及其他未被根路由索引的旧文档保留原样，但默认不读取、不迁移、不作为当前事实依据。
+- 详细分析、子代理、文件修改或状态变更操作前，按 `Y_MultipleAgentWorkflow/Workflow/Concurrency_Guide.md` 申请精确租约。
 
-## 项目结构
+## 权威性
 
-### 客户端 (Unity)
-- 脚本: `Assets/Core/Scripts/`
-  - `Client/` — 玩家管理、角色同步等客户端逻辑
-  - `Net/` — 网络连接管理
-  - `Events/` — 事件系统
-- 场景: `Assets/Core/Scenes/`
-- 事件资产: `Assets/Core/EventSOs/`
-
-### 服务端 (独立 C# 项目)
-- 路径: `LocalServer/`
-- 脚本: `LocalServer/Scripts/`
-  - `EchoServer.cs` — 服务器主逻辑
-  - `ServerProtocol.cs` — 通信协议定义
+- 用户最新明确要求优先。
+- 实际代码、资源、运行结果和可复现验证高于文档。
+- `Y_MultipleAgentWorkflow/` 中被根路由索引的 Guide 是项目知识的维护入口。
 
 ## 约定
 
+- 始终使用中文交流和维护权威文档。
+- 未经用户明确要求，不修改代码文件。
+- 保留所有原有中文注释；发现乱码时立即停止并优先恢复。
 - 客户端和服务端共享协议定义，修改协议时需同步两端。

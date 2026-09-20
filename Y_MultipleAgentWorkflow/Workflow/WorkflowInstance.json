@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "distributionName": "Y_MultipleAgentWorkflow",
+  "packageVersion": "development",
+  "skillVersion": "development",
+  "workflowTemplateVersion": "development",
+  "workflowRootName": "Y_MultipleAgentWorkflow",
+  "projectValidationMode": "None",
+  "categories": [
+    "Workflow",
+    "Client",
+    "Networking",
+    "Server",
+    "Protocol",
+    "UnityRuntime"
+  ],
+  "installedAtUtc": "2026-09-20T17:33:37.3899306Z",
+  "updatedAtUtc": "2026-09-20T17:33:37.3899632Z",
+  "managedFiles": [
+    {
+      "path": "Workflow/Scripts/WorkingAgent.ps1",
+      "installedHash": "d5938657519980b3f856a7020ae2537a7c249e295cc359c7e48e20501cdc115f"
+    },
+    {
+      "path": "Workflow/Scripts/Test-WorkingAgent.ps1",
+      "installedHash": "8a776fbd2a031a5ab3309a8d0a14941840e381f2e83ffddcbe6e838c5cf3768f"
+    },
+    {
+      "path": "Workflow/Templates/BusinessRouter.template.md",
+      "installedHash": "b18dc760305e151f005dc127ec276400a9152f51e2526edd91830192b45bbbc0"
+    },
+    {
+      "path": "Workflow/Templates/DeveloperLog.template.md",
+      "installedHash": "69ad56b8242fa96facc56ffe3f313d7a5c695c7baee6d84c720597f77592f7f5"
+    },
+    {
+      "path": "WorkingAgent/.gitignore",
+      "installedHash": "aac0321d51496c76515b06f647080173f7de8025ddb90c429312f534c8a4d109"
+    }
+  ]
+}
