@@ -23,6 +23,19 @@ public class PlayerManager : MonoBehaviour
     public void InitPlayer(string playerId, PlayerInfo info)
     {
         if (players.ContainsKey(playerId)) return;
+
+        if (info.modelID < 0 || info.modelID >= models.Count)
+        {
+            Debug.LogError($"同步玩家 {playerId} 的模型 ID {info.modelID} 超出范围，当前模型数量为 {models.Count}");
+            return;
+        }
+
+        if (models[info.modelID] == null)
+        {
+            Debug.LogError($"同步玩家 {playerId} 的模型 ID {info.modelID} 未配置 Prefab");
+            return;
+        }
+
         info.instance = Instantiate(models[info.modelID], Vector3.zero, Quaternion.identity);
         players[playerId] = info;
         playerToRefreshList.Add(playerId);
