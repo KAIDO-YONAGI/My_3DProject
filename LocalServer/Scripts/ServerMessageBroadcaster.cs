@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace MultiplayerServer
@@ -21,7 +21,7 @@ namespace MultiplayerServer
         }
 
         /// <summary>
-        /// 向所有已连接客户端广播消息
+        /// 向所有已登记客户端广播消息
         /// </summary>
         public async Task Broadcast(string sendStr)
         {
@@ -29,7 +29,7 @@ namespace MultiplayerServer
             List<Task> sendTasks = new();
             foreach (var pair in clientRegistry.Clients)
             {
-                sendTasks.Add(socketSender.SendTo(sendStr, pair.Value.socket));
+                sendTasks.Add(socketSender.SendTo(sendStr, pair.Value.endPoint));
             }
 
             await Task.WhenAll(sendTasks);
@@ -38,14 +38,16 @@ namespace MultiplayerServer
         /// <summary>
         /// 向除指定客户端外的所有人广播消息
         /// </summary>
-        public async Task BroadcastExcept(string sendStr, Socket exceptSocket)
+        public async Task BroadcastExcept(string sendStr, IPEndPoint exceptEndPoint)
         {
-            Console.WriteLine("[BroadcastExcept] to " + (clientRegistry.Count - 1) + " clients: " + sendStr.TrimEnd(ServerProtocol.LineEnd));
+            Console.WriteLine("[BroadcastExcept] to " + Math.Max(0, clientRegistry.Count - 1)
+                + " clients: " + sendStr.TrimEnd(ServerProtocol.LineEnd));
+            string exceptAddress = ServerClientRegistry.GetRemoteAddress(exceptEndPoint);
             List<Task> sendTasks = new();
             foreach (var pair in clientRegistry.Clients)
             {
-                if (pair.Key == exceptSocket) continue;
-                sendTasks.Add(socketSender.SendTo(sendStr, pair.Value.socket));
+                if (pair.Key == exceptAddress) continue;
+                sendTasks.Add(socketSender.SendTo(sendStr, pair.Value.endPoint));
             }
 
             await Task.WhenAll(sendTasks);
@@ -54,19 +56,17 @@ namespace MultiplayerServer
         /// <summary>
         /// 将所有已在线客户端的 Enter 消息发送给指定目标（新连接的客户端）
         /// </summary>
-        public async Task SyncExistingClientsTo(Socket target)
+        public async Task SyncExistingClientsTo(IPEndPoint target)
         {
+            string targetAddress = ServerClientRegistry.GetRemoteAddress(target);
             List<Task> sendTasks = new();
             foreach (var pair in clientRegistry.Clients)
             {
-                if (pair.Key == target) continue;
+                if (pair.Key == targetAddress) continue;
                 if (!pair.Value.entered) continue;
 
-                string address = ServerClientRegistry.GetRemoteAddress(pair.Key);
-                if (string.IsNullOrEmpty(address)) continue;
-
                 sendTasks.Add(socketSender.SendTo(ServerProtocol.PackEnter(
-                    address,
+                    pair.Key,
                     pair.Value.modelID,
                     pair.Value.health,
                     pair.Value.damage), target));

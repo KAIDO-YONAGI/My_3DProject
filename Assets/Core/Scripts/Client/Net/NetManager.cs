@@ -5,7 +5,7 @@ using UnityEngine;
 using ClientProtocol;
 
 // NetManager 只处理 Unity 生命周期、事件分发和当前连接的协调。
-// Socket 的连接生命周期与收发逻辑由 TcpConnection 独立管理。
+// UDP 端点的生命周期与收发逻辑由 UdpConnection 独立管理。
 public class NetManager : MonoBehaviour
 {
     public delegate void MessageListener(ParsedMessage msg);
@@ -16,7 +16,7 @@ public class NetManager : MonoBehaviour
     // 跨线程连接结果队列：异步连接完成后 Enqueue，主线程 Update 中消费
     private readonly ConcurrentQueue<ConnectionResult> connectResultList = new();
     private readonly ConcurrentQueue<string> logList = new();
-    private TcpConnection connection;
+    private UdpConnection connection;
     private int lastConnectionId;
     private int activeConnectionId;
 
@@ -89,7 +89,7 @@ public class NetManager : MonoBehaviour
 
         int connectionId = ++lastConnectionId;
         activeConnectionId = connectionId;
-        TcpConnection newConnection = new TcpConnection(
+        UdpConnection newConnection = new UdpConnection(
             ip,
             port,
             message => messageList.Enqueue(new ReceivedMessage(connectionId, message)),
@@ -102,7 +102,7 @@ public class NetManager : MonoBehaviour
 
     public void Disconnect()
     {
-        TcpConnection connectionToClose = connection;
+        UdpConnection connectionToClose = connection;
         if (connectionToClose == null) return;
 
         connection = null;
@@ -110,7 +110,7 @@ public class NetManager : MonoBehaviour
         _ = DisconnectAsync(connectionToClose);
     }
 
-    private async Task DisconnectAsync(TcpConnection connectionToClose)
+    private async Task DisconnectAsync(UdpConnection connectionToClose)
     {
         // 断开前先发 Leave 通知服务端，再关 socket
         await connectionToClose.DisconnectAsync(Protocol.PackLeave()).ConfigureAwait(false);
@@ -118,7 +118,7 @@ public class NetManager : MonoBehaviour
 
     public void Send(string sendStr)
     {
-        TcpConnection currentConnection = connection;
+        UdpConnection currentConnection = connection;
         if (currentConnection == null) return;
 
         currentConnection.Send(sendStr);
@@ -126,7 +126,7 @@ public class NetManager : MonoBehaviour
 
     public string GetDescribe()
     {
-        TcpConnection currentConnection = connection;
+        UdpConnection currentConnection = connection;
         return currentConnection == null ? string.Empty : currentConnection.GetLocalEndPoint();
     }
 
@@ -137,7 +137,7 @@ public class NetManager : MonoBehaviour
 
     private void CloseCurrentConnection()
     {
-        TcpConnection connectionToClose = connection;
+        UdpConnection connectionToClose = connection;
         connection = null;
         activeConnectionId = 0;
         connectionToClose?.Close();
