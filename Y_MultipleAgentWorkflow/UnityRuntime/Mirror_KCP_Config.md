@@ -18,7 +18,7 @@
 | 场景切换 | offline/online 均为空，阶段一单场景 | NetworkManager |
 | Build 场景 | `LobbyScene`（0 号）、`MultiplayerSampleScene`（1 号） | Build Settings |
 | runInBackground | `true` | PlayerSettings |
-| 客户端连接地址 | `127.0.0.1` | `AutoStartServerBuild.connectAddress` |
+| 客户端连接地址 | `127.0.0.1` | NetworkManager.networkAddress（HeadlessStartMode = AutoStartClient 或 HUD 手填） |
 
 ## Mirror 安装
 
@@ -95,12 +95,12 @@ Player_Network
 ### 专用服务器
 
 - Build Profiles 选择 Windows Server，构建产物无图形设备。
-- 启动命令：`My_3DProject.exe -batchmode -nographics -logFile server.log`。
-- 启动成功标志：日志出现 `Server listening on port 7777` 与 `[AutoStartServerBuild] Server started on port 7777`。
+- 启动方式：双击 `Server_4_0/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
+- 启动成功标志：日志出现 `Server listening on port 7777`。
 - 服务器日志中的 `Shader ... not supported` ERROR/WARNING 来自 Null 图形设备，属正常输出。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_3_0/My_3DProject.exe`。
+- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_4_0/My_3DProject.exe`。
 
-从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置指南.md`。
+从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置学习指南.md`。
 
 ## 风险
 
