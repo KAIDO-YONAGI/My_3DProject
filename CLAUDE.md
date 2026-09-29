@@ -3,19 +3,19 @@
 ## 必须先读
 
 - 先读取并遵守根目录 `AGENTS.md`。
-- 再读取 `Y_MultipleAgentWorkflow/Router.md`，按任务进入对应知识域。
-- 原有 `docs/` 及其他未被根路由索引的旧文档保留原样，但默认不读取、不迁移、不作为当前事实依据。
+- 再读取 `Y_MultipleAgentWorkflow/Router.md`，按任务进入对应文档。
+- `docs/` 目录存放计划、草案和教学文档；作为权威事实时以 `Y_MultipleAgentWorkflow/` 为准。
 - 详细分析、子代理、文件修改或状态变更操作前，按 `Y_MultipleAgentWorkflow/Workflow/Concurrency_Guide.md` 申请精确租约。
 
 ## 权威性
 
 - 用户最新明确要求优先。
 - 实际代码、资源、运行结果和可复现验证高于文档。
-- `Y_MultipleAgentWorkflow/` 中被根路由索引的 Guide 是项目知识的维护入口。
+- `Y_MultipleAgentWorkflow/` 中被根路由索引的文档是项目知识的维护入口。
 
 ## 约定
 
 - 始终使用中文交流和维护权威文档。
 - 未经用户明确要求，不修改代码文件。
 - 保留所有原有中文注释；发现乱码时立即停止并优先恢复。
-- 客户端和服务端共享协议定义，修改协议时需同步两端。
+- Mirror 配置与联机链路的事实来源是 `Y_MultipleAgentWorkflow/UnityRuntime/Mirror_KCP_Config.md`。

@@ -13,8 +13,7 @@
 | 场景层级、启动组件、相机和地形 | `UnityRuntime_Guide.md` |
 | Prefab、远端同步模型、事件资产 | `UnityRuntime_Guide.md` |
 | Mirror 安装、KCP 参数、NetworkManager/玩家 Prefab 配置 | `Mirror_KCP_Config.md` |
-| 服务器构建、启动命令、连接排障 | `Mirror_KCP_Config.md` |
-| 网络脚本运行行为 | `../Client/Client_Guide.md` 与 `../Networking/Networking_Guide.md` |
+| 服务器构建、启动命令、客户端连接地址 | `Mirror_KCP_Config.md` |
 
 ## 主要证据路径
 
@@ -23,8 +22,8 @@
 - `Assets/Core/Scenes/`
 - `Assets/Core/Prefabs/`
 - `Assets/Core/EventSOs/`
-- `Assets/Core/Scripts/Networking/`（Mirror 集成脚本）
-- `Assets/Mirror/`（本地插件，gitignored，见 `Mirror_KCP_Config.md` 第 2 节重装方法）
+- `Assets/Core/Scripts/Networking/`
+- `Assets/Mirror/`
 
 ## 并发资源
 
@@ -34,7 +33,8 @@
 - `path:Assets/Core/Scenes`
 - `path:Assets/Core/Prefabs`
 - `path:Assets/Core/EventSOs`
+- `path:Assets/Core/Scripts`
 
 ## 能力边界
 
-本域负责 Unity 序列化状态和项目配置。脚本内部业务逻辑仍路由到对应代码知识域。
+本域负责 Unity 序列化状态、项目配置和 Mirror 工程配置。玩法计划与同步模型设计路由到 `docs/plan/`。

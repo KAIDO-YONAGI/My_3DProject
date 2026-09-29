@@ -11,9 +11,9 @@
 
 ## 权威文档入口
 
-- 开始项目任务时，先读取 `Y_MultipleAgentWorkflow/Router.md`，再按任务触发词进入对应知识域的 `Router.md` 和 Guide。
+- 开始项目任务时，先读取 `Y_MultipleAgentWorkflow/Router.md`，再按任务触发词进入对应文档。
 - `Y_MultipleAgentWorkflow/` 是当前项目的权威文档库；实际代码、资源、运行结果和可复现验证高于文档。
-- 原有 `docs/` 及其他未被根路由索引的旧文档保留原样，但默认不读取、不迁移，也不作为当前事实依据。
+- `docs/` 目录存放计划、草案和教学文档；作为权威事实时以 `Y_MultipleAgentWorkflow/` 为准。
 - 仅进行轻量只读定位时可以先不申请租约；详细分析、调用子代理、修改文件或执行会改变状态的工具前，必须遵循 `Y_MultipleAgentWorkflow/Workflow/Concurrency_Guide.md` 申请精确租约。
 - 权威文档统一使用中文；源码标识符、协议字面量、命令和路径保持原样。
 
@@ -25,23 +25,16 @@
 
 ## 项目结构
 
-本项目是一个基于 Unity 的多人联机项目，分为**客户端**和**服务端**两部分：
+本项目是物理派对游戏：Unity 客户端 + Mirror 专用服务器，按 `docs/plan/00-改造计划总览.md` 的八个阶段执行。
 
-### 客户端 (Unity)
-- 脚本: `Assets/Core/Scripts/`
-  - `Client/` — 玩家管理、角色同步等客户端逻辑
-  - `Net/` — 网络连接管理
-  - `Events/` — 事件系统
-- 场景: `Assets/Core/Scenes/`
-- 事件资产: `Assets/Core/EventSOs/`
-
-### 服务端 (独立 C# 项目)
-- 路径: `LocalServer/`
-- 脚本: `LocalServer/Scripts/`
-  - `EchoServer.cs` — 服务器主逻辑
-  - `ServerProtocol.cs` — 通信协议定义
+- 联机脚本: `Assets/Core/Scripts/Networking/`
+- 单机框架: `Assets/Core/FrameWork/`
+- 联机场景: `Assets/Core/Scenes/LobbyScene.unity`
+- 玩家 Prefab: `Assets/Core/Prefabs/Player_Network.prefab`
+- Mirror 插件: `Assets/Mirror/`（本地不入库）
+- 构建产物: `D:/Unity/Releases/3D_MultiplayerGame/`
 
 ## 约定
 
-- 客户端和服务端共享协议定义，修改协议时需同步两端。
+- Mirror 配置与构建的事实来源是 `Y_MultipleAgentWorkflow/UnityRuntime/Mirror_KCP_Config.md`。
 - 涉及多个知识域的任务，必须同时读取并维护所有受影响知识域的权威文档。

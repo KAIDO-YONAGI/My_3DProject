@@ -8,48 +8,39 @@
 
 - Unity 编辑器版本：`2022.3.62f3c1`。
 - Addressables：`1.22.3`。
-- Unity MCP：从 GitHub `main` 分支引用，不是固定提交。
-- 其他显式包包括 Terrain Tools `5.0.6`、TextMeshPro `3.0.7`、Timeline `1.7.7`、UGUI `1.0.0`、Visual Scripting `1.9.4`。
-- Mirror：计划采用本地插件方式（`.gitignore` 忽略 `/Assets/Mirror/` 与 `/Assets/Plugins/`，不入库）。**2026-09-29 核验时磁盘上 `Assets/Mirror` 不存在**，仅有历史 csproj、`ScriptTemplates/` 下的 Mirror 项模板和 `MirrorExamplesPipelineConverted.txt`（2026-09-15 转换记录）残留，说明曾导入过后被移除；阶段一接入时需重新导入。仓库中当前没有可编译的 Mirror 程序集。
+- Unity MCP：从 GitHub `main` 分支引用。
+- 其他显式包：Terrain Tools `5.0.6`、TextMeshPro `3.0.7`、Timeline `1.7.7`、UGUI `1.0.0`、Visual Scripting `1.9.4`。
+- Mirror `96.11.2`：本地插件，`Assets/Mirror/` 与 `Assets/Plugins/` 在 `.gitignore` 中，不入库。安装与重装方法见 `Mirror_KCP_Config.md`。
 
 ## 构建与场景
 
-- `ProjectSettings/EditorBuildSettings.asset` 的场景列表为空，当前没有可确认的 Player 构建首场景。
+- Build Settings 场景：`LobbyScene`（0 号，构建启动场景）、`MultiplayerSampleScene`（1 号）。
+- `Assets/Core/Scenes/LobbyScene.unity`：联机原型场景，层级为 `NetworkManager`、`Ground`、`Directional Light`。NetworkManager 对象挂载 `Mirror.NetworkManager`、`NetworkManagerHUD`、`kcp2k.KcpTransport`、`AutoStartServerBuild`，playerPrefab 指向 `Player_Network.prefab`。配置细节见 `Mirror_KCP_Config.md`。
+- `Assets/Core/Scenes/MultiplayerSampleScene.unity`：单机原型场景基底。根节点为 `Defaults`（方向光、EventSystem、禁用的场景相机、地形）、`Managers`（空节点）、`Character`（两个本地角色实例，"学园之星"禁用、"华丽飞踢"启用）、`TerrainGroup_0`。
 - `Assets/Core/Scenes/Main.unity` 是空场景。
-- `MultiplayerSampleScene.unity` 根节点为 `Defaults`、`Managers`、`Character`、`TerrainGroup_0`（地形）。
 
-## MultiplayerSampleScene（2026-09-29 退役后状态）
+## Prefab
 
-- `Defaults` 包含方向光、EventSystem、禁用的场景相机和地形引用。
-- `Managers` 现为**空节点**：原 `NetManager`、`PlayerPositionManager` 两个子节点已随自研网络栈退役删除。
-- `Character` 下有两个本地角色实例："学园之星"禁用，"华丽飞踢"启用；启用实例的初始化数据残留字段（`modelID=1`、`health=10`、`damage=2`）属于已删除组件的序列化痕迹，已随组件剥离清理。
-- 本场景保留作为派对游戏原型场景基底（地形、光照、角色 Prefab 引用可复用）。
+- `Assets/Core/Prefabs/Player_Network.prefab`：联网玩家，组件为 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`NetworkPlayerController`，子对象 `PlayerCameraRig`（Camera、AudioListener、LocalPlayerCamera）。
+- 角色 Prefab（"学园之星""华丽飞踢"）：保留角色相机、AudioListener、CharacterController 和移动组件，作为派对游戏角色的美术与组件基底。
+- `CharactersForSync` 下的远端表现 Prefab 禁用 CharacterController 和本地移动组件，用作远端表现模型。
 
-## Prefab 角色分工
+## 脚本目录
 
-- 两个本地角色 Prefab（"学园之星""华丽飞踢"）的 `SyncCharacter` 组件引用已剥离（2026-09-29）；角色相机、AudioListener、CharacterController、移动组件保留。
-- Prefab 中的角色模型层级、动画组件未改动。
-- 远端表现 Prefab（`CharactersForSync`）仍禁用 CharacterController 和本地移动组件，可继续用作远端表现模型。
+- `Assets/Core/Scripts/Networking/`：`NetworkPlayerController`、`LocalPlayerCamera`、`AutoStartServerBuild`。
+- `Assets/Core/FrameWork/Scripts/`：按 `Core`、`SO`、`Scene`、`UI` 四层组织。`Core` 存放枚举与单例基类，`SO` 存放事件通道与场景 ScriptableObject，包括 `BoolEventChannelSO`。
+- `Assets/Core/Models/_SharedDependencies/`：第三方共享库（Movement、DynamicBone）。`Movement/Resources/CharacterLocomotion.controller` 被 `CharacterAnimator.cs` 通过 `Resources.Load` 硬编码路径加载，不可移动。
 
 ## 事件资产
 
-- `Assets/Core/EventSOs/BoolEventChannel.asset` 绑定 `BoolEventChannelSO`（`Assets/Core/Scripts/Events/BoolEventChannelSO.cs`，仓库中仅剩的玩法脚本），当前无场景或 Prefab 引用，作为通用事件通道保留备用。
-- 原 `Assets/Core/Scripts/Events/Assets/ConnectResultChannel.asset`（脚本 GUID 全零的损坏资产，无任何引用）已于 2026-09-29 一并删除。
+- `Assets/Core/EventSOs/BoolEventChannel.asset` 绑定 `Assets/Core/FrameWork/Scripts/SO/BoolEventChannelSO.cs`，当前无场景或 Prefab 引用，作为通用事件通道备用。
 
-## 脚本目录现状
+## 风险
 
-- `Assets/Core/Scripts/`：仅剩 `Events/`。
-- `Assets/Core/Scripts/Client/` 目录及其 `Net/` 子目录已删除。
-- `LocalServer/` 独立服务端工程已删除。
-
-## 已确认风险
-
-- Build Settings 没有场景，无法确认构建后的启动入口。
-- 场景相机禁用，视角依赖启用角色 Prefab 内的相机。
-- NavMesh 配置没有绑定烘焙后的 `NavMeshData`。
-- Unity MCP 跟踪远端 `main`，依赖解析结果可能随上游变化。
-- Mirror 未在磁盘上，阶段一第一步是重新导入并验证编译。
-- 当前没有经过用户确认的 Unity 构建、测试或批处理命令。
+- 场景相机禁用，视角依赖玩家 Prefab 内的相机。
+- NavMesh 配置未绑定烘焙后的 `NavMeshData`。
+- Unity MCP 跟踪远端 `main`，依赖解析结果随上游变化。
+- 当前没有经过用户确认的 Unity 测试或批处理命令。
 
 ## 维护触发
 

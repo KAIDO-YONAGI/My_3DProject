@@ -2,11 +2,9 @@
 
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
-最后更新：`2026-09-29`
+最后核验：`2026-09-29`
 
-本目录是项目权威文档的唯一入口。原有 `docs/` 和其他未在本文档索引中的旧文档继续保留，但默认不读取、不迁移，也不作为当前事实依据。
-
-> **2026-09-29 重大变更**：自研 TCP/UDP 网络栈与 `LocalServer` 已退役删除（提交 `5c2b019`，tag `v0.2-selfbuilt-net`）。`Client`、`Networking`、`Server`、`Protocol` 四个知识域当前为 **Retired** 状态，仅作 git 历史解读参考；项目当前目标架构与活跃文档见 `Project_Overview.md` 与 `docs/plan/`。新网络栈（Mirror + 自研固定 Tick 同步）落地时逐域重建。
+本目录是项目权威文档的唯一入口。`docs/` 目录存放计划、草案和教学文档，作为当前事实依据时以本目录为准。
 
 ## 权威顺序
 
@@ -14,25 +12,23 @@
 2. 实际代码、资源、运行结果和可复现验证。
 3. 对应知识域的 Guide。
 4. 对应知识域的 Router。
-5. DeveloperLog 和 Proposal。
+5. DeveloperLog。
 6. `AGENTS.md`、`CLAUDE.md`、Skills 等入口与通用规则。
 
 文档与实现不一致时，以实现和验证结果为准，并在任务结束前更新对应 Guide 与 DeveloperLog。
 
 ## 任务路由
 
-| 触发词或目标 | 知识域入口 | 首要权威文档 |
-|---|---|---|
-| 项目整体结构、目标架构、网络栈演进史 | `Project_Overview.md` | `Project_Overview.md` |
-| 玩法计划、八阶段执行、InputFrame/快照/预测 | `docs/plan/00-改造计划总览.md` | `docs/plan/`（计划文档，非权威库域） |
-| 历史玩家同步、自研客户端组件 | `Client\Router.md`（Retired） | `Client\Client_Guide.md`（Retired） |
-| 历史自研 UDP 传输 | `Networking\Router.md`（Retired） | `Networking\Networking_Guide.md`（Retired） |
-| 历史 LocalServer | `Server\Router.md`（Retired） | `Server\Server_Guide.md`（Retired） |
-| 历史文本协议 `Enter`/`Move`/`Leave`/`Attack` | `Protocol\Router.md`（Retired） | `Protocol\Protocol_Guide.md`（Retired） |
-| Unity 版本、场景、Prefab、事件资产、构建配置 | `UnityRuntime\Router.md` | `UnityRuntime\UnityRuntime_Guide.md` |
-| 路由、租约、维护周期、文档分类 | `Workflow\Router.md` | `Workflow\Workflow_Guide.md` |
+| 触发词或目标 | 权威文档 |
+|---|---|
+| 项目结构、目标架构、联机链路 | `Project_Overview.md` |
+| Mirror 配置、KCP 参数、玩家 Prefab、启动脚本 | `UnityRuntime/Mirror_KCP_Config.md` |
+| Unity 版本、场景、Prefab、事件资产、构建配置 | `UnityRuntime/UnityRuntime_Guide.md` |
+| 玩法计划、八阶段执行、InputFrame/快照/预测 | `docs/plan/00-改造计划总览.md` |
+| 联调流程、连接排障 | `docs/Mirror联机使用指南.md` |
+| 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md` |
 
-跨知识域任务必须读取所有受影响入口。修改当前 Unity 资产时进入 `UnityRuntime`；重建网络链路时同时重建受影响的 Retired 域。
+跨知识域任务必须同时读取所有受影响入口。
 
 ## 必须遵循的开始步骤
 
@@ -50,12 +46,9 @@
 
 | 文档 ID | 路径 | 职责 | 状态 | 最近核验 |
 |---|---|---|---|---|
-| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、目标架构和网络栈演进史 | Active | 2026-09-29 |
-| `CLIENT-GUIDE` | `Client/Client_Guide.md` | 自研客户端同步（已退役，历史参考） | Retired | 2026-09-29 |
-| `NETWORK-GUIDE` | `Networking/Networking_Guide.md` | 自研 UDP 传输（已退役，历史参考） | Retired | 2026-09-29 |
-| `SERVER-GUIDE` | `Server/Server_Guide.md` | 历史 LocalServer（已退役，历史参考） | Retired | 2026-09-29 |
-| `PROTOCOL-GUIDE` | `Protocol/Protocol_Guide.md` | 历史文本协议（已退役，历史参考） | Retired | 2026-09-29 |
+| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、架构和联机链路 | Active | 2026-09-29 |
 | `UNITY-GUIDE` | `UnityRuntime/UnityRuntime_Guide.md` | Unity 场景、Prefab、资产和配置 | Active | 2026-09-29 |
+| `UNITY-NETCFG` | `UnityRuntime/Mirror_KCP_Config.md` | Mirror 与 KCP 的工程配置 | Active | 2026-09-29 |
 | `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active | 2026-09-20 |
 | `WF-CONCURRENCY` | `Workflow/Concurrency_Guide.md` | WorkingAgent 租约规则 | Active | 2026-09-20 |
 | `WF-CONFIG-METHOD` | `Workflow_Configuration_Guide.md` | 工作流配置通用方法 | Active | 2026-09-20 |
