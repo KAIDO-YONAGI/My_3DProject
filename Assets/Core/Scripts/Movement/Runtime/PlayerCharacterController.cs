@@ -1,4 +1,5 @@
 using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// 角色控制器的 Unity 生命周期入口。
@@ -35,6 +36,7 @@ public sealed class PlayerCharacterController : MonoBehaviour
     // 两个运行时对象不参与序列化，分别管理运动状态和 AnimatorOverrideController。
     private CharacterMotor motor;
     private CharacterAnimator animationDriver;
+    private NetworkIdentity networkIdentity;
 
     // 添加组件或在 Inspector 重置时自动补齐最常见引用和默认配置。
     private void Reset()
@@ -48,6 +50,7 @@ public sealed class PlayerCharacterController : MonoBehaviour
     {
         CacheReferences();
         EnsureSettings();
+        networkIdentity = GetComponent<NetworkIdentity>();
 
         if (characterController == null)
         {
@@ -80,6 +83,12 @@ public sealed class PlayerCharacterController : MonoBehaviour
 
     private void Update()
     {
+        // 联机时只允许本地玩家采集输入；没有 NetworkIdentity 的单机角色仍沿用原有控制逻辑。
+        if (NetworkClient.active && (networkIdentity == null || !networkIdentity.isLocalPlayer))
+        {
+            return;
+        }
+
         // 保持固定数据流，动画永远读取本帧移动后的碰撞与方向结果。
         CharacterInput input = ReadInput();
         CharacterMotion motion = motor.Tick(input, inputSpace, Time.deltaTime);

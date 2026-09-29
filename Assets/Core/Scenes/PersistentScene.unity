@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 108368126}
   - component: {fileID: 108368125}
   - component: {fileID: 108368124}
+  - component: {fileID: 108368128}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -204,16 +205,16 @@ MonoBehaviour:
   unreliableBaselineRate: 1
   unreliableRedundancy: 0
   transport: {fileID: 108368124}
-  networkAddress: localhost
+  networkAddress: 127.0.0.1
   maxConnections: 100
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   exceptionsDisconnect: 1
   authenticator: {fileID: 0}
   offlineScene: 
-  onlineScene: 
+  onlineScene: Assets/Core/Scenes/MultiplayerSampleScene.unity
   offlineSceneLoadDelay: 0
-  playerPrefab: {fileID: 1215133417561776989, guid: 33da2babc93a42243b90c6e01d874f01, type: 3}
+  playerPrefab: {fileID: 8175709641735187815, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
@@ -246,6 +247,22 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1545904442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &108368128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 108368123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 855c9b6e39b4af64dae819d891c1283f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoConnectInEditor: 1
+  autoConnectInPlayer: 1
+  connectAddress: 127.0.0.1
+  reconnectInterval: 3
 --- !u!1 &1545904441
 GameObject:
   m_ObjectHideFlags: 0
