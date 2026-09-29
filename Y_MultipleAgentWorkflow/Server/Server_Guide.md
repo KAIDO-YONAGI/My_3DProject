@@ -1,46 +1,24 @@
 # 服务端核心、注册与广播
 
 文档 ID：`SERVER-GUIDE`
-状态：`Active`
-最后核验：`2026-09-20`
+状态：`Retired`
+最后核验：`2026-09-29`
 
-## 工程与入口
+> **本文档描述的独立 `LocalServer`（net10.0 UDP 控制台服务端）已于 2026-09-29 退役删除**（提交 `5c2b019`，归档 tag `v0.2-selfbuilt-net`）。`LocalServer/` 目录已不存在，本文件保留作为 git 历史的解读参考，不作为当前事实依据。
 
-- `LocalServer` 是 `net10.0` 控制台可执行项目，启用隐式 using 和 nullable。
-- `ServerCore.Main` 创建 UDP 服务端并绑定 `127.0.0.1:8888`，随后持续运行接收循环。
-- 当前没有取消令牌、正常退出命令或宿主生命周期管理。
+## 退役原因
 
-## 核心组件
+- 服务端形态切换为 **Unity Dedicated Server Build**（`docs/plan/07-阶段七` 落地），与客户端共享玩法模拟程序集；独立控制台工程与该目标冲突。
+- 旧服务端是纯转发管道（`Move` 客户端权威、无校验、无结算），新架构要求服务器权威的固定 Tick 模拟。
 
-- `ServerCore`：接收 UTF-8 UDP 数据报，按换行拆分多条消息并依次交给处理器。
-- `ServerNetHandler`：处理 `Enter`、`Move`、`Leave`，持有共享客户端注册表。
-- `ServerClientRegistry`：使用 `ConcurrentDictionary`，以 `IP:port` 字符串为键保存客户端状态。
-- `ServerMessageBroadcaster`：向全部客户端、除指定客户端之外的客户端广播，或向新客户端同步既有玩家。
-- `ServerSocketSender`：使用共享 `SemaphoreSlim` 串行化发送。
+## 历史设计存档（仅参考 git 历史）
 
-## 消息处理
+- `ServerCore.Main`：绑定 `127.0.0.1:8888`，串行接收循环，按换行拆分多消息。
+- `ServerClientRegistry`：`ConcurrentDictionary`，以 `IP:port` 为键。
+- `ServerNetHandler`：处理 `Enter/Move/Leave`；`Attack` 枚举存在但无处理分支。
+- `ServerMessageBroadcaster` / `ServerSocketSender`：广播与共享锁串行发送。
+- 无心跳、无超时、无认证、无长度与速率限制。
 
-- `Enter`：解析三个整数，登记 `modelID`、`health`、`damage` 和已进入状态；先向其他客户端广播新玩家，再把已有玩家逐个同步给新客户端。
-- `Move`：只接受已完成 `Enter` 的端点；服务端不解析、不保存坐标，直接在负载前加玩家地址后广播，包含发送者自身。
-- `Leave`：按数据报来源端点移除客户端，成功移除后广播该地址。
-- `Attack`：协议枚举和打包方法存在，但 `ServerNetHandler` 当前没有处理分支。
+## 替代文档
 
-## 状态与并发
-
-- 身份完全来自远端 UDP 端点，没有账户、令牌或其他认证。
-- 接收与业务处理主链是串行的。
-- 广播创建多个异步发送操作，但共享发送锁会串行访问 Socket。
-- 没有心跳、超时或异常断开检测；未发送 `Leave` 的客户端可能继续留在注册表中。
-
-## 已确认风险
-
-- 只绑定回环地址，外部设备无法连接。
-- 没有长度、速率、状态范围、模型范围或坐标合法性限制。
-- `Enter` 逐字段直接写入状态；后续字段解析失败时，前面字段可能已经部分更新。
-- `Move` 是客户端权威，服务端没有位置校验。
-- 当前没有生命值、伤害或攻击结算的服务端权威链。
-- `PlayerInfoManager` 当前未进入已确认的运行主链。
-
-## 维护触发
-
-修改服务端入口、注册表、广播策略、业务处理分支或状态所有权时更新本文档。
+阶段七落地后，本知识域将重写为 Mirror NetworkManager 服务器生命周期、玩家注册与 Server Build 的权威文档。

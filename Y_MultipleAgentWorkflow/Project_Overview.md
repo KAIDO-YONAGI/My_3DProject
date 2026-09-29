@@ -2,30 +2,37 @@
 
 文档 ID：`PROJ-OVERVIEW`
 状态：`Active`
-最后核验：`2026-09-20`
+最后核验：`2026-09-29`
 
 ## 项目边界
 
-本仓库包含两个运行部分：
+本仓库当前是 **Unity 物理派对游戏工程**，按 `docs/plan/00-改造计划总览.md` 的八阶段计划执行。网络与玩法目标架构：
 
-- Unity 客户端：主要代码位于 `Assets/Core/Scripts/`，场景位于 `Assets/Core/Scenes/`，事件资产位于 `Assets/Core/EventSOs/`。
-- 独立 C# UDP 服务端：位于 `LocalServer/`，目标框架为 `net10.0`，入口与业务脚本位于 `LocalServer/Scripts/`。
+- 网络框架：Mirror（本地插件，`Assets/Mirror/` 在 `.gitignore` 中，不入库）。
+- 服务器形态：Unity Dedicated Server Build（计划阶段七落地）。
+- 玩法模型：普通 C# 状态 + 30Hz 固定 Tick 自研同步（快照插值、预测校正）。
+- 玩法目标：2～5 人短回合物理乱斗垂直切片。
 
-## 核心运行链
+**历史事实**：本项目前身为自研联机框架。第一代为自研 TCP（提交 `4305eeb` 之前，LineMessageBuffer 分帧），第二代为自研 UDP（`UdpConnection` + `LocalServer` 独立 net10.0 控制台服务端）。两代均已完成多客户端加入/离开/移动同步。自研栈已于提交 `5c2b019` 完整退役删除，归档 tag 为 `v0.2-selfbuilt-net`。旧实现细节只在 git 历史中可查，不再是当前事实来源。
 
-1. Unity 场景中的 `SyncCharacter` 请求 `NetManager` 建立到 `127.0.0.1:8888` 的 UDP 连接。
-2. `UdpConnection` 设置默认远端并启动异步接收；该成功状态不代表服务端已响应。
-3. 客户端发送 `Enter`，服务端以 UDP 远端端点字符串作为玩家 ID 注册状态。
-4. 服务端向其他客户端广播新玩家，并把已有玩家逐个同步给新客户端。
-5. 客户端约每 `0.05` 秒发送一次位置；服务端转发 `Move`；接收端在 Unity 主线程更新远端角色位置。
-6. 客户端主动断开时发送 `Leave`；服务端移除注册并广播离开消息。
+## 当前代码结构
 
-## 状态归属
+- `Assets/Core/Scripts/`：仅剩 `Events/BoolEventChannelSO.cs`（通用事件通道，保留备用）。
+- `Assets/Core/Scenes/`：`Main.unity`（空场景）、`MultiplayerSampleScene.unity`（旧自研网络组件已剥离，保留地形、光照、EventSystem、Character 角色实例，作为派对游戏原型场景基底）。
+- `Assets/Core/Prefabs/`：两个角色 Prefab（"学园之星""华丽飞踢"），已移除 `SyncCharacter` 组件引用。
+- `Assets/FrameWork/`：单机框架（UI 焦点栈、场景管理、SO 事件总线），约 1859 行，服务后续对局与调试 UI。
+- `LocalServer/`：已删除。
+- Mirror 插件：`.gitignore` 声明忽略 `Assets/Mirror/` 与 `/Assets/Plugins/`；**本次核验时磁盘上 `Assets/Mirror` 目录不存在**（仅有历史 csproj 与 ScriptTemplates 模板残留），阶段一接入时需重新导入。
 
-- 客户端拥有本地角色 Transform、远端 Prefab 实例和本地消息消费队列。
-- 服务端以远端端点为身份键，保存 `modelID`、`health`、`damage` 和进入状态。
-- 当前移动坐标由客户端提供，服务端不解析或校验坐标，仅转发。
-- `Attack` 已在双端协议枚举中定义，但当前业务链未完整接通。
+## 目标架构（八阶段计划）
+
+```text
+输入源（真人/机器人/回放/网络）→ InputFrame → 固定 Tick 玩法模拟 → GameState → Unity 表现
+客户端输入 → Mirror Command/NetworkMessage → 服务器输入队列
+→ 权威模拟 → StateSnapshot + 离散事件 → 客户端插值/预测校正
+```
+
+阶段索引、全局约束和闸门见 `docs/plan/00-改造计划总览.md`。当前处于阶段一（玩法规格与工程基线）开始之前。
 
 ## 权威边界
 
@@ -35,10 +42,9 @@
 - 线协议：`Protocol/Protocol_Guide.md`
 - Unity 场景与资产：`UnityRuntime/UnityRuntime_Guide.md`
 
-## 已确认的高风险边界
+## 当前状态与风险（2026-09-29 退役后）
 
-- UDP 无握手、确认、重传、顺序保证、身份认证或加密。
-- 服务端和客户端均绑定本机地址配置，当前不是可直接跨机器部署的网络配置。
-- 浮点文本格式未固定为 `InvariantCulture`，同时协议使用逗号分隔字段。
-- Unity Build Settings 当前没有配置场景。
-- 原有旧文档未纳入本权威库，本页结论只来自代码、项目配置和 Unity 序列化资产。
+- 仓库当前没有任何可运行的网络链路；联机能力在阶段七重建。
+- `MultiplayerSampleScene` 中角色 Prefab 的相机、CharacterController 等单机组件仍在，可作原型基底，但没有任何网络组件。
+- Build Settings 场景列表仍为空。
+- 自研 TCP/UDP 协议（`Enter/Move/Leave/Attack` 文本协议）已随代码退役；新协议将在阶段七按 `InputFrame`/快照重新设计，旧 `Protocol` 知识域文档已标记为历史参考。

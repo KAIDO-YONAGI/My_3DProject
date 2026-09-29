@@ -1,43 +1,27 @@
 # 客户端生命周期与玩家同步
 
 文档 ID：`CLIENT-GUIDE`
-状态：`Active`
-最后核验：`2026-09-20`
+状态：`Retired`
+最后核验：`2026-09-29`
 
-## 主要组件
+> **本文档描述的客户端同步组件（`SyncCharacter`、`NetManager`、`PlayerManager`、`ClientMessageHandler`）已于 2026-09-29 退役删除**（提交 `5c2b019`，归档 tag `v0.2-selfbuilt-net`）。这些脚本不再存在于工作区，本文件保留作为 git 历史的解读参考，不作为当前事实依据。
 
-- `SyncCharacter`：客户端同步入口，注册 `Enter`、`Move`、`Leave` 监听，发起连接并定时上报本地位置。
-- `NetManager`：跨场景单例，在 Unity 主线程消费连接结果、日志和入站消息。
-- `ClientMessageHandler`：把协议消息转换为玩家管理操作。
-- `PlayerManager`：场景级单例，保存远端玩家状态、Prefab 实例和待刷新位置。
+## 退役原因
 
-## 生命周期
+- 自研 UDP 客户端栈整体让位于 Mirror KCP + 自研固定 Tick 同步模型（`docs/plan/` 八阶段计划）。
+- 旧链路是"客户端直发位置 + 服务端转发"的客户端权威模型，与新架构"输入上传 + 服务器权威模拟 + 快照插值/预测校正"不兼容。
 
-1. `SyncCharacter.Start` 注册消息监听和连接结果事件，然后启动 `ConnectWithRetry`。
-2. 客户端固定连接 `127.0.0.1:8888`。连接成功后读取本地 UDP 端点作为 `myPlayerId`，发送 `Enter`。
-3. `SyncCharacter.Update` 每隔超过 `0.05` 秒读取本地角色位置并发送 `Move`。
-4. 对象销毁时取消连接结果订阅并请求 `NetManager.Disconnect`；主动断开会尝试先发送 `Leave`。
+## 历史设计存档（仅参考 git 历史）
 
-## 入站消息
+- `SyncCharacter`：连接重试协程（重连延迟 3 秒）、每 0.05 秒上报位置、监听 `Enter/Move/Leave`。
+- `NetManager`：DontDestroyOnLoad 单例、连接编号防串扰、ConcurrentQueue 主线程消费。
+- `PlayerManager`：远端玩家字典 + Prefab 实例 + 待刷新列表。
+- 已知缺陷（原文档"已确认限制"）：无运行期断线重连、位置直接赋值无插值、监听器覆盖无移除接口、待刷新列表不去重等。
 
-- `Enter`：解析 `playerId`、`modelID`、`health`、`damage`，校验模型索引和 Prefab 后在原点实例化远端角色。
-- `Move`：排除本地玩家 ID，更新已登记远端玩家的位置；尚未收到 `Enter` 的 ID 被忽略。
-- `Leave`：销毁对应实例并从玩家字典移除。
-- `Attack`：协议可解析，但当前同步入口没有注册业务监听。
+## 当前状态
 
-## 线程边界
+`Assets/Core/Scripts/` 仅剩 `Events/BoolEventChannelSO.cs`（通用事件通道，保留备用）。两个角色 Prefab 上原 `SyncCharacter` 组件引用已从序列化数据中剥离，相机、CharacterController 等单机组件保留，作为派对游戏原型场景基底。
 
-异步网络回调只写入并发队列。Unity 对象创建、销毁、Transform 更新和事件派发均在 `NetManager.Update` 或 `PlayerManager.Update` 的主线程阶段发生。
+## 替代文档
 
-## 已确认限制
-
-- UDP “连接成功”仅表示本地端点设置完成，不代表服务端可达。
-- 初次连接成功后重试协程结束，当前没有运行期断线重连。
-- 位置更新为直接赋值，没有插值、预测、旋转、速度、动画或时间戳同步。
-- 每种消息类型只保存一个监听器，再次注册会覆盖旧监听器，且没有移除接口。
-- 待刷新列表不去重；`RemovePosition` 也不清理该列表，存在移除后再次按键索引导致 `KeyNotFoundException` 的路径。
-- `OnEnter` 当前不排除本地玩家，服务端若回发本地 `Enter`，客户端可能生成自身的远端副本。
-
-## 维护触发
-
-修改 `SyncCharacter.cs`、`PlayerManager.cs`、`ClientMessageHandler.cs` 或客户端消息分发行为时，更新本文档；涉及协议或传输时同步更新对应知识域。
+阶段一至八推进时，本知识域将重写为 Mirror NetworkIdentity 客户端、`InputFrame` 采集、快照插值与预测校正的权威文档。

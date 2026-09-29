@@ -1,32 +1,34 @@
 # Client 知识域路由
 
 文档 ID：`BUS-CLIENT`
-状态：`Active`
+状态：`Retired`
 维护计数：`0/5`
-最后更新：`2026-09-20`
+最后更新：`2026-09-29`
+
+> **本知识域描述的客户端同步组件（`SyncCharacter`、`PlayerManager`、`ClientMessageHandler`、`NetManager`）已于 2026-09-29 退役删除**（提交 `5c2b019`，tag `v0.2-selfbuilt-net`）。新客户端链路按 `docs/plan/` 八阶段计划在阶段一至八重建，届时重开本域。
 
 ## 任务路由
 
 | 触发词 | 权威文档 |
 |---|---|
-| 玩家进入、离开、远端角色生成、位置更新 | `Client_Guide.md` |
-| `SyncCharacter`、`PlayerManager`、`ClientMessageHandler` | `Client_Guide.md` |
-| UDP 生命周期、异步队列、错误处理 | `../Networking/Networking_Guide.md` |
-| 消息字段、序列化、双端兼容性 | `../Protocol/Protocol_Guide.md` |
-| 场景和 Prefab 绑定 | `../UnityRuntime/UnityRuntime_Guide.md` |
+| 历史自研客户端（连接重试、远端玩家字典、消息监听） | `Client_Guide.md`（Retired，仅历史参考） |
+| 场景和 Prefab 绑定（当前有效） | `../UnityRuntime/UnityRuntime_Guide.md` |
+| Mirror 客户端、`InputFrame`、快照插值、预测校正 | 尚无权威文档；按 `docs/plan/` 阶段落地时重建本域 |
 
-## 主要证据路径
+## 历史证据路径（仅 git 历史）
 
-- `Assets/Core/Scripts/Client/`
-- `Assets/Core/Scripts/Client/Net/`
+- `git show v0.2-selfbuilt-net^:Assets/Core/Scripts/Client/`
+
+## 当前证据路径
+
+- `Assets/Core/Scripts/Events/BoolEventChannelSO.cs`（仓库仅剩的 Core 脚本）
+- `Assets/Core/Scenes/MultiplayerSampleScene.unity`（原型基底场景）
 
 ## 并发资源
 
 - `workflow:Client`
-- `path:Assets/Core/Scripts/Client`
-- 与协议相关时同时申请 `workflow:Protocol`、`path:LocalServer/Scripts/ServerProtocol.cs`
-- 与场景或 Prefab 绑定相关时同时申请 `workflow:UnityRuntime`
+- `path:Assets/Core/Scripts`
 
 ## 能力边界
 
-当前权威范围是客户端生命周期、玩家管理和消息落地。网络传输细节归 `Networking`，线协议归 `Protocol`，Unity 序列化绑定归 `UnityRuntime`。
+本域历史上描述自研客户端生命周期与玩家同步。重建后描述 Mirror 客户端与自研同步模型的客户端侧；网络传输细节归 `Networking`，线协议归 `Protocol`，Unity 序列化绑定归 `UnityRuntime`。
