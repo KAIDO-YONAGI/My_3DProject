@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-UNITYRUNTIME`
 状态：`Active`
-维护计数：`1/5`
+维护计数：`3/5`
 最后更新：`2026-09-29`
 
 ## 任务路由
@@ -12,6 +12,8 @@
 | Unity 版本、Packages、Build Settings | `UnityRuntime_Guide.md` |
 | 场景层级、启动组件、相机和地形 | `UnityRuntime_Guide.md` |
 | Prefab、远端同步模型、事件资产 | `UnityRuntime_Guide.md` |
+| Mirror 安装、KCP 参数、NetworkManager/玩家 Prefab 配置 | `Mirror_KCP_Config.md` |
+| 服务器构建、启动命令、连接排障 | `Mirror_KCP_Config.md` |
 | 网络脚本运行行为 | `../Client/Client_Guide.md` 与 `../Networking/Networking_Guide.md` |
 
 ## 主要证据路径
@@ -21,6 +23,8 @@
 - `Assets/Core/Scenes/`
 - `Assets/Core/Prefabs/`
 - `Assets/Core/EventSOs/`
+- `Assets/Core/Scripts/Networking/`（Mirror 集成脚本）
+- `Assets/Mirror/`（本地插件，gitignored，见 `Mirror_KCP_Config.md` 第 2 节重装方法）
 
 ## 并发资源
 
