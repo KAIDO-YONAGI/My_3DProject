@@ -100,7 +100,7 @@ Player_Network
 - 服务器日志中的 `Shader ... not supported` ERROR/WARNING 来自 Null 图形设备，属正常输出。
 - 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_3_0/My_3DProject.exe`。
 
-本机三端联调的操作步骤见 `docs/Mirror联机使用指南.md`。
+从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置指南.md`。
 
 ## 风险
 

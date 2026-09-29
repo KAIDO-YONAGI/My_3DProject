@@ -25,7 +25,7 @@
 | Mirror 配置、KCP 参数、玩家 Prefab、启动脚本 | `UnityRuntime/Mirror_KCP_Config.md` |
 | Unity 版本、场景、Prefab、事件资产、构建配置 | `UnityRuntime/UnityRuntime_Guide.md` |
 | 玩法计划、八阶段执行、InputFrame/快照/预测 | `docs/plan/00-改造计划总览.md` |
-| 联调流程、连接排障 | `docs/Mirror联机使用指南.md` |
+| Mirror/KCP 从零配置步骤、配置复现 | `docs/Mirror+KCP配置指南.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md` |
 
 跨知识域任务必须同时读取所有受影响入口。
