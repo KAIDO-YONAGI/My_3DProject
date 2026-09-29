@@ -106,7 +106,7 @@ Player_Network
 
 - 端口占用：KCP 服务器绑定失败抛 `SocketException`，`AutoStartServerBuild` 已做轮询重试，启动前确认 7777 端口干净。
 - `debugLog` 每条 KCP 事件都写日志，压测与发布构建关闭。
-- `MultiplayerSampleScene` 作为地形与角色美术基底，联机演示使用 LobbyScene。
+- `MultiplayerSampleScene` 作为地形与角色美术基底，联机演示与联机验证使用 LobbyScene，在该场景按 Play 没有网络行为。
 - 当前联机为最小可玩形态：Mirror 组件直接同步。阶段七按 `docs/plan/` 引入固定 Tick、`InputFrame`、自定义快照插值与预测校正后，NetworkTransformReliable 与直连输入被替换，本文档同步更新。
 
 ## 维护触发

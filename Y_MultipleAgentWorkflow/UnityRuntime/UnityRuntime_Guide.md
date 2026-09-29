@@ -16,13 +16,12 @@
 
 - Build Settings 场景：`LobbyScene`（0 号，构建启动场景）、`MultiplayerSampleScene`（1 号）。
 - `Assets/Core/Scenes/LobbyScene.unity`：联机原型场景，层级为 `NetworkManager`、`Ground`、`Directional Light`。NetworkManager 对象挂载 `Mirror.NetworkManager`、`NetworkManagerHUD`、`kcp2k.KcpTransport`、`AutoStartServerBuild`，playerPrefab 指向 `Player_Network.prefab`。配置细节见 `Mirror_KCP_Config.md`。
-- `Assets/Core/Scenes/MultiplayerSampleScene.unity`：单机原型场景基底。根节点为 `Defaults`（方向光、EventSystem、禁用的场景相机、地形）、`Managers`（空节点）、`Character`（两个本地角色实例，"学园之星"禁用、"华丽飞踢"启用）、`TerrainGroup_0`。
-- `Assets/Core/Scenes/Main.unity` 是空场景。
+- `Assets/Core/Scenes/MultiplayerSampleScene.unity`：单机原型场景基底。根节点为 `Defaults`（方向光、EventSystem、禁用的场景相机、地形）、`Managers`（空节点）、`Character`（两个本地角色实例，"学园之星"禁用、"华丽飞踢"启用）、`TerrainGroup_0`。场景中的角色挂载 Movement 运动组件，联机验证一律使用 LobbyScene。
 
 ## Prefab
 
 - `Assets/Core/Prefabs/Player_Network.prefab`：联网玩家，组件为 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`NetworkPlayerController`，子对象 `PlayerCameraRig`（Camera、AudioListener、LocalPlayerCamera）。
-- 角色 Prefab（"学园之星""华丽飞踢"）：保留角色相机、AudioListener、CharacterController 和移动组件，作为派对游戏角色的美术与组件基底。
+- 角色 Prefab（"学园之星""华丽飞踢"）：保留角色相机、AudioListener、CharacterController 和 Movement 移动组件，作为派对游戏角色的美术与组件基底。
 - `CharactersForSync` 下的远端表现 Prefab 禁用 CharacterController 和本地移动组件，用作远端表现模型。
 
 ## 脚本目录
