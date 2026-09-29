@@ -9,16 +9,16 @@
 | 配置项 | 当前值 | 位置 |
 |---|---|---|
 | Mirror 版本 | 96.11.2 | `Assets/Mirror/` |
-| Transport | `kcp2k.KcpTransport` | `LobbyScene` → `NetworkManager` 对象 |
+| Transport | `kcp2k.KcpTransport` | `PersistentScene` → `NetworkManager` 对象 |
 | 服务器端口 | `7777`（UDP） | KcpTransport.port |
 | DualMode | `true` | KcpTransport.DualMode |
 | debugLog | `true` | KcpTransport.debugLog，压测与发布前关闭 |
-| 玩家 Prefab | `Assets/Core/Prefabs/Player_Network.prefab` | NetworkManager.playerPrefab |
+| 玩家 Prefab | `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab` | NetworkManager.playerPrefab |
 | autoCreatePlayer | `true` | NetworkManager |
-| 场景切换 | offline/online 均为空，阶段一单场景 | NetworkManager |
-| Build 场景 | `LobbyScene`（0 号）、`MultiplayerSampleScene`（1 号） | Build Settings |
+| 场景切换 | `onlineScene = Assets/Core/Scenes/MultiplayerSampleScene.unity` | NetworkManager |
+| Build 场景 | `PersistentScene`、`MultiplayerSampleScene`，两者均启用 | Build Settings |
 | runInBackground | `true` | PlayerSettings |
-| 客户端连接地址 | `127.0.0.1` | NetworkManager.networkAddress（HeadlessStartMode = AutoStartClient 或 HUD 手填） |
+| 客户端连接地址 | `127.0.0.1` | NetworkManager.networkAddress + AutoStartClient.connectAddress |
 
 ## Mirror 安装
 
@@ -29,16 +29,18 @@ Mirror 以本地插件形式存在，`.gitignore` 忽略 `/Assets/Mirror/` 与 `
 3. 导入后检查 `Library/ScriptAssemblies/` 下存在 `Mirror.dll`、`Mirror.Components.dll`、`Mirror.Transports.dll`、`kcp2k.dll`。
 4. Mirror 自带 `ScriptTemplates/` 目录与搬运工具 `MoveToAssetsFolder.cs`。`Assets/ScriptTemplates/` 下同时存在两份时产生 `CS0101` 重复定义编译错误，保留一份。
 
-## LobbyScene 层级
+## PersistentScene 联机入口
 
 ```text
-LobbyScene
-├─ NetworkManager          Mirror.NetworkManager + NetworkManagerHUD + KcpTransport + AutoStartServerBuild
-├─ Ground                  30×1×30 立方体地面，带 BoxCollider
-└─ Directional Light
+PersistentScene
+└─ NetworkManager
+   ├─ Mirror.NetworkManager
+   ├─ kcp2k.KcpTransport
+   ├─ Mirror.NetworkManagerHUD
+   └─ AutoStartClient
 ```
 
-NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。`NetworkManagerHUD` 用于编辑器和客户端内手动选择 Server/Host/Client。
+NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。客户端连接后由 Mirror 切换到 `MultiplayerSampleScene`，再自动创建玩家；如果 `onlineScene` 为空，玩家会生成在没有玩法地面的持久场景并持续下落。
 
 ## KcpTransport 参数
 
@@ -58,27 +60,24 @@ NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。`Net
 | `MTU` | 1200 | 固定值 |
 | `debugLog` | true | 打印 `[KCP] ...` 握手与连接日志，联调期开启 |
 
-## 玩家 Prefab Player_Network
+## 当前玩家 Prefab
 
 ```text
-Player_Network
-├─ Transform（位置 (0, 0.55, 0)）
+娜娜莉（华丽飞踢）
 ├─ Mirror.NetworkIdentity
-├─ Mirror.NetworkTransformReliable        位置同步组件，阶段七改为自定义快照
+├─ Mirror.NetworkTransformReliable        SyncDirection = ClientToServer
 ├─ CharacterController
-├─ NetworkPlayerController                isLocalPlayer 才读输入，服务器执行移动
-└─ PlayerCameraRig
-   ├─ Camera + AudioListener              远端实例禁用
-   └─ LocalPlayerCamera                   仅本地玩家启用相机，LateUpdate 跟随
+├─ PlayerCharacterController              联机时仅本地玩家采集输入
+└─ ThirdPersonCamera
 ```
+
+`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。这样不会把通用移动脚本加入 Mirror 的 NetworkBehaviour 序列，也兼容没有 `NetworkIdentity` 的单机角色 Prefab。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。
 
 ## 启动模式分流
 
-`AutoStartServerBuild` 按运行环境分流启动行为：
-
-- Server Build 检测到 `Application.isBatchMode` 后自动 `StartServer()`，端口占用抛 `SocketException` 时按 `serverRetryInterval` 每 2 秒轮询重试。
-- 客户端构建自动 `StartClient()` 连接 `connectAddress`，断开后按 `clientRetryInterval` 每 3 秒重连。
-- Unity 编辑器保持手动模式，通过 HUD 选择 Host/Server/Client。
+- 专用服务器使用 `HeadlessStartMode = AutoStartServer`，批处理启动后自动监听 7777。
+- `AutoStartClient` 在 Unity 编辑器和普通客户端构建中连接 `127.0.0.1`，断开后每 3 秒重试。
+- `AutoStartClient` 在 `Application.isBatchMode` 或本机已启动 Server/Client 时不重复发起连接。
 
 ## 连接地址
 
@@ -88,25 +87,34 @@ Player_Network
 
 ### 客户端
 
-- 平台 Windows x64，场景 0 号为 LobbyScene。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Client/Client_3_0/My_3DProject.exe`。
+- 平台 Windows x64，构建包含 `PersistentScene` 与 `MultiplayerSampleScene`。
+- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Client/Client_5_0/My_3DProject.exe`。
 - 校验：`My_3DProject_Data/Managed/` 含 `Mirror.dll`、`kcp2k.dll`。
 
 ### 专用服务器
 
 - Build Profiles 选择 Windows Server，构建产物无图形设备。
-- 启动方式：双击 `Server_4_0/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
+- 启动方式：运行 `Server_7_0/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
 - 启动成功标志：日志出现 `Server listening on port 7777`。
 - 服务器日志中的 `Shader ... not supported` ERROR/WARNING 来自 Null 图形设备，属正常输出。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_4_0/My_3DProject.exe`。
+- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_7_0/My_3DProject.exe`。
 
 从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置学习指南.md`。
 
+## 最近验证证据
+
+- 客户端 `Client_5_0` 与服务器 `Server_7_0` 均构建成功，结果为 0 error、1 warning。
+- `Server_7_0 + Unity Editor Play` 已验证连接和 Ready 正常。
+- 本地玩家 `娜娜莉（华丽飞踢）(Clone)` 的状态为 `local=True`、`owned=True`，移动启用，`SyncDirection=ClientToServer`。
+- 注入前进输入后角色移动约 `2.82m`，等待 2 秒后没有被服务端位置拉回；Unity Console 为 0 error，用户确认角色可以移动。
+- 验证结束后服务器进程已停止，UDP 7777 无监听，编辑器已退出 Play。
+
 ## 风险
 
-- 端口占用：KCP 服务器绑定失败抛 `SocketException`，`AutoStartServerBuild` 已做轮询重试，启动前确认 7777 端口干净。
+- 端口占用：KCP 服务器绑定失败会抛出 `SocketException`，启动前确认 7777 端口干净。
 - `debugLog` 每条 KCP 事件都写日志，压测与发布构建关闭。
-- `MultiplayerSampleScene` 作为地形与角色美术基底，联机演示与联机验证使用 LobbyScene，在该场景按 Play 没有网络行为。
+- 客户端与服务端必须来自同一次组件布局；修改玩家身上的 NetworkBehaviour 列表后只重启一端，会触发 `OnDeserialize` / `EndOfStreamException`。
+- 当前 `PlayerCharacterController` 不是 NetworkBehaviour，不得仅为判断本地玩家而改变其基类，否则会污染单机 Prefab 并改变 Mirror 组件序列。
 - 当前联机为最小可玩形态：Mirror 组件直接同步。阶段七按 `docs/plan/` 引入固定 Tick、`InputFrame`、自定义快照插值与预测校正后，NetworkTransformReliable 与直连输入被替换，本文档同步更新。
 
 ## 维护触发

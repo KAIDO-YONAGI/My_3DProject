@@ -25,3 +25,13 @@
 - 构建客户端 `Client_3_0` 与专用服务器 `Server_3_0`；双客户端连接服务器验证通过。
 - 连接地址使用 `127.0.0.1`：`localhost` 解析为 `::1`，服务器 KCP socket 降级为 IPv4 绑定时握手包丢失。
 - 新增 `UnityRuntime/Mirror_KCP_Config.md`。维护计数 `3/5`。
+
+## 2026-09-29：更新为当前联机入口与玩家同步方案
+
+- 本条取代上一条记录中的 `LobbyScene`、`Player_Network.prefab`、`Client_3_0` 和 `Server_3_0` 当前状态描述；旧条目仅保留为历史过程。
+- 联机入口改为 `PersistentScene`，`onlineScene` 指向 `MultiplayerSampleScene`，Build Settings 同时启用两者。
+- NetworkManager 当前玩家 Prefab 为 `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`。
+- 新增 `AutoStartClient`：编辑器和普通客户端连接 `127.0.0.1`，每 3 秒重试，批处理和已启动网络端不重复连接。
+- `PlayerCharacterController` 保持普通 `MonoBehaviour`，通过可选 `NetworkIdentity` 限制联机输入归属；`NetworkTransformReliable` 改为 `ClientToServer`。
+- 客户端 `Client_5_0`、服务器 `Server_7_0` 构建成功；服务端配合编辑器验证角色移动约 `2.82m` 且 2 秒后未回弹，Console 0 error。
+- 验证结束后已停止服务器、清理 UDP 7777 监听并退出 Editor Play。

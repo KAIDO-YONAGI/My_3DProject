@@ -7,23 +7,27 @@
 
 ## 任务路由
 
-| 触发词 | 权威文档 |
+| 触发词 | 必读文档 |
 |---|---|
 | Unity 版本、Packages、Build Settings | `UnityRuntime_Guide.md` |
-| 场景层级、启动组件、相机和地形 | `UnityRuntime_Guide.md` |
-| Prefab、远端同步模型、事件资产 | `UnityRuntime_Guide.md` |
-| Mirror 安装、KCP 参数、NetworkManager/玩家 Prefab 配置 | `Mirror_KCP_Config.md` |
-| 服务器构建、启动命令、客户端连接地址 | `Mirror_KCP_Config.md` |
+| PersistentScene、MultiplayerSampleScene、相机、地形 | `UnityRuntime_Guide.md` |
+| Prefab、移动组件、事件资产 | `UnityRuntime_Guide.md` |
+| Mirror、KCP、NetworkManager、玩家 Prefab、同步方向 | `Mirror_KCP_Config.md` |
+| AutoStartClient、专用服务器、连接地址、构建和联调 | `Mirror_KCP_Config.md` |
 
 ## 主要证据路径
 
-- `ProjectSettings/`
+- `ProjectSettings/ProjectVersion.txt`
+- `ProjectSettings/EditorBuildSettings.asset`
 - `Packages/manifest.json`
-- `Assets/Core/Scenes/`
-- `Assets/Core/Prefabs/`
-- `Assets/Core/EventSOs/`
+- `Assets/Core/Scenes/PersistentScene.unity`
+- `Assets/Core/Scenes/MultiplayerSampleScene.unity`
+- `Assets/Core/Prefabs/CharactersForSync/`
 - `Assets/Core/Scripts/Networking/`
+- `Assets/Core/Scripts/Movement/Runtime/`
+- `Assets/Core/EventSOs/`
 - `Assets/Mirror/`
+- `D:/Unity/Releases/3D_MultiplayerGame/`
 
 ## 并发资源
 
@@ -31,10 +35,11 @@
 - `path:ProjectSettings`
 - `path:Packages/manifest.json`
 - `path:Assets/Core/Scenes`
-- `path:Assets/Core/Prefabs`
+- `path:Assets/Core/Prefabs/CharactersForSync`
+- `path:Assets/Core/Scripts/Networking`
+- `path:Assets/Core/Scripts/Movement/Runtime`
 - `path:Assets/Core/EventSOs`
-- `path:Assets/Core/Scripts`
 
 ## 能力边界
 
-本域负责 Unity 序列化状态、项目配置和 Mirror 工程配置。玩法计划与同步模型设计路由到 `docs/plan/`。
+本域负责 Unity 序列化状态、项目配置、Mirror 工程配置和已完成的运行验证。玩法方案与未来同步模型设计可以读取 `docs/plan/`，但只有实际落地并验证后才能写成当前事实。

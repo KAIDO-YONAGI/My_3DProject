@@ -6,41 +6,80 @@
 
 ## 版本与依赖
 
-- Unity 编辑器版本：`2022.3.62f3c1`。
+- Unity 编辑器：`2022.3.62f3c1`。
+- Mirror：`96.11.2`，本地插件位于 `Assets/Mirror/`，不入库。
 - Addressables：`1.22.3`。
-- Unity MCP：从 GitHub `main` 分支引用。
-- 其他显式包：Terrain Tools `5.0.6`、TextMeshPro `3.0.7`、Timeline `1.7.7`、UGUI `1.0.0`、Visual Scripting `1.9.4`。
-- Mirror `96.11.2`：本地插件，`Assets/Mirror/` 与 `Assets/Plugins/` 在 `.gitignore` 中，不入库。安装与重装方法见 `Mirror_KCP_Config.md`。
+- Terrain Tools：`5.0.6`。
+- TextMeshPro：`3.0.7`。
+- Timeline：`1.7.7`。
+- UGUI：`1.0.0`。
+- Visual Scripting：`1.9.4`。
+- Unity MCP：通过 GitHub `main` 分支引用，解析结果可能随上游变化。
 
-## 构建与场景
+## Build Settings
 
-- Build Settings 场景：`LobbyScene`（0 号，构建启动场景）、`MultiplayerSampleScene`（1 号）。
-- `Assets/Core/Scenes/LobbyScene.unity`：联机原型场景，层级为 `NetworkManager`、`Ground`、`Directional Light`。NetworkManager 对象挂载 `Mirror.NetworkManager`、`NetworkManagerHUD`、`kcp2k.KcpTransport`、`AutoStartServerBuild`，playerPrefab 指向 `Player_Network.prefab`。配置细节见 `Mirror_KCP_Config.md`。
-- `Assets/Core/Scenes/MultiplayerSampleScene.unity`：单机原型场景基底。根节点为 `Defaults`（方向光、EventSystem、禁用的场景相机、地形）、`Managers`（空节点）、`Character`（两个本地角色实例，"学园之星"禁用、"华丽飞踢"启用）、`TerrainGroup_0`。场景中的角色挂载 Movement 运动组件，联机验证一律使用 LobbyScene。
+当前启用两个场景，顺序如下：
 
-## Prefab
+1. `Assets/Core/Scenes/PersistentScene.unity`
+2. `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 
-- `Assets/Core/Prefabs/Player_Network.prefab`：联网玩家，组件为 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`NetworkPlayerController`，子对象 `PlayerCameraRig`（Camera、AudioListener、LocalPlayerCamera）。
-- 角色 Prefab（"学园之星""华丽飞踢"）：保留角色相机、AudioListener、CharacterController 和 Movement 移动组件，作为派对游戏角色的美术与组件基底。
-- `CharactersForSync` 下的远端表现 Prefab 禁用 CharacterController 和本地移动组件，用作远端表现模型。
+联机构建必须同时包含这两个场景。旧的 `LobbyScene` 不再是当前联机入口。
 
-## 脚本目录
+## 场景职责
 
-- `Assets/Core/Scripts/Networking/`：`NetworkPlayerController`、`LocalPlayerCamera`、`AutoStartServerBuild`。
-- `Assets/Core/FrameWork/Scripts/`：按 `Core`、`SO`、`Scene`、`UI` 四层组织。`Core` 存放枚举与单例基类，`SO` 存放事件通道与场景 ScriptableObject，包括 `BoolEventChannelSO`。
-- `Assets/Core/Models/_SharedDependencies/`：第三方共享库（Movement、DynamicBone）。`Movement/Resources/CharacterLocomotion.controller` 被 `CharacterAnimator.cs` 通过 `Resources.Load` 硬编码路径加载，不可移动。
+### PersistentScene
+
+- 联机启动和常驻场景。
+- `NetworkManager` 对象挂载 Mirror NetworkManager、`kcp2k.KcpTransport`、NetworkManagerHUD 和 `AutoStartClient`。
+- `networkAddress=127.0.0.1`。
+- `onlineScene=Assets/Core/Scenes/MultiplayerSampleScene.unity`。
+- `playerPrefab=Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`。
+- 如果 `onlineScene` 为空，玩家会留在没有玩法地面的持久场景并持续下落。
+
+### MultiplayerSampleScene
+
+- 当前在线玩法场景，提供地形、方向光、EventSystem、相机及角色相关场景内容。
+- Mirror 完成场景切换后在此自动创建玩家。
+- 场景结构或角色内容发生变化时，应直接核验场景序列化数据，不沿用旧文档中的层级快照。
+
+## 当前玩家 Prefab
+
+路径：`Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`
+
+关键组件：
+
+- `Mirror.NetworkIdentity`
+- `Mirror.NetworkTransformReliable`，`SyncDirection=ClientToServer`
+- `CharacterController`
+- `PlayerCharacterController`
+- `ThirdPersonCamera`
+
+`PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：联机时只有 `isLocalPlayer` 为真的实例采集输入；没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
+
+## 脚本职责
+
+- `Assets/Core/Scripts/Networking/AutoStartClient.cs`：编辑器和普通客户端自动连接 `127.0.0.1`，失败或断开后每 3 秒重试；批处理以及已启动 Server/Client 的进程不重复连接。
+- `Assets/Core/Scripts/Networking/LocalPlayerCamera.cs`：联机玩家相机的本地归属控制。
+- `Assets/Core/Scripts/Networking/NetworkPlayerController.cs`：Mirror 玩家控制辅助逻辑。
+- `Assets/Core/Scripts/Movement/Runtime/PlayerCharacterController.cs`：单机与联机共用的输入和移动入口。
+- `Assets/Core/FrameWork/Scripts/`：按 Core、SO、Scene、UI 组织通用框架。
 
 ## 事件资产
 
-- `Assets/Core/EventSOs/BoolEventChannel.asset` 绑定 `Assets/Core/FrameWork/Scripts/SO/BoolEventChannelSO.cs`，当前无场景或 Prefab 引用，作为通用事件通道备用。
+- `Assets/Core/EventSOs/BoolEventChannel.asset` 绑定 `BoolEventChannelSO`，作为通用布尔事件通道。
+- 修改事件资产、脚本 GUID 或引用关系时，必须以 Unity 序列化引用和实际运行结果为证据。
 
-## 风险
+## 已验证状态
 
-- 场景相机禁用，视角依赖玩家 Prefab 内的相机。
-- NavMesh 配置未绑定烘焙后的 `NavMeshData`。
-- Unity MCP 跟踪远端 `main`，依赖解析结果随上游变化。
-- 当前没有经过用户确认的 Unity 测试或批处理命令。
+- Build Settings 中两个当前场景均启用。
+- `Server_7_0 + Unity Editor Play` 已验证连接、Ready、玩家生成和移动。
+- 本地玩家实例满足 `local=True`、`owned=True`，同步方向为 `ClientToServer`。
+- 注入前进输入后移动约 `2.82m`，等待 2 秒未回弹；Unity Console 0 error。
+- 验证结束后服务器、UDP 7777 监听和 Editor Play 均已清理。
 
-## 维护触发
+## 风险与维护触发
 
-修改 Unity 版本、包版本、Build Settings、场景层级、Prefab 绑定或事件资产时更新本文档。
+- 新旧客户端和服务器混用可能因 NetworkBehaviour 组件布局不一致触发 `OnDeserialize` 或 `EndOfStreamException`。
+- Unity MCP 跟踪远端 `main`，更新依赖后需要重新核验。
+- 修改 Unity/包版本、Build Settings、场景、Prefab、事件资产或移动输入归属时更新本文档。
+- Mirror、KCP、连接和构建细节统一维护在 `Mirror_KCP_Config.md`。
