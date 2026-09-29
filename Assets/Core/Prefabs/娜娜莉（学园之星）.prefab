@@ -1090,25 +1090,6 @@ MonoBehaviour:
     rightPonytailRoot: {fileID: 4375665505408653738}
     leftPonytailSource: {fileID: 591466735988564944}
     rightPonytailSource: {fileID: 9128473986053404680}
---- !u!114 &246473015308223924
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1418679974092018017}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0c8ccafe22964a4a8dc285f8ec904ae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  localCharacter: {fileID: 1418679974092018017}
-  connectResultChannel: {fileID: 11400000, guid: 0ae334929aa1e354d818f91aeeac1bc9, type: 2}
-  reconnectDelay: 3
-  playerInitData:
-    modelID: 0
-    health: 0
-    damage: 0
 --- !u!1 &1766594175809402281 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 573492283020581273, guid: fe966f01d79457f44969176ebdd4d62a, type: 3}
