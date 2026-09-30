@@ -215,8 +215,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   localCharacterPrefabs:
-  - {fileID: 17880146166110261, guid: 74a0f8b248df4085a76adffbb64c805e, type: 3}
-  - {fileID: 14283172266791757, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
+  - {fileID: 3188397518594900890, guid: 74a0f8b248df4085a76adffbb64c805e, type: 3}
+  - {fileID: 1418679974092018017, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
   characterPrefabs:
   - {fileID: 8175709641735187815, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
   - {fileID: 6558802990599994996, guid: 67df291ec0c4f33439fdf03b06ad4330, type: 3}
@@ -815,7 +815,7 @@ Transform:
   m_GameObject: {fileID: 1900000001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.63, y: -65.67435, z: -31.27}
+  m_LocalPosition: {x: -2.63, y: -9.3075, z: -31.27}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -859,7 +859,7 @@ Transform:
   m_GameObject: {fileID: 1900000011}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.63, y: -65.64285, z: -31.27}
+  m_LocalPosition: {x: -0.63, y: -9.05172, z: -31.27}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

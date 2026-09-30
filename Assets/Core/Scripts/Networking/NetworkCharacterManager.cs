@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// PersistentScene 中的联机角色表现管理器。
@@ -22,7 +23,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
 
     private readonly Dictionary<NetworkCharacterSync, GameObject> characterInstances = new();
     private readonly Dictionary<NetworkCharacterSync, int> appliedCharacterIds = new();
-    private bool? standaloneCameraMode;
+    private bool? networkPresentationMode;
 
     /// <summary>
     /// 返回 PersistentScene 中配置的默认角色编号。
@@ -52,6 +53,23 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        bool networkMode = IsNetworkPresentationActive();
+        networkPresentationMode = networkMode;
+        ApplyPresentationMode(networkMode);
+    }
+
     private void OnDestroy()
     {
         if (Instance == this)
@@ -62,16 +80,15 @@ public sealed class NetworkCharacterManager : MonoBehaviour
 
     private void Update()
     {
-        // 单机角色继续留在 PersistentScene 中，但联机时必须让网络本地角色独占相机。
-        // 这样不会破坏单机开发的模型配置，也不会让两套 MainCamera 互相抢控制权。
-        bool networkMode = Mirror.NetworkClient.active;
-        if (standaloneCameraMode == networkMode)
+        // 正在重试连接时仍属于单机表现；只有真正连上服务端后才切换到网络角色和网络相机。
+        bool networkMode = IsNetworkPresentationActive();
+        if (networkPresentationMode == networkMode)
         {
             return;
         }
 
-        standaloneCameraMode = networkMode;
-        SetStandaloneCameraEnabled(!networkMode);
+        networkPresentationMode = networkMode;
+        ApplyPresentationMode(networkMode);
     }
 
     public bool IsValidCharacterId(int requestedCharacterId)
@@ -244,6 +261,14 @@ public sealed class NetworkCharacterManager : MonoBehaviour
 
     private static void SetStandaloneCameraEnabled(bool enabled)
     {
+        foreach (Camera camera in FindObjectsOfType<Camera>(true))
+        {
+            if (camera.GetComponentInParent<Mirror.NetworkIdentity>() == null)
+            {
+                camera.enabled = enabled;
+            }
+        }
+
         foreach (ThirdPersonCamera cameraController in
                  FindObjectsOfType<ThirdPersonCamera>(true))
         {
@@ -258,6 +283,38 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             if (listener.GetComponentInParent<Mirror.NetworkIdentity>() == null)
             {
                 listener.enabled = enabled;
+            }
+        }
+    }
+
+
+    private static bool IsNetworkPresentationActive()
+    {
+        // NetworkClient.active 在连接尝试和重试阶段也会为 true，不能用它关闭单机表现。
+        // 专用服务器没有本地玩家；批处理模式下同样不应运行场景中的单机角色。
+        return Mirror.NetworkClient.isConnected || Application.isBatchMode;
+    }
+
+    private static void ApplyPresentationMode(bool networkMode)
+    {
+        bool standaloneEnabled = !networkMode;
+        SetStandalonePlayerEnabled(standaloneEnabled);
+        SetStandaloneCameraEnabled(standaloneEnabled);
+    }
+
+    private static void SetStandalonePlayerEnabled(bool enabled)
+    {
+        foreach (PlayerCharacterController characterController in
+                 FindObjectsOfType<PlayerCharacterController>(true))
+        {
+            if (characterController.GetComponentInParent<Mirror.NetworkIdentity>() != null)
+            {
+                continue;
+            }
+
+            if (characterController.gameObject.activeSelf != enabled)
+            {
+                characterController.gameObject.SetActive(enabled);
             }
         }
     }

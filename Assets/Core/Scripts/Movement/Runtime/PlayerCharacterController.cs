@@ -63,7 +63,7 @@ public sealed class PlayerCharacterController : MonoBehaviour
         }
 
         // 联机时只允许本地玩家采集输入；没有 NetworkIdentity 的单机角色仍沿用原有控制逻辑。
-        if (NetworkClient.active && (networkIdentity == null || !networkIdentity.isLocalPlayer))
+        if (NetworkClient.isConnected && (networkIdentity == null || !networkIdentity.isLocalPlayer))
         {
             return;
         }
@@ -198,7 +198,7 @@ public sealed class PlayerCharacterController : MonoBehaviour
 
     private bool IsRemoteNetworkPlayer()
     {
-        return NetworkClient.active
+        return NetworkClient.isConnected
             && networkIdentity != null
             && !networkIdentity.isLocalPlayer;
     }
