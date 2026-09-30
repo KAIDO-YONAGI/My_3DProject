@@ -70,7 +70,9 @@
 
 ## 事件资产
 
-- `Assets/Core/EventSOs/BoolEventChannel.asset` 绑定 `BoolEventChannelSO`，作为通用布尔事件通道。
+- `Assets/Core/SO/EventSOs/BoolEventChannel.asset` 是当前唯一的通用布尔事件通道资产，GUID 为 `0ae334929aa1e354d818f91aeeac1bc9`。
+- 该资产目前是缺失脚本资产：它引用的脚本 GUID `2e72fff171e71a040b9c5ce0f06a5cbe`（原 `Assets/Core/Scripts/Events/BoolEventChannelSO.cs`）已在提交 `2d61248` 删除，项目中不再存在名为 `BoolEventChannelSO` 的类型。
+- 该资产当前没有被任何场景或 Prefab 引用；恢复脚本或废弃该资产前，不要把它的缺失脚本状态当作可用能力。
 - 修改事件资产、脚本 GUID 或引用关系时，必须以 Unity 序列化引用和实际运行结果为证据。
 
 ## 已验证状态

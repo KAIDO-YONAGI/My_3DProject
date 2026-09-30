@@ -3,7 +3,7 @@
 文档 ID：`BUS-UNITYRUNTIME`
 状态：`Active`
 维护计数：`3/5`
-最后更新：`2026-09-29`
+最后更新：`2026-09-30`
 
 ## 任务路由
 
@@ -25,7 +25,7 @@
 - `Assets/Core/Prefabs/CharactersForSync/`
 - `Assets/Core/Scripts/Networking/`
 - `Assets/Core/Scripts/Movement/Runtime/`
-- `Assets/Core/EventSOs/`
+- `Assets/Core/SO/EventSOs/`
 - `Assets/Mirror/`
 - `D:/Unity/Releases/3D_MultiplayerGame/`
 
@@ -38,7 +38,7 @@
 - `path:Assets/Core/Prefabs/CharactersForSync`
 - `path:Assets/Core/Scripts/Networking`
 - `path:Assets/Core/Scripts/Movement/Runtime`
-- `path:Assets/Core/EventSOs`
+- `path:Assets/Core/SO/EventSOs`
 
 ## 能力边界
 
