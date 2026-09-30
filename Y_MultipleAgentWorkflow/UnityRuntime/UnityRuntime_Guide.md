@@ -7,90 +7,110 @@
 ## 版本与依赖
 
 - Unity 编辑器：`2022.3.62f3c1`。
-- Mirror：`96.11.2`，本地插件位于 `Assets/Mirror/`，不入库。
+- Mirror：`96.11.2`。
 - Addressables：`1.22.3`。
+- Input System：`1.14.2`。
 - Terrain Tools：`5.0.6`。
 - TextMeshPro：`3.0.7`。
 - Timeline：`1.7.7`。
 - UGUI：`1.0.0`。
 - Visual Scripting：`1.9.4`。
-- Unity MCP：通过 GitHub `main` 分支引用，解析结果可能随上游变化。
+- Unity MCP：Git 依赖的 `main` 分支。
 
 ## Build Settings
 
-当前启用两个场景，顺序如下：
+启用场景顺序如下：
 
-1. `Assets/Core/Scenes/PersistentScene.unity`
-2. `Assets/Core/Scenes/MultiplayerSampleScene.unity`
-
-联机构建必须同时包含这两个场景。旧的 `LobbyScene` 不再是当前联机入口。
+1. `Assets/Core/Scenes/InitialScene.unity`
+2. `Assets/Core/Scenes/PersistentScene.unity`
+3. `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 
 ## 场景职责
 
+### InitialScene
+
+`InitialScene` 是构建入口，根对象为 `Bootstrapper`。`InitialLoad` 读取 Persistent Scene 配置，向 `PersistentSceneRegistry` 注册常驻场景，并以 Additive 模式加载 `PersistentScene`。
+
 ### PersistentScene
 
-- 联机启动和常驻场景。
-- `NetworkManager` 对象挂载 Mirror NetworkManager、`kcp2k.KcpTransport`、NetworkManagerHUD 和 `AutoStartClient`。
-- `networkAddress=127.0.0.1`。
-- `onlineScene` 为空；由 `Managers/SceneChanger` 以 Additive 模式加载 `Assets/Core/Scenes/MultiplayerSampleScene.unity`。
-- `playerPrefab=Assets/Core/Prefabs/Player_Network.prefab`。
-- `NetworkStartPosition` 位于玩法地形上方约 `0.2m`；角色随后由 `CharacterController` 重力和地形碰撞自然落地，不通过运行时传送修正位置。
+`PersistentScene` 是常驻运行层，包含：
+
+- `Managers/NetworkManager`：Mirror、KCP、HUD 和自动连接。
+- `Managers/NetworkCharacterManager`：本地与远程角色表现装配、相机归属和单机联机模式切换。
+- `Managers/SceneChanger`：以 Additive 模式加载玩法场景。
+- `Managers/TimeManager`：项目时间管理。
+- `EventSystem`：UI 输入。
+- `LocalPlayer`：单机开发角色与本地相机。
+- `NetworkPlayerSpawn_A`：位置 `(-2.63, -9.3075, -31.27)`。
+- `NetworkPlayerSpawn_B`：位置 `(-0.63, -9.05172, -31.27)`。
+
+`SceneChanger.firstSceneToLoad` 引用 `Assets/Core/SO/MultiplayerSampleSceneSO.asset`。该资产配置场景名 `MultiplayerSampleScene` 和初始位置 `(-2.63, 3.38, -31.27)`。
 
 ### MultiplayerSampleScene
 
-- 当前在线玩法场景，提供地形、`TerrainCollider`、方向光、EventSystem、相机及角色相关场景内容。
-- `SceneChanger` Additive 加载完成后，`NetworkCharacterManager` 会重新应用表现模式；只有真正连接服务端后才禁用场景单机角色和非网络相机，联机时仅本地网络角色的 Camera 保持启用。
-- 网络玩家由 Mirror 在连接后生成，出生点和地形碰撞必须在同一次客户端/服务器构建中保持一致。
-- 场景结构或角色内容发生变化时，应直接核验场景序列化数据，不沿用旧文档中的层级快照。
+`MultiplayerSampleScene` 是玩法环境层，提供 Terrain、`TerrainCollider`、方向光、默认环境对象和 Terrain 分组。场景中的 `Camera` 对象保持停用，运行视角来自单机角色或本地网络角色。
 
-## 当前玩家 Prefab
+## NetworkManager Prefab
+
+路径：`Assets/Core/Prefabs/NetworkManager.prefab`
+
+关键组件：
+
+- `Mirror.NetworkManager`
+- `Mirror.NetworkManagerHUD`
+- `kcp2k.KcpTransport`
+- `AutoStartClient`
+
+关键配置：
+
+- `networkAddress=127.0.0.1`
+- `maxConnections=100`
+- `sendRate=60`
+- `runInBackground=true`
+- `headlessStartMode=AutoStartServer`
+- `onlineScene` 为空
+- `offlineScene` 为空
+- `playerPrefab=Assets/Core/Prefabs/Player_Network.prefab`
+- `autoCreatePlayer=true`
+- `playerSpawnMethod=Random`
+
+## Player_Network Prefab
 
 路径：`Assets/Core/Prefabs/Player_Network.prefab`
 
 关键组件：
 
 - `Mirror.NetworkIdentity`
-- `Mirror.NetworkTransformReliable`，`SyncDirection=ClientToServer`
+- `Mirror.NetworkTransformReliable`
 - `CharacterController`
 - `PlayerCharacterController`
 - `NetworkCharacterSync`
 
-`PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：`NetworkClient.isConnected=true` 时只有 `isLocalPlayer` 为真的实例采集输入；尚未连接或正在重试时，没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。`CharacterController` 的高度为 `2`，半径为 `0.5`，中心为 `(0, 1, 0)`。
 
-`PersistentScene/Managers/NetworkCharacterManager` 持有 `localCharacterPrefabs[]`、`characterPrefabs[]` 和 `defaultCharacterId`。两个数组按相同下标表示同一个角色编号：本地拥有者加载 `CharactersForLocal`，远程拥有者加载 `CharactersForSync`。只有本地视觉 Prefab 保留 `ThirdPersonCamera` 和 `Camera`；切换角色时网络根先释放旧动画驱动，再绑定新模型的 Animator。
+`PlayerCharacterController` 的移动配置为运行速度 `6.8`、疾跑速度 `10.8`、加速度 `32`、减速度 `38`、空中控制 `0.45`、旋转速度 `360`、重力 `-28`、跳跃高度 `1.2`、接地吸附速度 `-2`。
 
-## 脚本职责
+## 角色表现资源
 
-- `Assets/Core/Scripts/Networking/AutoStartClient.cs`：编辑器和普通客户端自动连接 `127.0.0.1`，失败或断开后每 3 秒重试；批处理以及已启动 Server/Client 的进程不重复连接。
-- `Assets/Core/Scripts/Networking/NetworkCharacterManager.cs`：联机角色编号、远程角色加载、单机/联机表现切换、本地相机归属和 Additive 场景加载后的相机收拢。
-- `Assets/Core/Scripts/Networking/NetworkCharacterSync.cs`：Player_Network 上的角色编号同步入口。
-- `Assets/Core/Scripts/Networking/LocalPlayerCamera.cs`：历史相机辅助脚本，不挂在当前 `Player_Network`。
-- `Assets/Core/Scripts/Networking/NetworkPlayerController.cs`：历史网络移动辅助脚本，不挂在当前 `Player_Network`。
-- `Assets/Core/Scripts/Movement/Runtime/PlayerCharacterController.cs`：单机与联机共用的输入和移动入口。
-- `Assets/Core/FrameWork/Scripts/`：按 Core、SO、Scene、UI 组织通用框架。
+`NetworkCharacterManager` 的角色数组按下标配对：
 
-## 事件资产
+| 角色编号 | 本地拥有者 Prefab | 远程同步 Prefab |
+|---|---|---|
+| `0` | `CharactersForLocal/娜娜莉（华丽飞踢）.prefab` | `CharactersForSync/娜娜莉（华丽飞踢）_Sync.prefab` |
+| `1` | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
 
-- `Assets/Core/SO/EventSOs/BoolEventChannel.asset` 是当前唯一的通用布尔事件通道资产，GUID 为 `0ae334929aa1e354d818f91aeeac1bc9`。
-- 该资产目前是缺失脚本资产：它引用的脚本 GUID `2e72fff171e71a040b9c5ce0f06a5cbe`（原 `Assets/Core/Scripts/Events/BoolEventChannelSO.cs`）已在提交 `2d61248` 删除，项目中不再存在名为 `BoolEventChannelSO` 的类型。
-- 该资产当前没有被任何场景或 Prefab 引用；恢复脚本或废弃该资产前，不要把它的缺失脚本状态当作可用能力。
-- 修改事件资产、脚本 GUID 或引用关系时，必须以 Unity 序列化引用和实际运行结果为证据。
+默认角色编号为 `1`。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型、Animator 和动画配置。
 
-## 已验证状态
+## 角色数量与相机规则
 
-- Build Settings 中两个当前场景均启用。
-- `Server_12_7 + 两个 Unity Editor Play` 已验证 KCP 连接、玩家生成和本地/远程角色同步。
-- 本地玩家实例满足 `local=True`、`owned=True`，同步方向为 `ClientToServer`。
-- 本地角色运行时稳定在 `Y=-9.167`、`isGrounded=True`，远程角色稳定在 `Y=-9.170`；模型边界最低点与根节点约差 `0.01m`。
-- 验证中启用相机仅为网络角色子节点的 `Main Camera`；场景原有 `Main Camera` 与 Additive 场景 `Camera` 均已禁用。
-- 将本地相机偏航 `90°` 后，`CharacterMotor` 的前进方向从 `(0,0,1)` 变为 `(1,0,0)`，移动方向与相机朝向同步。
-- 无服务端时场景单机角色从 `Y=3.38` 由 `CharacterController` 重力自然落到 `Y=-9.491`，`isGrounded=True`，单机相机保持启用。
-- 双编辑器连接后每端 `networkPlayers=2`、`activeNetworkVisuals=2`、`standaloneActive=0`，场景单机角色被禁用，不再出现第三个悬空角色。
-- 验证结束后服务器、UDP 7777 监听和 Editor Play 均已清理。
+- 单机状态使用 `PersistentScene` 中的 `LocalPlayer`。
+- 联机状态收起 `LocalPlayer`。
+- 每个 Mirror 玩家对应一个 `Player_Network` 网络根和一个角色表现。
+- 本地玩家装配带相机的本地表现。
+- 远程玩家装配同步表现。
+- 每个客户端仅启用本地拥有者的 Camera、`ThirdPersonCamera` 和 `AudioListener`。
+- Additive 场景加载完成后重新应用相同规则。
 
-## 风险与维护触发
+## 维护触发
 
-- 新旧客户端和服务器混用可能因 NetworkBehaviour 组件布局不一致触发 `OnDeserialize` 或 `EndOfStreamException`。
-- Unity MCP 跟踪远端 `main`，更新依赖后需要重新核验。
-- 修改 Unity/包版本、Build Settings、场景、Prefab、事件资产或移动输入归属时更新本文档。
-- Mirror、KCP、连接和构建细节统一维护在 `Mirror_KCP_Config.md`。
+修改 Unity 或包版本、Build Settings、场景、Prefab、角色数组、出生点、相机归属或移动配置时更新本文档。Mirror 与 KCP 参数统一维护在 `Mirror_KCP_Config.md`。

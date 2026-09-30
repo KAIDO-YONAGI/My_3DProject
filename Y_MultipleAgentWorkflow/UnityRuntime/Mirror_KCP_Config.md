@@ -6,145 +6,142 @@
 
 ## 配置总览
 
-| 配置项 | 当前值 | 位置 |
+| 配置项 | 当前值 | 配置位置 |
 |---|---|---|
-| Mirror 版本 | 96.11.2 | `Assets/Mirror/` |
-| Transport | `kcp2k.KcpTransport` | `PersistentScene` → `NetworkManager` 对象 |
-| 服务器端口 | `7777`（UDP） | KcpTransport.port |
-| DualMode | `true` | KcpTransport.DualMode |
-| debugLog | `true` | KcpTransport.debugLog，压测与发布前关闭 |
-| 玩家 Prefab | `Assets/Core/Prefabs/Player_Network.prefab` | NetworkManager.playerPrefab |
-| autoCreatePlayer | `true` | NetworkManager |
-| 场景切换 | `onlineScene = 空`，由 `SceneChanger` 通过 Additive 加载 | `PersistentScene` |
-| NetworkManager 生命周期 | `dontDestroyOnLoad = false` | `PersistentScene` 持有 |
-| Build 场景 | `PersistentScene`、`MultiplayerSampleScene`，两者均启用 | Build Settings |
-| runInBackground | `true` | PlayerSettings |
-| 客户端连接地址 | `127.0.0.1` | NetworkManager.networkAddress + AutoStartClient.connectAddress |
-
-## Mirror 安装
-
-Mirror 以本地插件形式存在，`.gitignore` 忽略 `/Assets/Mirror/` 与 `/Assets/Plugins/`。换机器或误删后重新导入：
-
-1. Asset Store 的 Package Manager → My Assets → Mirror 重新下载导入，或从 GitHub github.com/MirrorNetworking/Mirror 下载 release 的 `.unitypackage`。
-2. 本机备用源：Asset Store 缓存解压包 `D:/Unity/Temp/Mirror-96.11.2-extracted`，hash 目录下的 `pathname` 文件记录 `Assets/...` 原始路径，可按清单还原。
-3. 导入后检查 `Library/ScriptAssemblies/` 下存在 `Mirror.dll`、`Mirror.Components.dll`、`Mirror.Transports.dll`、`kcp2k.dll`。
-4. Mirror 自带 `ScriptTemplates/` 目录与搬运工具 `MoveToAssetsFolder.cs`。`Assets/ScriptTemplates/` 下同时存在两份时产生 `CS0101` 重复定义编译错误，保留一份。
-
-## PersistentScene 联机入口与单机入口
-
-```text
-PersistentScene
-├─ Managers
-│  ├─ NetworkManager
-│  │  ├─ Mirror.NetworkManager
-│  │  ├─ kcp2k.KcpTransport
-│  │  ├─ Mirror.NetworkManagerHUD
-│  │  └─ AutoStartClient
-│  ├─ TimeManager
-│  └─ SceneChanger
-└─ LocalPlayer
-   └─ 本地角色 Prefab（包含本地 Camera）
-```
-
-NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。`PersistentScene` 是项目自己的常驻场景，由 `SceneChanger.firstSceneToLoad` 引用 `GameSceneSO`，以 Additive 模式加载 `MultiplayerSampleScene`。本地单机角色和本地 Camera 直接配置在 `PersistentScene` 中，Play 时不会通过运行时 Instantiate 生成。
-
-Mirror 的 `onlineScene` 必须保持为空，`dontDestroyOnLoad` 必须关闭。这样 Mirror 只负责连接、身份、网络玩家 Prefab 和同步，不会绕过项目框架切换场景，也不会把 NetworkManager 脱离 `PersistentScene`。`NetworkManager.playerPrefab` 仍指向 `Assets/Core/Prefabs/Player_Network.prefab`，不得指向本地视觉模型 Prefab。
-
-单机开发时直接打开 `Assets/Core/Scenes/PersistentScene.unity` 后按 Play：编辑器可见的 `LocalPlayer` 保留在常驻场景，`SceneChanger` additive 加载玩法场景。需要切换模型时修改 `LocalPlayer` 的 Prefab 或其引用，不改 Mirror 的 `playerPrefab`。
+| Mirror 版本 | `96.11.2` | `Assets/Mirror/version.txt` |
+| Transport | `kcp2k.KcpTransport` | `NetworkManager.prefab` |
+| 服务器端口 | UDP `7777` | `KcpTransport.Port` |
+| 客户端地址 | `127.0.0.1` | NetworkManager 与 AutoStartClient |
+| 玩家 Prefab | `Assets/Core/Prefabs/Player_Network.prefab` | NetworkManager |
+| 自动创建玩家 | `true` | NetworkManager |
+| 出生点模式 | `Random` | NetworkManager |
+| 场景切换 | `SceneChanger` Additive 加载 | PersistentScene |
+| Mirror onlineScene | 空 | NetworkManager |
+| 同步方向 | `ClientToServer` | NetworkTransformReliable |
+| 自动重连间隔 | `3` 秒 | AutoStartClient |
 
 ## KcpTransport 参数
 
-以下为 Mirror 96 的默认值。
-
-| 参数 | 值 | 说明 |
+| 参数 | 当前值 | 作用 |
 |---|---|---|
-| `port` | 7777 | 服务器 UDP 监听端口 |
-| `DualMode` | true | IPv6 socket + DualMode，兼容 IPv4 映射地址 |
-| `NoDelay` | true | 降低发送延迟 |
-| `Interval` | 10 ms | KCP 内部 tick 间隔 |
-| `SendWindowSize` / `ReceiveWindowSize` | 4096 / 4096 | Mirror 调整过的窗口 |
-| `MaximizeSocketBuffers` | true | 自动放大 OS socket 缓冲 |
-| `Timeout` | 10000 ms | 对端无数据判定超时 |
-| `FastResend` | 0 | 快速重传阈值 |
-| `CongestionWindow` | false | 实时游戏默认关闭 |
-| `MTU` | 1200 | 固定值 |
-| `debugLog` | true | 打印 `[KCP] ...` 握手与连接日志，联调期开启 |
+| `Port` | `7777` | 服务器 UDP 监听端口 |
+| `DualMode` | `true` | IPv6 socket 接收 IPv4 映射地址 |
+| `NoDelay` | `true` | 使用低延迟 KCP 配置 |
+| `Interval` | `10` 毫秒 | KCP 更新间隔 |
+| `Timeout` | `10000` 毫秒 | 无数据连接超时 |
+| `RecvBufferSize` | `7361536` | UDP 接收缓冲 |
+| `SendBufferSize` | `7361536` | UDP 发送缓冲 |
+| `FastResend` | `2` | 快速重传阈值 |
+| `ReceiveWindowSize` | `4096` | KCP 接收窗口 |
+| `SendWindowSize` | `4096` | KCP 发送窗口 |
+| `MaxRetransmit` | `40` | 最大重传控制 |
+| `MaximizeSocketBuffers` | `true` | 请求扩大系统 socket 缓冲 |
+| `ReliableMaxMessageSize` | `297433` | 可靠通道单条消息上限 |
+| `UnreliableMaxMessageSize` | `1194` | 非可靠通道单条消息上限 |
+| `debugLog` | `true` | 输出 KCP 调试日志 |
 
-## 当前玩家 Prefab
+## 场景启动关系
 
 ```text
-Player_Network
-├─ Mirror.NetworkIdentity
-├─ Mirror.NetworkTransformReliable        SyncDirection = ClientToServer
-├─ CharacterController
-├─ PlayerCharacterController              联机时仅本地玩家采集输入
-└─ NetworkCharacterSync                    SyncVar characterId，只同步角色编号
+InitialScene
+  → InitialLoad
+  → PersistentScene
+     ├─ NetworkManager
+     ├─ NetworkCharacterManager
+     ├─ SceneChanger
+     ├─ LocalPlayer
+     ├─ NetworkPlayerSpawn_A
+     └─ NetworkPlayerSpawn_B
+  → MultiplayerSampleScene
+     ├─ Terrain
+     ├─ TerrainCollider
+     └─ Directional Light
 ```
 
-`PersistentScene/Managers/NetworkCharacterManager` 是编辑器可见的联机角色逻辑中心，配置 `localCharacterPrefabs[]`、`characterPrefabs[]` 和 `defaultCharacterId`。两个数组按下标对齐：本地拥有者从 `CharactersForLocal` 加载带本地相机的模型，远程拥有者从 `CharactersForSync` 加载不带相机的模型。`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。`NetworkCharacterSync` 只同步 `characterId`，每个客户端由场景管理器按角色编号选择对应类别的视觉 Prefab；本地单机 `LocalPlayer` 仍是独立入口。
+Mirror 的 `onlineScene` 保持为空。`SceneChanger` 负责玩法场景加载，NetworkManager 负责连接、身份、玩家创建和网络同步。
 
-`PersistentScene` 不覆盖 `NetworkManager.playerPrefab`。Mirror 的玩家 Prefab 只在 `Assets/Core/Prefabs/NetworkManager.prefab` 配置一次，必须是 `Assets/Core/Prefabs/Player_Network.prefab`，不能直接指向 `CharactersForSync` 中的视觉 Prefab。
+## 客户端启动
 
-## 启动模式分流
+`AutoStartClient` 在编辑器和普通客户端构建中运行：
 
-- 专用服务器使用 `HeadlessStartMode = AutoStartServer`，批处理启动后自动监听 7777。
-- `AutoStartClient` 在 Unity 编辑器和普通客户端构建中连接 `127.0.0.1`，断开后每 3 秒重试。
-- `AutoStartClient` 在 `Application.isBatchMode` 或本机已启动 Server/Client 时不重复发起连接。
-- `NetworkClient.active` 会在连接尝试阶段变化，不能作为单机/联机表现切换依据。`NetworkCharacterManager` 和输入归属使用 `NetworkClient.isConnected`：未连接时保留单机角色、相机和重力；连接完成后禁用场景单机角色，只显示 Mirror 生成的网络玩家。
+1. 检查当前进程类型和 Mirror 活动状态。
+2. 设置 `NetworkManager.networkAddress=127.0.0.1`。
+3. 调用 `NetworkManager.StartClient`。
+4. 连接结束后继续监视状态。
+5. 断开时等待 3 秒再次连接。
 
-## 连接地址
+## 服务器启动
 
-客户端连接地址使用 `127.0.0.1`。`localhost` 的 DNS 解析结果为 `::1`，服务器 KCP socket 在部分机器上为纯 IPv4 绑定，发往 `::1` 的握手包到不了服务器，客户端表现为发送 hello 后 10 秒超时。跨机联机填写服务器 IPv4 地址。
+Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
+
+1. `NetworkManager.StartServer` 初始化服务端。
+2. `NetworkServer.Listen` 注册 Transport 回调。
+3. `KcpTransport.ServerStart` 创建 `KcpServer`。
+4. `KcpServer.Start` 创建非阻塞 UDP socket 并绑定 `7777`。
+5. EarlyUpdate 接收数据，LateUpdate 刷新待发送数据。
+
+## 玩家生成
+
+客户端连接并完成认证后，Mirror 发送 Ready 和 AddPlayer。服务器从两个 `NetworkStartPosition` 中随机选择一个位置，创建 `Player_Network`，再通过 `NetworkServer.AddPlayerForConnection` 建立连接归属。
+
+`Player_Network` 生成后：
+
+- 本地拥有者运行输入、移动和本地相机。
+- 远程实例接收服务器广播的 Transform。
+- `NetworkCharacterSync` 同步角色编号。
+- `NetworkCharacterManager` 为网络根装配本地或远程表现。
+
+## 表现装配与相机隔离
+
+`Player_Network` 自身不保存具体角色模型。`NetworkCharacterManager` 读取 `characterId` 和 `isLocalPlayer`：
+
+- 本地拥有者实例化 `localCharacterPrefabs[characterId]`。
+- 远程玩家实例化 `characterPrefabs[characterId]`。
+- 视觉实例挂到网络根下并重置局部 Transform。
+- 视觉子对象上的移动组件和 `CharacterController` 停用。
+- 网络根的移动组件绑定新模型 Animator。
+- 本地 Camera 成为 `inputSpace` 和 `MainCamera`。
+- 远程 Camera、`ThirdPersonCamera` 和 `AudioListener` 保持关闭。
+- 连接完成后场景单机角色关闭。
+- Additive 场景加载完成后再次收拢相机和单机角色。
+
+## 移动、重力与高度
+
+本地输入驱动网络根的 `PlayerCharacterController`。`CharacterMotor` 根据本地 Camera 的水平 forward 和 right 计算方向，调用 `CharacterController.Move`。重力持续作用，出生后角色依据地形碰撞自然落地。
+
+`NetworkTransformReliable` 负责同步移动结果。项目移动链路不调用 Transform 传送方法，也不执行运行时高度钳制。
 
 ## 构建
 
-### 客户端
+客户端输出根目录：
 
-- 平台 Windows x64，构建包含 `PersistentScene` 与 `MultiplayerSampleScene`。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Client/Client_5_0/My_3DProject.exe`。
-- 校验：`My_3DProject_Data/Managed/` 含 `Mirror.dll`、`kcp2k.dll`。
+`D:/Unity/Releases/3D_MultiplayerGame/Client/`
 
-### 专用服务器
+专用服务器输出根目录：
 
-- Build Profiles 选择 Windows Server，构建产物无图形设备。
-- 启动方式：运行 `Server_12_7/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
-- 启动成功标志：日志出现 `Server listening on port 7777`。
-- 服务器日志中的 `Shader ... not supported` ERROR/WARNING 来自 Null 图形设备，属正常输出。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_12_7/My_3DProject.exe`。
+`D:/Unity/Releases/3D_MultiplayerGame/Server/`
 
-从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置学习指南.md`。
+两个构建都包含以下场景：
 
-## 最近验证证据
+1. `InitialScene`
+2. `PersistentScene`
+3. `MultiplayerSampleScene`
 
-- 客户端 `Client_5_0` 与服务器 `Server_7_0` 均构建成功，结果为 0 error、1 warning。
-- `Server_7_0 + Unity Editor Play` 已验证连接和 Ready 正常。
-- 本地玩家 `娜娜莉（华丽飞踢）(Clone)` 的状态为 `local=True`、`owned=True`，移动启用，`SyncDirection=ClientToServer`。
-- Host 模式下已验证角色 `characterId 0 -> 1 -> 0` 连续切换，角色持续可见，控制台为 0 error；角色替换前后的 `Animator` 重绑定已覆盖销毁时序。
-- 注入前进输入后角色移动约 `2.82m`，等待 2 秒后没有被服务端位置拉回；Unity Console 为 0 error，用户确认角色可以移动。
-- 验证结束后服务器进程已停止，UDP 7777 无监听，编辑器已退出 Play。
+客户端与服务器使用相同的 `Player_Network` 组件布局、NetworkBehaviour 顺序和序列化字段。
 
-### 2026-09-30：双编辑器物理落地与相机验证
+## 验收
 
-- 通过 Unity MCP 重建 Windows Server，输出为 `Server_12_7`；构建结果为 succeeded，0 error、1 warning。
-- 两个 Unity 编辑器同时连接 KCP 7777 成功，均生成 `Player_Network(Clone)`，证明编辑器联机链路可用。
-- `PersistentScene` 的两个 `NetworkStartPosition` 位于 TerrainCollider 上方约 `0.2m`；运行时由 `CharacterController` 重力自然落地，本地角色保持 `isGrounded=True`，没有运行时传送或高度钳制。
-- 本地 `PlayerCharacterController.inputSpace` 绑定到网络角色子节点的 `Main Camera`；相机偏航 `90°` 后前进方向同步旋转。Additive 场景的非网络相机由 `sceneLoaded` 回调自动禁用。
-- 验证结束后两个编辑器已退出 Play，服务器进程已停止。
+- 服务端日志显示 UDP `7777` 已监听。
+- 每个客户端完成 KCP 连接和 Mirror Ready。
+- 每个连接生成一个 `Player_Network`。
+- 两名客户端连接时，每端显示两个网络角色。
+- 每端只有本地拥有者的 Camera 和 `AudioListener` 启用。
+- 本地前进方向随相机水平朝向变化。
+- 玩家从出生点依据重力和地形碰撞落地。
+- 角色切换后各端使用同一 `characterId` 对应的本地或同步 Prefab。
 
-### 2026-09-30：单机重试与第三角色修复验证
-
-- 无服务端时单机角色和相机保持启用；角色从场景初始 `Y=3.38` 通过 `CharacterController` 重力自然落到 `Y=-9.491`，`isGrounded=True`。
-- 双编辑器连接 `Server_12_7` 后，每端均为 `networkPlayers=2`、`activeNetworkVisuals=2`、`standaloneActive=0`；第三个角色原因为 PersistentScene 单机角色未禁用，并非服务端额外生成玩家。
-- 每端只有本地网络角色的 Camera 启用；没有增加运行时传送或高度钳制。
-
-## 风险
-
-- 端口占用：KCP 服务器绑定失败会抛出 `SocketException`，启动前确认 7777 端口干净。
-- `debugLog` 每条 KCP 事件都写日志，压测与发布构建关闭。
-- 客户端与服务端必须来自同一次组件布局；修改玩家身上的 NetworkBehaviour 列表后只重启一端，会触发 `OnDeserialize` / `EndOfStreamException`。
-- 当前 `PlayerCharacterController` 不是 NetworkBehaviour，不得仅为判断本地玩家而改变其基类，否则会污染单机 Prefab 并改变 Mirror 组件序列。
-- 当前联机为最小可玩形态：Mirror 组件直接同步。阶段七按 `docs/plan/` 引入固定 Tick、`InputFrame`、自定义快照插值与预测校正后，NetworkTransformReliable 与直连输入被替换，本文档同步更新。
+逐文件代码讲解见 `docs/联机系统教学/README.md`。
 
 ## 维护触发
 
-修改 Mirror 版本、Transport 参数、NetworkManager 配置、玩家 Prefab 组件、连接地址或构建输出时更新本文档。
+修改 Mirror 版本、KCP 参数、NetworkManager、玩家 Prefab、角色装配、连接地址、出生点或构建配置时更新本文档。

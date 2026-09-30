@@ -2,26 +2,59 @@
 
 文档 ID：`PROTOCOL-GUIDE`
 状态：`Active`
-最后核验：`2026-09-29`
+最后核验：`2026-09-30`
 
-## 当前协议形态
+## 协议分层
 
-当前没有项目自定义的 `Protocol` 源码目录，也没有自定义 `NetworkMessage`、Command/Rpc 消息定义。网络边界由 Mirror 内置连接、对象生成和 `NetworkTransformReliable` 序列化承载。
+```text
+UDP Datagram
+  → kcp2k 通道头与连接 Cookie
+  → KCP 可靠传输或非可靠直传
+  → Mirror Transport 事件
+  → Mirror 连接、Ready、AddPlayer、Spawn 和状态消息
+  → NetworkTransformReliable 变换数据
+  → NetworkCharacterSync 角色编号
+```
 
-- 连接传输：KCP，UDP `7777`。
-- 玩家对象身份：`NetworkIdentity`。
-- 玩家位置同步：`NetworkTransformReliable`，`SyncDirection=ClientToServer`。
-- 玩家生成：NetworkManager `autoCreatePlayer=true`。
+## 传输层
+
+- 服务器监听 UDP `7777`。
+- KCP 可靠通道负责握手、确认、重传、窗口和分片。
+- 非可靠通道保留 kcp2k 通道头与 Cookie，数据直接交给上层。
+- KCP 客户端和服务器在 EarlyUpdate 接收数据，在 LateUpdate 刷新发送。
+
+## Mirror 消息层
+
+- 连接建立后，Mirror 完成认证并进入 Ready。
+- `AddPlayerMessage` 请求服务器创建当前连接的玩家对象。
+- Spawn 数据携带 `NetworkIdentity`、初始 Transform 和 NetworkBehaviour 初始状态。
+- Entity State 数据携带 NetworkBehaviour 的增量状态。
+
+## 项目同步字段
+
+### 角色变换
+
+`NetworkTransformReliable` 使用 `ClientToServer` 方向。本地拥有者序列化位置和旋转，服务器接收后广播，远程客户端通过快照缓冲插值显示。
+
+### 角色编号
+
+`NetworkCharacterSync.characterId` 是 `SyncVar`。服务器持有最终值，客户端 Hook 收到变化后重新装配角色表现。
+
+本地拥有者调用 `SetLocalCharacter` 时：
+
+```text
+SetLocalCharacter
+  → CmdSetCharacter
+  → 服务器校验角色编号
+  → 更新 characterId
+  → SyncVar Hook
+  → 各客户端重新装配对应表现
+```
 
 ## 兼容性规则
 
-客户端和服务端必须使用相同的玩家组件布局。只替换一端构建可能触发 `OnDeserialize` 或 `EndOfStreamException`。修改 NetworkBehaviour 列表、同步组件或序列化字段后，必须同时重建并验证两端。
-
-## Proposal 边界
-
-固定 Tick、`InputFrame`、服务器输入队列、自定义状态快照、插值和预测校正目前均未实现。它们可以在 `docs/plan/` 中作为计划阅读，但落地前不得写入“当前协议”。
+客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
 ## 维护触发
 
-新增或修改消息、序列化字段、NetworkTransform、输入帧、快照或兼容版本规则时更新本文档，并同步 Networking、Server 文档。
-
+修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、序列化字段或兼容规则时更新本文档，并同步 Networking、Server 和 UnityRuntime 文档。

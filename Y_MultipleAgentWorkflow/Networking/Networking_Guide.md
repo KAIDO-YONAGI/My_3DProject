@@ -6,32 +6,68 @@
 
 ## 当前组件
 
-- `AutoStartClient`：编辑器和普通客户端连接 `127.0.0.1`，断线后每 3 秒重试；批处理、Server active 或 Client active 时不重复连接。
-- `NetworkCharacterManager`：挂在 `PersistentScene/Managers/NetworkCharacterManager`，按同一角色编号维护两套配置：本地拥有者使用 `CharactersForLocal`，远程拥有者使用 `CharactersForSync`。
-- `NetworkCharacterSync`：挂在 `Player_Network.prefab`，只同步 `characterId`，不持有模型配置。
-- 当前玩家 Prefab `Player_Network.prefab` 使用 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
-- `NetworkManager` 固定配置在 `PersistentScene`，`dontDestroyOnLoad=false`、`onlineScene` 为空；场景生命周期由项目自己的 Additive `SceneChanger` 管理。
-- 单机 `LocalPlayer` 不由 Mirror 生成，也不由 `NetworkCharacterManager` 生成；它是 `PersistentScene` 中的编辑器可见角色实例，继续使用本地角色 Prefab。网络玩家使用 `Player_Network.prefab` 网络外壳；`NetworkCharacterManager.localCharacterPrefabs[]` 只能引用 `CharactersForLocal`，`characterPrefabs[]` 只能引用 `CharactersForSync`，两个数组按角色编号一一对应，禁止混用。
-- `localCharacterPrefabs[]` 必须引用完整的本地 Prefab 根对象；本地角色的 Camera 由管理器绑定到网络根的 `PlayerCharacterController.inputSpace`，远程角色不启用相机和输入。
-- `NetworkCharacterManager` 以 `NetworkClient.isConnected` 判断联机表现模式；只有连接完成后才禁用场景单机角色以及非网络 Camera、`ThirdPersonCamera` 和 `AudioListener`。连接尝试和重试期间保持单机表现，Additive 场景加载后重新应用当前模式。
-- `PlayerCharacterController` 仍是普通 `MonoBehaviour`；角色切换时由 `NetworkCharacterManager` 重新绑定根对象的 `Animator`，销毁旧角色前先清空旧动画驱动。
-- `PersistentScene` 不再覆盖 `NetworkManager.playerPrefab`；唯一来源是 `Assets/Core/Prefabs/NetworkManager.prefab` 中的 `Player_Network.prefab`。
+- `AutoStartClient`：编辑器和普通客户端连接 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
+- `NetworkCharacterManager`：按角色编号维护本地角色 Prefab 与同步角色 Prefab，装配网络玩家表现，管理相机归属，并切换单机与联机表现。
+- `NetworkCharacterSync`：同步 `characterId`，通过 `CmdSetCharacter` 接收本地拥有者的角色选择。
+- `Player_Network.prefab`：承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
+- `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
+- `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
 
-## 当前同步边界
+## 连接与玩家生成
 
-`NetworkTransformReliable.SyncDirection=ClientToServer`。本地玩家的移动结果上传服务端，再由 Mirror 广播；当前没有自定义 NetworkMessage、Command/Rpc 协议层。
+```text
+AutoStartClient.StartClient
+  → NetworkClient.Connect
+  → KcpTransport.ClientConnect
+  → KcpClient 使用 UDP 与服务器握手
+  → NetworkClient.Ready
+  → NetworkClient.AddPlayer
+  → NetworkManager.OnServerAddPlayer
+  → NetworkServer.AddPlayerForConnection
+  → 各客户端收到 Player_Network 的 Spawn 数据
+```
 
-当前网络组件和通道事实以 `../UnityRuntime/Mirror_KCP_Config.md` 为准。
+`NetworkManager.onlineScene` 为空。Mirror 完成认证后直接发送 Ready 和 AddPlayer。服务器以 `Random` 模式从两个 `NetworkStartPosition` 中选取位置，实例化 `Player_Network` 并绑定到连接。
 
-## 已验证
+## 角色装配
 
-- `PersistentScene` 可连接到 `MultiplayerSampleScene`。
-- Host 模式下已验证本地角色生成、模型编号 `0 -> 1 -> 0` 切换，控制台无 `MissingReferenceException`。
-- 玩家生成后具有本地所有权，移动没有在等待 2 秒后被拉回。
-- 混用新旧玩家组件布局曾导致 `OnDeserialize` / `EndOfStreamException`，客户端与服务端必须使用同一组件布局构建。
-- 2026-09-30 两个 Unity 编辑器同时连接重建后的专用服务器成功，双方均生成网络玩家；网络角色在正确高度稳定落地，连接问题不是 KCP 传输故障。
-- 2026-09-30 双编辑器连接后每端仅有两个活动网络角色，场景单机角色 `activeSelf=false`；无服务端时单机角色和相机保持活动并自然落地。
+`Player_Network` 是统一的网络根，具体角色模型在每个客户端本地装配。
+
+1. 服务器在 `NetworkCharacterSync.OnStartServer` 设置默认 `characterId`。
+2. 客户端在 `OnStartClient` 和 `OnStartLocalPlayer` 应用角色编号。
+3. `NetworkCharacterManager` 根据 `NetworkIdentity.isLocalPlayer` 选择 Prefab 数组。
+4. 本地拥有者使用 `localCharacterPrefabs`，获得完整角色、Camera、`ThirdPersonCamera` 和 `AudioListener`。
+5. 远程玩家使用 `characterPrefabs`，获得同步模型和 Animator。
+6. 视觉实例成为网络根子对象，局部位置和旋转归零。
+7. 视觉实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
+8. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
+9. 本地 Camera 绑定为 `inputSpace`，远程相机、远程音频监听器和远程本地控制组件保持关闭。
+
+两个 Prefab 数组使用相同下标表达同一角色编号。当前默认角色编号为 `1`。
+
+## 多余角色与相机收拢
+
+`PersistentScene` 保留一个单机 `LocalPlayer`，便于无服务端时直接开发移动、物理和相机。`NetworkCharacterManager` 在 `NetworkClient.isConnected=true` 后进入联机表现模式：
+
+- 收起场景单机角色。
+- 保留所有 Mirror 创建的网络根。
+- 每个网络根只保留一个当前角色表现。
+- 仅本地拥有者启用 Camera、`ThirdPersonCamera` 和 `AudioListener`。
+- Additive 场景加载完成后再次应用相同规则。
+
+两名客户端连接同一服务器时，每端显示两个网络角色，其中一个是本地拥有者，一个是远程同步角色。
+
+## 同步边界
+
+- `NetworkTransformReliable.SyncDirection=ClientToServer`。
+- 本地拥有者移动网络根，变换数据发送到服务器。
+- 服务器缓冲并广播变换快照。
+- 远程客户端插值应用位置和旋转。
+- `NetworkCharacterSync.characterId` 是 `SyncVar`。
+- `CmdSetCharacter` 将本地角色选择提交到服务器，服务器校验后更新 `SyncVar`。
+
+客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。
 
 ## 维护触发
 
-修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接重试策略或玩家网络归属时更新本文档。
+修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接策略、玩家生成、角色装配或相机归属时更新本文档。
