@@ -52,17 +52,19 @@
 - `Mirror.NetworkTransformReliable`，`SyncDirection=ClientToServer`
 - `CharacterController`
 - `PlayerCharacterController`
-- `NetworkPlayerModel`
+- `NetworkCharacterSync`
 
 `PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：联机时只有 `isLocalPlayer` 为真的实例采集输入；没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
 
-`NetworkPlayerModel` 的 `modelId` 是 Mirror `SyncVar`，客户端按 `models[]` 的相同下标加载本地视觉模型。模型 Prefab 自带的 `ThirdPersonCamera` 和 Animator 保留在模型内部；切换模型时网络根先释放旧动画驱动，再绑定新模型的 Animator。
+`PersistentScene/Managers/NetworkCharacterManager` 持有 `localCharacterPrefabs[]`、`characterPrefabs[]` 和 `defaultCharacterId`。两个数组按相同下标表示同一个角色编号：本地拥有者加载 `CharactersForLocal`，远程拥有者加载 `CharactersForSync`。只有本地视觉 Prefab 保留 `ThirdPersonCamera` 和 `Camera`；切换角色时网络根先释放旧动画驱动，再绑定新模型的 Animator。
 
 ## 脚本职责
 
 - `Assets/Core/Scripts/Networking/AutoStartClient.cs`：编辑器和普通客户端自动连接 `127.0.0.1`，失败或断开后每 3 秒重试；批处理以及已启动 Server/Client 的进程不重复连接。
-- `Assets/Core/Scripts/Networking/LocalPlayerCamera.cs`：联机玩家相机的本地归属控制。
-- `Assets/Core/Scripts/Networking/NetworkPlayerController.cs`：Mirror 玩家控制辅助逻辑。
+- `Assets/Core/Scripts/Networking/NetworkCharacterManager.cs`：联机角色编号、远程角色加载和本地相机归属。
+- `Assets/Core/Scripts/Networking/NetworkCharacterSync.cs`：Player_Network 上的角色编号同步入口。
+- `Assets/Core/Scripts/Networking/LocalPlayerCamera.cs`：历史相机辅助脚本，不挂在当前 `Player_Network`。
+- `Assets/Core/Scripts/Networking/NetworkPlayerController.cs`：历史网络移动辅助脚本，不挂在当前 `Player_Network`。
 - `Assets/Core/Scripts/Movement/Runtime/PlayerCharacterController.cs`：单机与联机共用的输入和移动入口。
 - `Assets/Core/FrameWork/Scripts/`：按 Core、SO、Scene、UI 组织通用框架。
 

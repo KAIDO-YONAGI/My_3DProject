@@ -25,7 +25,7 @@ PlayerCharacterController
 - `ThirdPersonCamera` 保留在本地视觉模型 Prefab 内。单机开发时角色 Prefab 和相机直接放在 `PersistentScene` 的 `LocalPlayer` 对象上，由编辑器可见配置驱动，不在 Play 时生成。
 - `PersistentScene` 是客户端常驻层；玩法场景由框架 `SceneChanger` 以 Additive 模式加载，不能改成 Mirror `onlineScene` 自动切场。
 - `PlayerCharacterController` 挂在网络根对象上；模型切换前清空旧动画驱动，切换后重新绑定新模型的 `Animator`。
-- `LocalPlayerCamera` 不再承担模型实例化职责；联机归属规则详见 Networking。
+- `PersistentScene/Managers/NetworkCharacterManager` 负责联机角色表现和本地/远程相机归属；本地拥有者从 `CharactersForLocal` 加载带相机的视觉 Prefab，远程拥有者从 `CharactersForSync` 加载不带相机的视觉 Prefab；`Player_Network` 上的 `NetworkCharacterSync` 只负责同步角色编号。
 
 ## 输入归属
 
@@ -36,7 +36,7 @@ PlayerCharacterController
 ## 当前状态与边界
 
 - 当前移动仍是 Unity 每帧驱动，不是固定 Tick 的 `InputFrame` 模拟。
-- 联机根 Prefab 与本地视觉模型解耦：网络同步位置和 `modelId`，客户端按相同编号从本地模型目录加载表现资源。
+- 联机根 Prefab 与视觉模型解耦：网络同步位置和 `characterId`，客户端按相同编号分别从 `CharactersForLocal` 和 `CharactersForSync` 加载本地、远程表现资源；本地单机角色仍由 `PersistentScene/LocalPlayer` 配置。
 - 固定 Tick、预测和校正属于 Proposal，计划来源为 `docs/plan/`，尚未写成当前实现。
 - 最近运行验证中本地玩家前进约 `2.82m`，等待 2 秒后未被服务端位置拉回。
 

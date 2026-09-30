@@ -27,7 +27,7 @@
 - `Assets/Core/Scenes/PersistentScene.unity`：联机启动与常驻场景，包含 NetworkManager、KCP、HUD 和自动客户端连接。
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`：在线玩法场景，提供地形、光照和玩法环境。
 - `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`：NetworkManager 当前玩家 Prefab。
-- `Assets/Core/Scripts/Networking/`：Mirror 集成脚本，包括 `AutoStartClient`、`LocalPlayerCamera` 和 `NetworkPlayerController`。
+- `Assets/Core/Scripts/Networking/`：Mirror 集成脚本，包括 `AutoStartClient`、`NetworkCharacterManager`、`LocalPlayerCamera` 和 `NetworkPlayerController`。
 - `Assets/Core/Scripts/Movement/Runtime/PlayerCharacterController.cs`：通用角色输入与移动入口；保持普通 `MonoBehaviour`，联机时仅本地玩家采集输入。
 - `Assets/Core/FrameWork/`：单机框架、场景管理、UI 与 ScriptableObject 事件基础设施。
 - `Assets/Mirror/`：Mirror 96.11.2 本地插件，不入库。

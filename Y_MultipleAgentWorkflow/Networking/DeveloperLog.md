@@ -8,6 +8,6 @@
 
 ## 2026-09-30：修复联机模型切换后的 Animator 失效
 
-- `NetworkPlayerModel` 按同步的 `modelId` 在客户端加载本地模型，网络根对象不再持有固定角色视觉。
+- `PersistentScene/Managers/NetworkCharacterManager` 按 `NetworkCharacterSync` 同步的 `characterId` 分流加载：本地拥有者使用 `CharactersForLocal`，远程拥有者使用 `CharactersForSync`，网络根对象不再持有固定角色视觉。
 - 模型销毁前先清空 `PlayerCharacterController` 的旧动画驱动，模型实例化后再绑定新 `Animator`。
-- Host 模式实测 `modelId 0 -> 1 -> 0`，角色持续可见，控制台无 `MissingReferenceException`。
+- Host 模式实测 `characterId 0 -> 1 -> 0`，角色持续可见，控制台无 `MissingReferenceException`。

@@ -78,10 +78,12 @@ Player_Network
 ├─ Mirror.NetworkTransformReliable        SyncDirection = ClientToServer
 ├─ CharacterController
 ├─ PlayerCharacterController              联机时仅本地玩家采集输入
-└─ NetworkPlayerModel                      SyncVar modelId，本地按编号加载模型与相机
+└─ NetworkCharacterSync                    SyncVar characterId，只同步角色编号
 ```
 
-`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。这样不会把通用移动脚本加入 Mirror 的 NetworkBehaviour 序列，也兼容没有 `NetworkIdentity` 的单机角色 Prefab。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。`NetworkPlayerModel` 只同步 `modelId`，每个客户端从本地 `models[]` 目录实例化同编号模型；模型自带的 `ThirdPersonCamera` 保持在模型内部，不由网络根生成。
+`PersistentScene/Managers/NetworkCharacterManager` 是编辑器可见的联机角色逻辑中心，配置 `localCharacterPrefabs[]`、`characterPrefabs[]` 和 `defaultCharacterId`。两个数组按下标对齐：本地拥有者从 `CharactersForLocal` 加载带本地相机的模型，远程拥有者从 `CharactersForSync` 加载不带相机的模型。`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。`NetworkCharacterSync` 只同步 `characterId`，每个客户端由场景管理器按角色编号选择对应类别的视觉 Prefab；本地单机 `LocalPlayer` 仍是独立入口。
+
+`PersistentScene` 不覆盖 `NetworkManager.playerPrefab`。Mirror 的玩家 Prefab 只在 `Assets/Core/Prefabs/NetworkManager.prefab` 配置一次，必须是 `Assets/Core/Prefabs/Player_Network.prefab`，不能直接指向 `CharactersForSync` 中的视觉 Prefab。
 
 ## 启动模式分流
 
@@ -116,7 +118,7 @@ Player_Network
 - 客户端 `Client_5_0` 与服务器 `Server_7_0` 均构建成功，结果为 0 error、1 warning。
 - `Server_7_0 + Unity Editor Play` 已验证连接和 Ready 正常。
 - 本地玩家 `娜娜莉（华丽飞踢）(Clone)` 的状态为 `local=True`、`owned=True`，移动启用，`SyncDirection=ClientToServer`。
-- Host 模式下已验证模型 `modelId 0 -> 1 -> 0` 连续切换，角色持续可见，控制台为 0 error；模型替换前后的 `Animator` 重绑定已覆盖销毁时序。
+- Host 模式下已验证角色 `characterId 0 -> 1 -> 0` 连续切换，角色持续可见，控制台为 0 error；角色替换前后的 `Animator` 重绑定已覆盖销毁时序。
 - 注入前进输入后角色移动约 `2.82m`，等待 2 秒后没有被服务端位置拉回；Unity Console 为 0 error，用户确认角色可以移动。
 - 验证结束后服务器进程已停止，UDP 7777 无监听，编辑器已退出 Play。
 

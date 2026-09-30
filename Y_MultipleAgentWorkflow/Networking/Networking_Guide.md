@@ -7,11 +7,13 @@
 ## 当前组件
 
 - `AutoStartClient`：编辑器和普通客户端连接 `127.0.0.1`，断线后每 3 秒重试；批处理、Server active 或 Client active 时不重复连接。
-- `NetworkPlayerModel`：同步 `modelId`，客户端从本地模型目录实例化对应视觉模型，并按 `isLocalPlayer` 控制模型内相机和 AudioListener。
-- 当前玩家 Prefab `Player_Network.prefab` 使用 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkPlayerModel`。
+- `NetworkCharacterManager`：挂在 `PersistentScene/Managers/NetworkCharacterManager`，按同一角色编号维护两套配置：本地拥有者使用 `CharactersForLocal`，远程拥有者使用 `CharactersForSync`。
+- `NetworkCharacterSync`：挂在 `Player_Network.prefab`，只同步 `characterId`，不持有模型配置。
+- 当前玩家 Prefab `Player_Network.prefab` 使用 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
 - `NetworkManager` 固定配置在 `PersistentScene`，`dontDestroyOnLoad=false`、`onlineScene` 为空；场景生命周期由项目自己的 Additive `SceneChanger` 管理。
-- 单机 `LocalPlayer` 不由 Mirror 生成，也不由 `NetworkPlayerModel` 生成；它是 `PersistentScene` 中的编辑器可见角色实例。网络玩家才使用 `Player_Network.prefab`。
-- `PlayerCharacterController` 仍是普通 `MonoBehaviour`；模型切换时由 `NetworkPlayerModel` 重新绑定根对象的 `Animator`，销毁旧模型前先清空旧动画驱动。
+- 单机 `LocalPlayer` 不由 Mirror 生成，也不由 `NetworkCharacterManager` 生成；它是 `PersistentScene` 中的编辑器可见角色实例，继续使用本地角色 Prefab。网络玩家使用 `Player_Network.prefab` 网络外壳；`NetworkCharacterManager.localCharacterPrefabs[]` 只能引用 `CharactersForLocal`，`characterPrefabs[]` 只能引用 `CharactersForSync`，两个数组按角色编号一一对应，禁止混用。
+- `PlayerCharacterController` 仍是普通 `MonoBehaviour`；角色切换时由 `NetworkCharacterManager` 重新绑定根对象的 `Animator`，销毁旧角色前先清空旧动画驱动。
+- `PersistentScene` 不再覆盖 `NetworkManager.playerPrefab`；唯一来源是 `Assets/Core/Prefabs/NetworkManager.prefab` 中的 `Player_Network.prefab`。
 
 ## 当前同步边界
 

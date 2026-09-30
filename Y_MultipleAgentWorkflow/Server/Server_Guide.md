@@ -10,7 +10,7 @@
 
 - Headless 构建使用 `HeadlessStartMode=AutoStartServer`。
 - KCP 使用 UDP `7777`。
-- NetworkManager 的 `onlineScene` 为 `MultiplayerSampleScene`。
+- NetworkManager 的 `onlineScene` 保持为空；玩法场景由项目自己的 `SceneChanger` 以 Additive 模式加载。
 - `autoCreatePlayer=true`。
 - 当前服务器构建：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_7_0/My_3DProject.exe`。
 
@@ -25,4 +25,3 @@
 ## 维护触发
 
 修改 Headless 启动、服务器构建配置、NetworkManager、KCP 监听或服务端权威逻辑时更新本文档，并同步 Networking、Protocol 文档。
-
