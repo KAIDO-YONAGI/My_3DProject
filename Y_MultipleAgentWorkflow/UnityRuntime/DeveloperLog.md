@@ -35,3 +35,10 @@
 - `PlayerCharacterController` 保持普通 `MonoBehaviour`，通过可选 `NetworkIdentity` 限制联机输入归属；`NetworkTransformReliable` 改为 `ClientToServer`。
 - 客户端 `Client_5_0`、服务器 `Server_7_0` 构建成功；服务端配合编辑器验证角色移动约 `2.82m` 且 2 秒后未回弹，Console 0 error。
 - 验证结束后已停止服务器、清理 UDP 7777 监听并退出 Editor Play。
+
+## 2026-09-30：确认 Player_Network 与本地模型目录配置
+
+- `NetworkManager.playerPrefab` 更新为 `Assets/Core/Prefabs/Player_Network.prefab`；`PersistentScene` 中的 NetworkManager 实例保持启用。
+- `NetworkPlayerModel.models[]` 使用本地模型编号加载视觉模型，模型内的 `ThirdPersonCamera` 和 Animator 不迁移到网络根对象。
+- `NetworkManager.prefab` 默认关闭 `autoConnectInEditor`，避免单机编辑器 Play 被自动连接流程干扰；需要联机时仍可通过 HUD 或显式启动 Host。
+- 2026-09-30 在正确 Unity 实例 `My_3DProject@6d686e37950b774c` 中完成 Host、模型切换和截图验证。

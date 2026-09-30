@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-NETCFG`
 状态：`Active`
-最后核验：`2026-09-29`
+最后核验：`2026-09-30`
 
 ## 配置总览
 
@@ -13,9 +13,10 @@
 | 服务器端口 | `7777`（UDP） | KcpTransport.port |
 | DualMode | `true` | KcpTransport.DualMode |
 | debugLog | `true` | KcpTransport.debugLog，压测与发布前关闭 |
-| 玩家 Prefab | `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab` | NetworkManager.playerPrefab |
+| 玩家 Prefab | `Assets/Core/Prefabs/Player_Network.prefab` | NetworkManager.playerPrefab |
 | autoCreatePlayer | `true` | NetworkManager |
-| 场景切换 | `onlineScene = Assets/Core/Scenes/MultiplayerSampleScene.unity` | NetworkManager |
+| 场景切换 | `onlineScene = 空`，由 `SceneChanger` 通过 Additive 加载 | `PersistentScene` |
+| NetworkManager 生命周期 | `dontDestroyOnLoad = false` | `PersistentScene` 持有 |
 | Build 场景 | `PersistentScene`、`MultiplayerSampleScene`，两者均启用 | Build Settings |
 | runInBackground | `true` | PlayerSettings |
 | 客户端连接地址 | `127.0.0.1` | NetworkManager.networkAddress + AutoStartClient.connectAddress |
@@ -29,18 +30,27 @@ Mirror 以本地插件形式存在，`.gitignore` 忽略 `/Assets/Mirror/` 与 `
 3. 导入后检查 `Library/ScriptAssemblies/` 下存在 `Mirror.dll`、`Mirror.Components.dll`、`Mirror.Transports.dll`、`kcp2k.dll`。
 4. Mirror 自带 `ScriptTemplates/` 目录与搬运工具 `MoveToAssetsFolder.cs`。`Assets/ScriptTemplates/` 下同时存在两份时产生 `CS0101` 重复定义编译错误，保留一份。
 
-## PersistentScene 联机入口
+## PersistentScene 联机入口与单机入口
 
 ```text
 PersistentScene
-└─ NetworkManager
-   ├─ Mirror.NetworkManager
-   ├─ kcp2k.KcpTransport
-   ├─ Mirror.NetworkManagerHUD
-   └─ AutoStartClient
+├─ Managers
+│  ├─ NetworkManager
+│  │  ├─ Mirror.NetworkManager
+│  │  ├─ kcp2k.KcpTransport
+│  │  ├─ Mirror.NetworkManagerHUD
+│  │  └─ AutoStartClient
+│  ├─ TimeManager
+│  └─ SceneChanger
+└─ LocalPlayer
+   └─ 本地角色 Prefab（包含本地 Camera）
 ```
 
-NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。客户端连接后由 Mirror 切换到 `MultiplayerSampleScene`，再自动创建玩家；如果 `onlineScene` 为空，玩家会生成在没有玩法地面的持久场景并持续下落。
+NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。`PersistentScene` 是项目自己的常驻场景，由 `SceneChanger.firstSceneToLoad` 引用 `GameSceneSO`，以 Additive 模式加载 `MultiplayerSampleScene`。本地单机角色和本地 Camera 直接配置在 `PersistentScene` 中，Play 时不会通过运行时 Instantiate 生成。
+
+Mirror 的 `onlineScene` 必须保持为空，`dontDestroyOnLoad` 必须关闭。这样 Mirror 只负责连接、身份、网络玩家 Prefab 和同步，不会绕过项目框架切换场景，也不会把 NetworkManager 脱离 `PersistentScene`。`NetworkManager.playerPrefab` 仍指向 `Assets/Core/Prefabs/Player_Network.prefab`，不得指向本地视觉模型 Prefab。
+
+单机开发时直接打开 `Assets/Core/Scenes/PersistentScene.unity` 后按 Play：编辑器可见的 `LocalPlayer` 保留在常驻场景，`SceneChanger` additive 加载玩法场景。需要切换模型时修改 `LocalPlayer` 的 Prefab 或其引用，不改 Mirror 的 `playerPrefab`。
 
 ## KcpTransport 参数
 
@@ -63,15 +73,15 @@ NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。客�
 ## 当前玩家 Prefab
 
 ```text
-娜娜莉（华丽飞踢）
+Player_Network
 ├─ Mirror.NetworkIdentity
 ├─ Mirror.NetworkTransformReliable        SyncDirection = ClientToServer
 ├─ CharacterController
 ├─ PlayerCharacterController              联机时仅本地玩家采集输入
-└─ ThirdPersonCamera
+└─ NetworkPlayerModel                      SyncVar modelId，本地按编号加载模型与相机
 ```
 
-`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。这样不会把通用移动脚本加入 Mirror 的 NetworkBehaviour 序列，也兼容没有 `NetworkIdentity` 的单机角色 Prefab。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。
+`PlayerCharacterController` 保持普通 `MonoBehaviour`，通过同对象上可选的 `NetworkIdentity` 判断本地玩家。这样不会把通用移动脚本加入 Mirror 的 NetworkBehaviour 序列，也兼容没有 `NetworkIdentity` 的单机角色 Prefab。位置由本地拥有者驱动并经 `NetworkTransformReliable` 上传到服务端，再广播给其他客户端。`NetworkPlayerModel` 只同步 `modelId`，每个客户端从本地 `models[]` 目录实例化同编号模型；模型自带的 `ThirdPersonCamera` 保持在模型内部，不由网络根生成。
 
 ## 启动模式分流
 
@@ -106,6 +116,7 @@ NetworkManager 的 `transport` 字段指向同对象上的 `KcpTransport`。客�
 - 客户端 `Client_5_0` 与服务器 `Server_7_0` 均构建成功，结果为 0 error、1 warning。
 - `Server_7_0 + Unity Editor Play` 已验证连接和 Ready 正常。
 - 本地玩家 `娜娜莉（华丽飞踢）(Clone)` 的状态为 `local=True`、`owned=True`，移动启用，`SyncDirection=ClientToServer`。
+- Host 模式下已验证模型 `modelId 0 -> 1 -> 0` 连续切换，角色持续可见，控制台为 0 error；模型替换前后的 `Animator` 重绑定已覆盖销毁时序。
 - 注入前进输入后角色移动约 `2.82m`，等待 2 秒后没有被服务端位置拉回；Unity Console 为 0 error，用户确认角色可以移动。
 - 验证结束后服务器进程已停止，UDP 7777 无监听，编辑器已退出 Play。
 

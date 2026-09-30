@@ -2,7 +2,7 @@
 
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
-最后核验：`2026-09-29`
+最后核验：`2026-09-30`
 
 本目录是项目权威文档的唯一入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，另有 `Workflow` 管理路由与租约。`docs/` 保留计划、草案和教学材料，不作为当前实现事实；不因本次重建迁移、删除或改写其中内容。
 
@@ -21,7 +21,8 @@
 
 - 联机启动场景：`Assets/Core/Scenes/PersistentScene.unity`。
 - 在线玩法场景：`Assets/Core/Scenes/MultiplayerSampleScene.unity`。
-- 当前玩家 Prefab：`Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`。
+- 网络玩家 Prefab：`Assets/Core/Prefabs/Player_Network.prefab`；单机角色是 `Assets/Core/Scenes/PersistentScene.unity` 中编辑器可见的 `LocalPlayer`，其本地视觉模型和 Camera 不通过 Mirror 运行时生成。
+- 场景框架入口：`PersistentScene` 中的 `Managers/SceneChanger` 引用 `Assets/Core/SO/MultiplayerSampleSceneSO.asset`，以 Additive 模式加载 `MultiplayerSampleScene`。
 - Mirror/KCP、自动连接、同步方向和构建事实：`UnityRuntime/Mirror_KCP_Config.md`。
 
 ## 任务路由

@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-GUIDE`
 状态：`Active`
-最后核验：`2026-09-29`
+最后核验：`2026-09-30`
 
 ## 版本与依赖
 
@@ -33,7 +33,7 @@
 - `NetworkManager` 对象挂载 Mirror NetworkManager、`kcp2k.KcpTransport`、NetworkManagerHUD 和 `AutoStartClient`。
 - `networkAddress=127.0.0.1`。
 - `onlineScene=Assets/Core/Scenes/MultiplayerSampleScene.unity`。
-- `playerPrefab=Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`。
+- `playerPrefab=Assets/Core/Prefabs/Player_Network.prefab`。
 - 如果 `onlineScene` 为空，玩家会留在没有玩法地面的持久场景并持续下落。
 
 ### MultiplayerSampleScene
@@ -44,7 +44,7 @@
 
 ## 当前玩家 Prefab
 
-路径：`Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`
+路径：`Assets/Core/Prefabs/Player_Network.prefab`
 
 关键组件：
 
@@ -52,9 +52,11 @@
 - `Mirror.NetworkTransformReliable`，`SyncDirection=ClientToServer`
 - `CharacterController`
 - `PlayerCharacterController`
-- `ThirdPersonCamera`
+- `NetworkPlayerModel`
 
 `PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：联机时只有 `isLocalPlayer` 为真的实例采集输入；没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
+
+`NetworkPlayerModel` 的 `modelId` 是 Mirror `SyncVar`，客户端按 `models[]` 的相同下标加载本地视觉模型。模型 Prefab 自带的 `ThirdPersonCamera` 和 Animator 保留在模型内部；切换模型时网络根先释放旧动画驱动，再绑定新模型的 Animator。
 
 ## 脚本职责
 
