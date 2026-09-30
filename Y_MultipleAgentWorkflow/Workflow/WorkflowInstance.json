@@ -8,10 +8,14 @@
   "projectValidationMode": "None",
   "categories": [
     "Workflow",
+    "Client",
+    "Networking",
+    "Server",
+    "Protocol",
     "UnityRuntime"
   ],
   "installedAtUtc": "2026-09-20T17:33:37.3899306Z",
-  "updatedAtUtc": "2026-09-29T00:00:00Z",
+  "updatedAtUtc": "2026-09-29T18:12:00Z",
   "managedFiles": [
     {
       "path": "Workflow/Scripts/WorkingAgent.ps1",

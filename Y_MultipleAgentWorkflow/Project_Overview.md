@@ -33,6 +33,19 @@
 - `Assets/Mirror/`：Mirror 96.11.2 本地插件，不入库。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
 
+## 代码模块地图
+
+| 模块 | 实际代码或资源边界 | 当前职责 |
+|---|---|---|
+| `Client` | `Assets/Core/Scripts/Movement/`、角色 Prefab、客户端相机 | 输入采集、角色移动、动画表现、本地相机 |
+| `Networking` | `Assets/Core/Scripts/Networking/`、Mirror 组件 | 客户端连接、玩家网络行为、本地玩家归属和相机隔离 |
+| `Server` | `PersistentScene` 的 Mirror NetworkManager、Headless 构建 | 监听 KCP、管理连接和生成玩家；当前没有独立 Server 脚本目录 |
+| `Protocol` | Mirror 内置消息、NetworkTransformReliable 序列化边界 | 当前没有自定义协议源码；未来自定义消息和状态快照归此模块 |
+| `UnityRuntime` | `ProjectSettings/`、`Packages/`、`Assets/Core/Scenes/`、`Assets/Core/Prefabs/` | Unity 序列化配置、场景、Prefab、构建设置和运行时资产 |
+| `Workflow` | `Y_MultipleAgentWorkflow/` | 权威文档路由、知识域租约和维护规则 |
+
+各代码模块的详细入口见根路由对应的模块 Guide。模块文档不得代替实际源码；没有独立源码的模块必须明确记录其承载位置和当前空白。
+
 ## 当前网络事实
 
 - Transport 为 `kcp2k.KcpTransport`，UDP 端口为 `7777`。

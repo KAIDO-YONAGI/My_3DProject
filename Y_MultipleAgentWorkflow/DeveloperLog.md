@@ -20,3 +20,10 @@
 - 根路由、项目总览和 UnityRuntime 文档统一指向 `PersistentScene`、`MultiplayerSampleScene` 与当前角色 Prefab。
 - 将固定 Tick、`InputFrame`、快照和预测明确标记为后续计划，避免把计划描述为已实现事实。
 - 工作流实例知识域清单收敛为 `Workflow` 与 `UnityRuntime`，`ProjectValidationMode=None` 保持不变。
+
+## 2026-09-29：按代码职责恢复模块化知识域
+
+- 修正上一条“仅保留 `Workflow` 与 `UnityRuntime`”的过度收敛。
+- 权威知识域恢复为 `Workflow`、`Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`。
+- `Client` 对应 Movement、玩家输入、动画和相机；`Networking` 对应 Mirror 连接与玩家网络组件。
+- `Server` 和 `Protocol` 当前没有独立源码目录，分别由 Mirror Headless/NetworkManager 与 Mirror 内置消息/序列化边界承载；文档明确记录这一事实，不虚构实现。

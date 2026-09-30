@@ -4,7 +4,7 @@
 状态：`Active`
 最后核验：`2026-09-29`
 
-本目录是项目权威文档的唯一入口。`docs/` 保留计划、草案和教学材料，不作为当前实现事实；不因本次重建迁移、删除或改写其中内容。
+本目录是项目权威文档的唯一入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，另有 `Workflow` 管理路由与租约。`docs/` 保留计划、草案和教学材料，不作为当前实现事实；不因本次重建迁移、删除或改写其中内容。
 
 ## 权威顺序
 
@@ -29,8 +29,12 @@
 | 触发词或目标 | 必读文档 |
 |---|---|
 | 项目定位、当前架构、联机链路、实施边界 | `Project_Overview.md` |
-| Mirror、KCP、NetworkManager、玩家 Prefab、自动连接、构建和联调 | `UnityRuntime/Mirror_KCP_Config.md` |
+| 客户端生命周期、玩家输入、移动、相机和客户端表现 | `Client/Client_Guide.md` |
+| Mirror、KCP、NetworkManager、自动连接、玩家网络组件 | `Networking/Networking_Guide.md` |
+| 专用服务器启动、Headless 构建、监听和部署事实 | `Server/Server_Guide.md` |
+| 客户端/服务器消息边界、当前协议形态和未来协议设计 | `Protocol/Protocol_Guide.md` |
 | Unity 版本、Packages、Build Settings、场景、Prefab、事件资产 | `UnityRuntime/UnityRuntime_Guide.md` |
+| Mirror 参数、当前玩家 Prefab、联机验证和构建产物 | `UnityRuntime/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
 | 八阶段计划、InputFrame、固定 Tick、快照、预测 | `docs/plan/00-改造计划总览.md`，仅作为计划读取 |
 | Mirror/KCP 教学与从零配置 | `docs/Mirror+KCP配置学习指南.md`，当前工程事实仍以 `UnityRuntime/Mirror_KCP_Config.md` 为准 |
@@ -54,6 +58,10 @@
 | 文档 ID | 路径 | 职责 | 状态 | 最近核验 |
 |---|---|---|---|---|
 | `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active | 2026-09-29 |
+| `CLIENT-GUIDE` | `Client/Client_Guide.md` | 客户端生命周期、输入、移动和相机 | Active | 2026-09-29 |
+| `NETWORKING-GUIDE` | `Networking/Networking_Guide.md` | Mirror 网络运行时组件与连接管理 | Active | 2026-09-29 |
+| `SERVER-GUIDE` | `Server/Server_Guide.md` | 专用服务器运行与构建事实 | Active | 2026-09-29 |
+| `PROTOCOL-GUIDE` | `Protocol/Protocol_Guide.md` | 协议边界、当前同步形态和未来设计 | Active | 2026-09-29 |
 | `UNITY-GUIDE` | `UnityRuntime/UnityRuntime_Guide.md` | Unity 场景、Prefab、资产和配置 | Active | 2026-09-29 |
 | `UNITY-NETCFG` | `UnityRuntime/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证证据 | Active | 2026-09-29 |
 | `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active | 2026-09-20 |
