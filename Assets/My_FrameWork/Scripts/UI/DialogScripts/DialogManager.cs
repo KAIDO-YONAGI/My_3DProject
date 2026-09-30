@@ -178,8 +178,6 @@ public class DialogManager : MonoBehaviour
                 }
             }
         }
-        //TODO 添加检测位置有没有去过的逻辑
-
         return true;
     }
 
