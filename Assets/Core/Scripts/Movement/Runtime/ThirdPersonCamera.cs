@@ -61,12 +61,6 @@ public sealed class ThirdPersonCamera : MonoBehaviour
             return;
         }
 
-        // 镜头如果是角色子节点，会叠加角色位移和旋转；先脱离层级以保持独立世界变换。
-        if (transform.IsChildOf(target))
-        {
-            transform.SetParent(null, true);
-        }
-
         Vector3 angles = transform.eulerAngles;
         yaw = angles.y;
         pitch = NormalizePitch(angles.x);
@@ -74,6 +68,19 @@ public sealed class ThirdPersonCamera : MonoBehaviour
         // 用场景中的初始镜头位置建立偏移，避免启用脚本时突然跳到预设距离。
         smoothedOffset = transform.position - (target.position + targetOffset);
         SetCursorLock(lockCursor);
+    }
+
+    /// <summary>
+    /// 网络模型运行时替换跟随目标，但保留摄像头在本地模型 Prefab 内的层级。
+    /// </summary>
+    public void SetTarget(Transform newTarget)
+    {
+        if (newTarget == null)
+        {
+            return;
+        }
+
+        target = newTarget;
     }
 
     private void LateUpdate()

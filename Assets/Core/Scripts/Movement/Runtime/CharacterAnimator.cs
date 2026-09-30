@@ -118,7 +118,8 @@ public sealed class CharacterAnimator : IDisposable
     /// </summary>
     public void Apply(CharacterMotion motion)
     {
-        if (overrideController == null)
+        // 模型切换期间旧 Animator 可能已被 Unity 销毁，避免把失效引用传给动画 API。
+        if (overrideController == null || animator == null)
         {
             return;
         }

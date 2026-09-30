@@ -48,43 +48,19 @@ public sealed class PlayerCharacterController : MonoBehaviour
     // Awake 只负责组装依赖，不在这里读取输入或执行位移。
     private void Awake()
     {
-        CacheReferences();
-        EnsureSettings();
-        networkIdentity = GetComponent<NetworkIdentity>();
-
-        if (characterController == null)
-        {
-            Debug.LogError($"{name} 缺少 CharacterController，角色控制已停用。", this);
-            enabled = false;
-            return;
-        }
-
-        // CharacterMotor 始终创建，因此即使没有 Animator，角色仍能正常移动。
-        motor = new CharacterMotor(transform, characterController, movementSettings);
-
-        if (animator != null)
-        {
-            animationDriver = new CharacterAnimator(
-                animator,
-                idleClip,
-                runDirectionalSet,
-                sprintDirectionalSet,
-                jumpAnimationSet);
-            animationDriver.Initialize();
-        }
-        else
-        {
-            Debug.LogWarning($"{name} 缺少 Animator，角色仍可移动但不会播放动画。", this);
-        }
-
-        // 骨骼跟随依赖 Animator 的人形骨骼信息，必须在引用确定后初始化。
-        ponytailFollower.Initialize(animator);
+        EnsureRuntimeState();
     }
 
     private void Update()
     {
         // 联机时只允许本地玩家采集输入；没有 NetworkIdentity 的单机角色仍沿用原有控制逻辑。
         if (NetworkClient.active && (networkIdentity == null || !networkIdentity.isLocalPlayer))
+        {
+            return;
+        }
+
+        // 网络模型是运行时挂载的，首次 Update 可能早于实例化后的依赖初始化，避免因此丢失移动能力。
+        if (!EnsureRuntimeState())
         {
             return;
         }
@@ -118,6 +94,54 @@ public sealed class PlayerCharacterController : MonoBehaviour
         if (animator == null)
         {
             animator = GetComponentInChildren<Animator>();
+        }
+    }
+
+    // 允许网络模型在运行时挂载后补齐 CharacterMotor 与动画驱动，单机 Prefab 仍沿用同一套初始化逻辑。
+    private bool EnsureRuntimeState()
+    {
+        CacheReferences();
+        EnsureSettings();
+        networkIdentity ??= GetComponent<NetworkIdentity>();
+
+        if (characterController == null)
+        {
+            return false;
+        }
+
+        if (motor == null)
+        {
+            motor = new CharacterMotor(transform, characterController, movementSettings);
+        }
+
+        if (animationDriver == null && animator != null)
+        {
+            animationDriver = new CharacterAnimator(
+                animator,
+                idleClip,
+                runDirectionalSet,
+                sprintDirectionalSet,
+                jumpAnimationSet);
+            animationDriver.Initialize();
+            ponytailFollower.Initialize(animator);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 模型 Prefab 被替换后，重新绑定网络根对象使用的 Animator。
+    /// </summary>
+    public void RebindAnimator(Animator replacementAnimator)
+    {
+        animationDriver?.Dispose();
+        animationDriver = null;
+        animator = replacementAnimator;
+
+        // 清空引用时只保留“无动画驱动”状态，避免 CacheReferences 又找回正在销毁的旧模型。
+        if (replacementAnimator != null)
+        {
+            EnsureRuntimeState();
         }
     }
 
