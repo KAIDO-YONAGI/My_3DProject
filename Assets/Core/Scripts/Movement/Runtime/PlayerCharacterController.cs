@@ -37,6 +37,8 @@ public sealed class PlayerCharacterController : MonoBehaviour
     private CharacterMotor motor;
     private CharacterAnimator animationDriver;
     private NetworkIdentity networkIdentity;
+    private Vector3 previousNetworkPosition;
+    private bool hasPreviousNetworkPosition;
 
     // 添加组件或在 Inspector 重置时自动补齐最常见引用和默认配置。
     private void Reset()
@@ -53,6 +55,13 @@ public sealed class PlayerCharacterController : MonoBehaviour
 
     private void Update()
     {
+        // 专用服务器只负责转发网络状态，不执行本地输入、重力和动画驱动，
+        // 否则无摄像头和本地输入的服务器会把网络玩家持续推落场景。
+        if (networkIdentity != null && NetworkServer.active && !NetworkClient.active)
+        {
+            return;
+        }
+
         // 联机时只允许本地玩家采集输入；没有 NetworkIdentity 的单机角色仍沿用原有控制逻辑。
         if (NetworkClient.active && (networkIdentity == null || !networkIdentity.isLocalPlayer))
         {
@@ -73,6 +82,13 @@ public sealed class PlayerCharacterController : MonoBehaviour
 
     private void LateUpdate()
     {
+        // 远程玩家不读取本地输入；它的动画速度来自 NetworkTransform 更新后的根节点位移。
+        // 放在 LateUpdate 是为了先让 Mirror 完成本帧位置插值，再根据最终位置驱动 Animator。
+        if (IsRemoteNetworkPlayer())
+        {
+            ApplyRemoteAnimation(Time.deltaTime);
+        }
+
         // Animator 已完成骨骼计算后，再恢复发辫根节点相对头部的偏移。
         ponytailFollower.Apply();
     }
@@ -132,17 +148,104 @@ public sealed class PlayerCharacterController : MonoBehaviour
     /// <summary>
     /// 模型 Prefab 被替换后，重新绑定网络根对象使用的 Animator。
     /// </summary>
-    public void RebindAnimator(Animator replacementAnimator)
+    public void RebindAnimator(Animator replacementAnimator, PlayerCharacterController visualConfiguration = null)
     {
         animationDriver?.Dispose();
         animationDriver = null;
         animator = replacementAnimator;
 
+        // 当前本地或远程视觉预制体拥有具体角色的 Idle/Run/Sprint/Jump 素材；
+        // 网络根对象只负责移动和网络身份，因此绑定 Animator 时必须把这些配置复制过来。
+        if (visualConfiguration != null)
+        {
+            CopyAnimationConfiguration(visualConfiguration);
+        }
+
         // 清空引用时只保留“无动画驱动”状态，避免 CacheReferences 又找回正在销毁的旧模型。
         if (replacementAnimator != null)
         {
+            hasPreviousNetworkPosition = false;
             EnsureRuntimeState();
         }
+    }
+
+    /// <summary>
+    /// 绑定本地玩家的输入参考空间。
+    /// CharactersForLocal 自带相机，网络根对象必须读取这台相机的朝向，
+    /// 否则移动会退回 Camera.main 或根节点朝向，出现“转相机但前进方向不变”。
+    /// </summary>
+    public void RebindInputSpace(Transform replacementInputSpace)
+    {
+        // 远程角色传入 null，表示它不采集本地输入；本地角色传入本地视觉 Prefab 的相机。
+        inputSpace = replacementInputSpace;
+    }
+
+    /// <summary>
+    /// 从当前视觉预制体的控制器复制动画素材配置。
+    /// 不复制 CharacterController、移动参数和输入引用，避免远程视觉模型重新接管移动。
+    /// </summary>
+    private void CopyAnimationConfiguration(PlayerCharacterController source)
+    {
+        idleClip = source.idleClip;
+        runDirectionalSet = source.runDirectionalSet;
+        sprintDirectionalSet = source.sprintDirectionalSet;
+        jumpAnimationSet = source.jumpAnimationSet;
+
+        // 发辫跟随配置属于角色视觉预制体，网络根对象只在这里接管它的引用，
+        // 不重新创建或改写视觉预制体上的 DynamicBone 组件。
+        ponytailFollower.CopyConfigurationFrom(source.ponytailFollower);
+    }
+
+    private bool IsRemoteNetworkPlayer()
+    {
+        return NetworkClient.active
+            && networkIdentity != null
+            && !networkIdentity.isLocalPlayer;
+    }
+
+    /// <summary>
+    /// 根据远程根节点本帧的实际位移生成动画快照。
+    /// 位置由 NetworkTransformReliable 同步，动画不再依赖远程客户端的本地输入。
+    /// </summary>
+    private void ApplyRemoteAnimation(float deltaTime)
+    {
+        if (!EnsureRuntimeState() || animationDriver == null)
+        {
+            return;
+        }
+
+        Vector3 currentPosition = transform.position;
+        if (!hasPreviousNetworkPosition || deltaTime <= 0f)
+        {
+            previousNetworkPosition = currentPosition;
+            hasPreviousNetworkPosition = true;
+            animationDriver.Apply(new CharacterMotion(true, false, Vector2.zero, 0f));
+            return;
+        }
+
+        Vector3 frameVelocity = (currentPosition - previousNetworkPosition) / deltaTime;
+        previousNetworkPosition = currentPosition;
+
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(frameVelocity, Vector3.up);
+        Vector3 localVelocity = transform.InverseTransformDirection(planarVelocity);
+        float speed = planarVelocity.magnitude;
+        float runSpeed = movementSettings.GetTargetSpeed(false);
+        float sprintSpeed = movementSettings.GetTargetSpeed(true);
+        float sprintThreshold = Mathf.Lerp(runSpeed, sprintSpeed, 0.65f);
+
+        Vector2 localDirection = localVelocity.sqrMagnitude > 0.0001f
+            ? new Vector2(localVelocity.x, localVelocity.z).normalized
+            : Vector2.zero;
+        bool grounded = characterController == null || characterController.isGrounded
+            || Mathf.Abs(frameVelocity.y) < 0.05f;
+        bool wantsSprint = speed >= sprintThreshold;
+        float locomotionWeight = runSpeed > 0.01f ? Mathf.Clamp01(speed / runSpeed) : 0f;
+
+        animationDriver.Apply(new CharacterMotion(
+            grounded,
+            wantsSprint,
+            localDirection,
+            locomotionWeight));
     }
 
     // Unity 旧序列化数据可能把可序列化类保存为 null，这里统一补回默认对象。

@@ -21,6 +21,26 @@ public sealed class CharacterBoneFollower
     private Quaternion localRotation;
 
     /// <summary>
+    /// 复制 CharactersForSync 视觉预制体上的发辫跟随配置。
+    /// 网络根对象本身没有角色骨骼，不能继续使用 Player_Network 上的空引用配置；
+    /// 这里只复制视觉实例中的 Transform 引用，不改写视觉预制体上的 DynamicBone 组件。
+    /// </summary>
+    public void CopyConfigurationFrom(CharacterBoneFollower source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        enabled = source.enabled;
+        headBone = source.headBone;
+        hairRigRoot = source.hairRigRoot;
+        initialized = false;
+        localPosition = Vector3.zero;
+        localRotation = Quaternion.identity;
+    }
+
+    /// <summary>
     /// 解析头骨引用并记录模型初始偏移；引用无效时保持未初始化状态。
     /// </summary>
     public void Initialize(Animator animator)

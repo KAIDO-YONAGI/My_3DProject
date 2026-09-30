@@ -103,8 +103,10 @@ public sealed class CharacterMotor
     private Vector3 ResolveMoveDirection(Vector2 moveInput, Transform inputSpace)
     {
         Transform basis = inputSpace;
-        if (basis == null && Camera.main != null && !Camera.main.transform.IsChildOf(owner))
+        if (basis == null && Camera.main != null)
         {
+            // 本地玩家的相机属于 CharactersForLocal 子模型；
+            // 即使相机是网络根对象的子节点，也必须用它作为前进方向基准。
             basis = Camera.main.transform;
         }
 
