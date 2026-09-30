@@ -137,7 +137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 855c9b6e39b4af64dae819d891c1283f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoConnectInEditor: 0
+  autoConnectInEditor: 1
   autoConnectInPlayer: 1
   connectAddress: 127.0.0.1
   reconnectInterval: 3
