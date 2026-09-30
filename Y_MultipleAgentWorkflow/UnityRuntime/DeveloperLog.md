@@ -42,3 +42,17 @@
 - `PersistentScene/Managers/NetworkCharacterManager.characterPrefabs[]` 使用 `NetworkCharacterSync` 的角色编号加载 `CharactersForSync` 远程角色，角色内的 `ThirdPersonCamera` 和 Animator 不迁移到网络根对象。
 - `NetworkManager.prefab` 默认关闭 `autoConnectInEditor`，避免单机编辑器 Play 被自动连接流程干扰；需要联机时仍可通过 HUD 或显式启动 Host。
 - 2026-09-30 在正确 Unity 实例 `My_3DProject@6d686e37950b774c` 中完成 Host、模型切换和截图验证。
+
+## 2026-09-30：修复联机出生高度与相机归属
+
+- 修正 `PersistentScene` 的本地角色 Prefab 根引用和两个 `NetworkStartPosition`，出生点位于 `TerrainCollider` 上方约 `0.2m`。
+- `NetworkCharacterManager` 在 Additive 场景加载后重新禁用非网络 Camera、`ThirdPersonCamera` 和 `AudioListener`。
+- 通过 Unity MCP 重建 `Server_12_7`，再以两个 Unity 编辑器连接验证；本地角色稳定落地，模型未悬空，只有本地网络角色相机启用。
+- 验证结束后两个编辑器均退出 Play，专用服务器进程已停止。
+
+## 2026-09-30：修复单机表现与联机第三角色
+
+- `NetworkCharacterManager` 仅在 `NetworkClient.isConnected` 后禁用 PersistentScene 的单机角色和相机，连接重试阶段继续保留单机表现。
+- `PlayerCharacterController` 使用同一连接完成条件限制输入，未连接时单机重力不再因 KCP 重试暂停。
+- 无服务端验证单机角色自然落地并保持唯一活动场景相机；双编辑器验证每端仅显示两个网络角色。
+- 新增编辑器回归测试，当前 `Core.EditorTests` 为 4/4 通过。

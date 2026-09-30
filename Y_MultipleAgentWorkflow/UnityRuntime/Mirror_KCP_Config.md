@@ -90,6 +90,7 @@ Player_Network
 - 专用服务器使用 `HeadlessStartMode = AutoStartServer`，批处理启动后自动监听 7777。
 - `AutoStartClient` 在 Unity 编辑器和普通客户端构建中连接 `127.0.0.1`，断开后每 3 秒重试。
 - `AutoStartClient` 在 `Application.isBatchMode` 或本机已启动 Server/Client 时不重复发起连接。
+- `NetworkClient.active` 会在连接尝试阶段变化，不能作为单机/联机表现切换依据。`NetworkCharacterManager` 和输入归属使用 `NetworkClient.isConnected`：未连接时保留单机角色、相机和重力；连接完成后禁用场景单机角色，只显示 Mirror 生成的网络玩家。
 
 ## 连接地址
 
@@ -106,10 +107,10 @@ Player_Network
 ### 专用服务器
 
 - Build Profiles 选择 Windows Server，构建产物无图形设备。
-- 启动方式：运行 `Server_7_0/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
+- 启动方式：运行 `Server_12_7/My_3DProject.exe`，HeadlessStartMode = AutoStartServer 使其自动监听 7777。
 - 启动成功标志：日志出现 `Server listening on port 7777`。
 - 服务器日志中的 `Shader ... not supported` ERROR/WARNING 来自 Null 图形设备，属正常输出。
-- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_7_0/My_3DProject.exe`。
+- 输出：`D:/Unity/Releases/3D_MultiplayerGame/Server/Server_12_7/My_3DProject.exe`。
 
 从零复现整套配置的步骤与常见配置错误速查见 `docs/Mirror+KCP配置学习指南.md`。
 
@@ -121,6 +122,20 @@ Player_Network
 - Host 模式下已验证角色 `characterId 0 -> 1 -> 0` 连续切换，角色持续可见，控制台为 0 error；角色替换前后的 `Animator` 重绑定已覆盖销毁时序。
 - 注入前进输入后角色移动约 `2.82m`，等待 2 秒后没有被服务端位置拉回；Unity Console 为 0 error，用户确认角色可以移动。
 - 验证结束后服务器进程已停止，UDP 7777 无监听，编辑器已退出 Play。
+
+### 2026-09-30：双编辑器物理落地与相机验证
+
+- 通过 Unity MCP 重建 Windows Server，输出为 `Server_12_7`；构建结果为 succeeded，0 error、1 warning。
+- 两个 Unity 编辑器同时连接 KCP 7777 成功，均生成 `Player_Network(Clone)`，证明编辑器联机链路可用。
+- `PersistentScene` 的两个 `NetworkStartPosition` 位于 TerrainCollider 上方约 `0.2m`；运行时由 `CharacterController` 重力自然落地，本地角色保持 `isGrounded=True`，没有运行时传送或高度钳制。
+- 本地 `PlayerCharacterController.inputSpace` 绑定到网络角色子节点的 `Main Camera`；相机偏航 `90°` 后前进方向同步旋转。Additive 场景的非网络相机由 `sceneLoaded` 回调自动禁用。
+- 验证结束后两个编辑器已退出 Play，服务器进程已停止。
+
+### 2026-09-30：单机重试与第三角色修复验证
+
+- 无服务端时单机角色和相机保持启用；角色从场景初始 `Y=3.38` 通过 `CharacterController` 重力自然落到 `Y=-9.491`，`isGrounded=True`。
+- 双编辑器连接 `Server_12_7` 后，每端均为 `networkPlayers=2`、`activeNetworkVisuals=2`、`standaloneActive=0`；第三个角色原因为 PersistentScene 单机角色未禁用，并非服务端额外生成玩家。
+- 每端只有本地网络角色的 Camera 启用；没有增加运行时传送或高度钳制。
 
 ## 风险
 

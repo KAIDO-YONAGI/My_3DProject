@@ -32,14 +32,15 @@
 - 联机启动和常驻场景。
 - `NetworkManager` 对象挂载 Mirror NetworkManager、`kcp2k.KcpTransport`、NetworkManagerHUD 和 `AutoStartClient`。
 - `networkAddress=127.0.0.1`。
-- `onlineScene=Assets/Core/Scenes/MultiplayerSampleScene.unity`。
+- `onlineScene` 为空；由 `Managers/SceneChanger` 以 Additive 模式加载 `Assets/Core/Scenes/MultiplayerSampleScene.unity`。
 - `playerPrefab=Assets/Core/Prefabs/Player_Network.prefab`。
-- 如果 `onlineScene` 为空，玩家会留在没有玩法地面的持久场景并持续下落。
+- `NetworkStartPosition` 位于玩法地形上方约 `0.2m`；角色随后由 `CharacterController` 重力和地形碰撞自然落地，不通过运行时传送修正位置。
 
 ### MultiplayerSampleScene
 
-- 当前在线玩法场景，提供地形、方向光、EventSystem、相机及角色相关场景内容。
-- Mirror 完成场景切换后在此自动创建玩家。
+- 当前在线玩法场景，提供地形、`TerrainCollider`、方向光、EventSystem、相机及角色相关场景内容。
+- `SceneChanger` Additive 加载完成后，`NetworkCharacterManager` 会重新应用表现模式；只有真正连接服务端后才禁用场景单机角色和非网络相机，联机时仅本地网络角色的 Camera 保持启用。
+- 网络玩家由 Mirror 在连接后生成，出生点和地形碰撞必须在同一次客户端/服务器构建中保持一致。
 - 场景结构或角色内容发生变化时，应直接核验场景序列化数据，不沿用旧文档中的层级快照。
 
 ## 当前玩家 Prefab
@@ -54,14 +55,14 @@
 - `PlayerCharacterController`
 - `NetworkCharacterSync`
 
-`PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：联机时只有 `isLocalPlayer` 为真的实例采集输入；没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
+`PlayerCharacterController` 保持普通 `MonoBehaviour`。它可选读取同对象上的 `NetworkIdentity`：`NetworkClient.isConnected=true` 时只有 `isLocalPlayer` 为真的实例采集输入；尚未连接或正在重试时，没有 `NetworkIdentity` 的单机角色 Prefab 继续按原逻辑运行。不得仅为判断本地玩家而把该脚本改成 `NetworkBehaviour`。
 
 `PersistentScene/Managers/NetworkCharacterManager` 持有 `localCharacterPrefabs[]`、`characterPrefabs[]` 和 `defaultCharacterId`。两个数组按相同下标表示同一个角色编号：本地拥有者加载 `CharactersForLocal`，远程拥有者加载 `CharactersForSync`。只有本地视觉 Prefab 保留 `ThirdPersonCamera` 和 `Camera`；切换角色时网络根先释放旧动画驱动，再绑定新模型的 Animator。
 
 ## 脚本职责
 
 - `Assets/Core/Scripts/Networking/AutoStartClient.cs`：编辑器和普通客户端自动连接 `127.0.0.1`，失败或断开后每 3 秒重试；批处理以及已启动 Server/Client 的进程不重复连接。
-- `Assets/Core/Scripts/Networking/NetworkCharacterManager.cs`：联机角色编号、远程角色加载和本地相机归属。
+- `Assets/Core/Scripts/Networking/NetworkCharacterManager.cs`：联机角色编号、远程角色加载、单机/联机表现切换、本地相机归属和 Additive 场景加载后的相机收拢。
 - `Assets/Core/Scripts/Networking/NetworkCharacterSync.cs`：Player_Network 上的角色编号同步入口。
 - `Assets/Core/Scripts/Networking/LocalPlayerCamera.cs`：历史相机辅助脚本，不挂在当前 `Player_Network`。
 - `Assets/Core/Scripts/Networking/NetworkPlayerController.cs`：历史网络移动辅助脚本，不挂在当前 `Player_Network`。
@@ -78,9 +79,13 @@
 ## 已验证状态
 
 - Build Settings 中两个当前场景均启用。
-- `Server_7_0 + Unity Editor Play` 已验证连接、Ready、玩家生成和移动。
+- `Server_12_7 + 两个 Unity Editor Play` 已验证 KCP 连接、玩家生成和本地/远程角色同步。
 - 本地玩家实例满足 `local=True`、`owned=True`，同步方向为 `ClientToServer`。
-- 注入前进输入后移动约 `2.82m`，等待 2 秒未回弹；Unity Console 0 error。
+- 本地角色运行时稳定在 `Y=-9.167`、`isGrounded=True`，远程角色稳定在 `Y=-9.170`；模型边界最低点与根节点约差 `0.01m`。
+- 验证中启用相机仅为网络角色子节点的 `Main Camera`；场景原有 `Main Camera` 与 Additive 场景 `Camera` 均已禁用。
+- 将本地相机偏航 `90°` 后，`CharacterMotor` 的前进方向从 `(0,0,1)` 变为 `(1,0,0)`，移动方向与相机朝向同步。
+- 无服务端时场景单机角色从 `Y=3.38` 由 `CharacterController` 重力自然落到 `Y=-9.491`，`isGrounded=True`，单机相机保持启用。
+- 双编辑器连接后每端 `networkPlayers=2`、`activeNetworkVisuals=2`、`standaloneActive=0`，场景单机角色被禁用，不再出现第三个悬空角色。
 - 验证结束后服务器、UDP 7777 监听和 Editor Play 均已清理。
 
 ## 风险与维护触发

@@ -12,6 +12,8 @@
 - 当前玩家 Prefab `Player_Network.prefab` 使用 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
 - `NetworkManager` 固定配置在 `PersistentScene`，`dontDestroyOnLoad=false`、`onlineScene` 为空；场景生命周期由项目自己的 Additive `SceneChanger` 管理。
 - 单机 `LocalPlayer` 不由 Mirror 生成，也不由 `NetworkCharacterManager` 生成；它是 `PersistentScene` 中的编辑器可见角色实例，继续使用本地角色 Prefab。网络玩家使用 `Player_Network.prefab` 网络外壳；`NetworkCharacterManager.localCharacterPrefabs[]` 只能引用 `CharactersForLocal`，`characterPrefabs[]` 只能引用 `CharactersForSync`，两个数组按角色编号一一对应，禁止混用。
+- `localCharacterPrefabs[]` 必须引用完整的本地 Prefab 根对象；本地角色的 Camera 由管理器绑定到网络根的 `PlayerCharacterController.inputSpace`，远程角色不启用相机和输入。
+- `NetworkCharacterManager` 以 `NetworkClient.isConnected` 判断联机表现模式；只有连接完成后才禁用场景单机角色以及非网络 Camera、`ThirdPersonCamera` 和 `AudioListener`。连接尝试和重试期间保持单机表现，Additive 场景加载后重新应用当前模式。
 - `PlayerCharacterController` 仍是普通 `MonoBehaviour`；角色切换时由 `NetworkCharacterManager` 重新绑定根对象的 `Animator`，销毁旧角色前先清空旧动画驱动。
 - `PersistentScene` 不再覆盖 `NetworkManager.playerPrefab`；唯一来源是 `Assets/Core/Prefabs/NetworkManager.prefab` 中的 `Player_Network.prefab`。
 
@@ -27,6 +29,8 @@
 - Host 模式下已验证本地角色生成、模型编号 `0 -> 1 -> 0` 切换，控制台无 `MissingReferenceException`。
 - 玩家生成后具有本地所有权，移动没有在等待 2 秒后被拉回。
 - 混用新旧玩家组件布局曾导致 `OnDeserialize` / `EndOfStreamException`，客户端与服务端必须使用同一组件布局构建。
+- 2026-09-30 两个 Unity 编辑器同时连接重建后的专用服务器成功，双方均生成网络玩家；网络角色在正确高度稳定落地，连接问题不是 KCP 传输故障。
+- 2026-09-30 双编辑器连接后每端仅有两个活动网络角色，场景单机角色 `activeSelf=false`；无服务端时单机角色和相机保持活动并自然落地。
 
 ## 维护触发
 
