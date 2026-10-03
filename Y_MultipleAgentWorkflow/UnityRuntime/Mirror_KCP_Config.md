@@ -12,7 +12,7 @@
 | Transport | `kcp2k.KcpTransport` | `NetworkManager.prefab` |
 | 服务器端口 | UDP `7777` | `KcpTransport.Port` |
 | 客户端地址 | `127.0.0.1` | NetworkManager 与 AutoStartClient |
-| 玩家 Prefab | `Assets/Core/Prefabs/Player_Network.prefab` | NetworkManager |
+| 玩家 Prefab | `Assets/Core/Prefabs/NetworkPlayer.prefab` | NetworkManager |
 | 自动创建玩家 | `true` | NetworkManager |
 | 出生点模式 | `Random` | NetworkManager |
 | 场景切换 | `SceneChanger` Additive 加载 | PersistentScene |
@@ -82,9 +82,9 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 
 ## 玩家生成
 
-客户端连接并完成认证后，Mirror 发送 Ready 和 AddPlayer。服务器从两个 `NetworkStartPosition` 中随机选择一个位置，创建 `Player_Network`，再通过 `NetworkServer.AddPlayerForConnection` 建立连接归属。
+客户端连接并完成认证后，Mirror 发送 Ready 和 AddPlayer。服务器从两个 `NetworkStartPosition` 中随机选择一个位置，创建 `NetworkPlayer`，再通过 `NetworkServer.AddPlayerForConnection` 建立连接归属。
 
-`Player_Network` 生成后：
+`NetworkPlayer` 生成后：
 
 - 本地拥有者运行输入、移动和本地相机。
 - 远程实例接收服务器广播的 Transform。
@@ -93,7 +93,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 
 ## 表现装配与相机隔离
 
-`Player_Network` 自身不保存具体角色模型。`NetworkCharacterManager` 读取 `characterId` 和 `isLocalPlayer`：
+`NetworkPlayer` 自身不保存具体角色模型。`NetworkCharacterManager` 读取 `characterId` 和 `isLocalPlayer`：
 
 - 本地拥有者实例化 `localCharacterPrefabs[characterId]`。
 - 远程玩家实例化 `characterPrefabs[characterId]`。
@@ -127,13 +127,13 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 2. `PersistentScene`
 3. `MultiplayerSampleScene`
 
-客户端与服务器使用相同的 `Player_Network` 组件布局、NetworkBehaviour 顺序和序列化字段。
+客户端与服务器使用相同的 `NetworkPlayer` 组件布局、NetworkBehaviour 顺序和序列化字段。
 
 ## 验收
 
 - 服务端日志显示 UDP `7777` 已监听。
 - 每个客户端完成 KCP 连接和 Mirror Ready。
-- 每个连接生成一个 `Player_Network`。
+- 每个连接生成一个 `NetworkPlayer`。
 - 两名客户端连接时，每端显示两个网络角色。
 - 每端只有本地拥有者的 Camera 和 `AudioListener` 启用。
 - 本地前进方向随相机水平朝向变化。

@@ -23,7 +23,7 @@
 - 常驻场景：`Assets/Core/Scenes/PersistentScene.unity`。
 - 玩法场景：`Assets/Core/Scenes/MultiplayerSampleScene.unity`。
 - 场景框架：`Assets/FrameWork/Scripts/Scene/`。
-- 网络玩家 Prefab：`Assets/Core/Prefabs/Player_Network.prefab`。
+- 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
 - Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`UnityRuntime/Mirror_KCP_Config.md`。
 
 ## 任务路由

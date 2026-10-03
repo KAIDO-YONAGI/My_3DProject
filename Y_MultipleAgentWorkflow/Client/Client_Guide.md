@@ -31,13 +31,13 @@ PlayerCharacterController
 
 ## 网络角色装配
 
-服务器生成的 `Player_Network` 是网络根。该对象不直接包含具体角色模型和相机，客户端通过以下流程完成装配：
+服务器生成的 `NetworkPlayer` 是网络根。该对象不直接包含具体角色模型和相机，客户端通过以下流程完成装配：
 
 1. `NetworkCharacterSync.OnStartClient` 将当前 `characterId` 交给 `NetworkCharacterManager`。
 2. 管理器检查 `NetworkIdentity.isLocalPlayer`。
 3. 本地拥有者从 `localCharacterPrefabs[characterId]` 创建完整本地角色。
 4. 远程玩家从 `characterPrefabs[characterId]` 创建同步角色。
-5. 新角色成为 `Player_Network` 的子对象，本地位置和旋转归零。
+5. 新角色成为 `NetworkPlayer` 的子对象，本地位置和旋转归零。
 6. 管理器停用视觉子对象上的 `PlayerCharacterController` 和 `CharacterController`，运动和碰撞统一由网络根负责。
 7. 管理器把网络根上的 `PlayerCharacterController` 重新绑定到新模型的 `Animator` 和动画配置。
 8. 本地拥有者启用角色相机、`ThirdPersonCamera` 和 `AudioListener`，并把相机 Transform 绑定到 `inputSpace`。

@@ -9,7 +9,7 @@
 - `AutoStartClient`：编辑器和普通客户端连接 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
 - `NetworkCharacterManager`：按角色编号维护本地角色 Prefab 与同步角色 Prefab，装配网络玩家表现，管理相机归属，并切换单机与联机表现。
 - `NetworkCharacterSync`：同步 `characterId`，通过 `CmdSetCharacter` 接收本地拥有者的角色选择。
-- `Player_Network.prefab`：承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
+- `NetworkPlayer.prefab`：承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
 
@@ -24,14 +24,14 @@ AutoStartClient.StartClient
   → NetworkClient.AddPlayer
   → NetworkManager.OnServerAddPlayer
   → NetworkServer.AddPlayerForConnection
-  → 各客户端收到 Player_Network 的 Spawn 数据
+  → 各客户端收到 NetworkPlayer 的 Spawn 数据
 ```
 
-`NetworkManager.onlineScene` 为空。Mirror 完成认证后直接发送 Ready 和 AddPlayer。服务器以 `Random` 模式从两个 `NetworkStartPosition` 中选取位置，实例化 `Player_Network` 并绑定到连接。
+`NetworkManager.onlineScene` 为空。Mirror 完成认证后直接发送 Ready 和 AddPlayer。服务器以 `Random` 模式从两个 `NetworkStartPosition` 中选取位置，实例化 `NetworkPlayer` 并绑定到连接。
 
 ## 角色装配
 
-`Player_Network` 是统一的网络根，具体角色模型在每个客户端本地装配。
+`NetworkPlayer` 是统一的网络根，具体角色模型在每个客户端本地装配。
 
 1. 服务器在 `NetworkCharacterSync.OnStartServer` 设置默认 `characterId`。
 2. 客户端在 `OnStartClient` 和 `OnStartLocalPlayer` 应用角色编号。
@@ -75,8 +75,6 @@ AutoStartClient.StartClient
 - `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；`connectAddress` 指定服务端地址；`reconnectInterval` 使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
 - `NetworkCharacterManager`：`localCharacterPrefabs` 与 `characterPrefabs` 按下标配对；`defaultCharacterId` 指定服务器生成玩家时的初始编号。实例缓存与编号缓存共同复用重复回调中的角色表现。
 - `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。角色选择经拥有者 `Command` 提交到服务器。
-- `NetworkPlayerController`：`moveSpeed` 与 `jumpSpeed` 使用世界单位每秒，分别表示水平移动速度和起跳竖直速度；`gravity` 使用世界单位每秒的平方，负值指向世界 Y 轴下方。
-- `LocalPlayerCamera`：源码说明本地身份判定、远程相机关闭范围，以及 `LateUpdate` 中使用的 Transform 引用和偏移坐标。
 
 ## 维护触发
 

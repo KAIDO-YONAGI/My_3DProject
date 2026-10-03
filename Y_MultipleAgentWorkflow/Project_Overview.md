@@ -19,11 +19,11 @@ InitialScene
   → NetworkManager 自动启动 Server
   → KcpTransport 在 UDP 7777 监听
   → Mirror 接收连接、Ready 和 AddPlayer
-  → 在 NetworkStartPosition 创建 Player_Network
+  → 在 NetworkStartPosition 创建 NetworkPlayer
 
 编辑器或普通客户端
   → AutoStartClient 连接 127.0.0.1
-  → Mirror 创建本地和远程 Player_Network
+  → Mirror 创建本地和远程 NetworkPlayer
   → NetworkCharacterManager 为每个网络根装配角色表现
   → 本地拥有者使用带相机的本地角色 Prefab
   → 远程玩家使用同步角色 Prefab
@@ -36,7 +36,7 @@ InitialScene
 - `Assets/Core/Scenes/PersistentScene.unity`：常驻管理层，包含场景切换、网络管理、角色表现管理、单机角色和两个网络出生点。
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`：玩法环境，提供地形、碰撞和光照。
 - `Assets/Core/Prefabs/NetworkManager.prefab`：Mirror、KCP、HUD 和自动连接配置。
-- `Assets/Core/Prefabs/Player_Network.prefab`：玩家网络根，承载网络身份、同步、物理控制器和角色编号同步。
+- `Assets/Core/Prefabs/NetworkPlayer.prefab`：玩家网络根，承载网络身份、同步、物理控制器和角色编号同步。
 - `Assets/Core/Prefabs/CharactersForLocal/`：本地拥有者使用的完整角色表现，包含本地相机。
 - `Assets/Core/Prefabs/CharactersForSync/`：远程玩家使用的同步角色表现。
 - `Assets/Core/Scripts/Networking/`：自动连接、角色编号同步和角色表现装配。
@@ -58,7 +58,7 @@ InitialScene
 
 ## 角色表现结构
 
-`Player_Network` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据网络身份在该根下面装配视觉角色。
+`NetworkPlayer` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据网络身份在该根下面装配视觉角色。
 
 - 本地拥有者装配 `CharactersForLocal` 中的完整角色 Prefab。
 - 远程玩家装配 `CharactersForSync` 中的同步角色 Prefab。

@@ -16,7 +16,7 @@
 - `onlineScene` 为空。
 - `autoCreatePlayer=true`。
 - 出生点选择模式为 `Random`。
-- 玩家 Prefab 为 `Assets/Core/Prefabs/Player_Network.prefab`。
+- 玩家 Prefab 为 `Assets/Core/Prefabs/NetworkPlayer.prefab`。
 
 ## 启动流程
 
@@ -34,7 +34,7 @@ Windows Server 构建启动
 
 ## 玩家生命周期
 
-连接认证完成后，客户端发送 Ready 和 AddPlayer。`NetworkManager.OnServerAddPlayer` 选择出生点并创建 `Player_Network`。`NetworkServer.AddPlayerForConnection` 将对象归属给当前连接并向观察者发送 Spawn 数据。
+连接认证完成后，客户端发送 Ready 和 AddPlayer。`NetworkManager.OnServerAddPlayer` 选择出生点并创建 `NetworkPlayer`。`NetworkServer.AddPlayerForConnection` 将对象归属给当前连接并向观察者发送 Spawn 数据。
 
 `NetworkCharacterSync.OnStartServer` 设置默认角色编号。客户端提交角色切换时，服务器执行 `CmdSetCharacter` 校验并更新 `SyncVar`。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
 

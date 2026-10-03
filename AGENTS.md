@@ -28,9 +28,10 @@
 本项目是物理派对游戏：Unity 客户端 + Mirror 专用服务器，按 `docs/plan/00-改造计划总览.md` 的八个阶段执行。
 
 - 联机脚本: `Assets/Core/Scripts/Networking/`
-- 单机框架: `Assets/Core/FrameWork/`
-- 联机场景: `Assets/Core/Scenes/LobbyScene.unity`
-- 玩家 Prefab: `Assets/Core/Prefabs/Player_Network.prefab`
+- 单机框架: `Assets/FrameWork/`
+- 网络玩家 Prefab: `Assets/Core/Prefabs/NetworkPlayer.prefab`
+- 角色 Prefab: `Assets/Core/Prefabs/CharactersForLocal/`、`Assets/Core/Prefabs/CharactersForSync/`
+- 场景: `Assets/Core/Scenes/InitialScene.unity`（初始）、`PersistentScene.unity`（常驻）、`MultiplayerSampleScene.unity`（玩法）
 - Mirror 插件: `Assets/Mirror/`（本地不入库）
 - 构建产物: `D:/Unity/Releases/3D_MultiplayerGame/`
 

@@ -70,13 +70,13 @@
 - `headlessStartMode=AutoStartServer`
 - `onlineScene` 为空
 - `offlineScene` 为空
-- `playerPrefab=Assets/Core/Prefabs/Player_Network.prefab`
+- `playerPrefab=Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `autoCreatePlayer=true`
 - `playerSpawnMethod=Random`
 
-## Player_Network Prefab
+## NetworkPlayer Prefab
 
-路径：`Assets/Core/Prefabs/Player_Network.prefab`
+路径：`Assets/Core/Prefabs/NetworkPlayer.prefab`
 
 关键组件：
 
@@ -111,7 +111,7 @@
 
 - 单机状态使用 `PersistentScene` 中的 `LocalPlayer`。
 - 联机状态收起 `LocalPlayer`。
-- 每个 Mirror 玩家对应一个 `Player_Network` 网络根和一个角色表现。
+- 每个 Mirror 玩家对应一个 `NetworkPlayer` 网络根和一个角色表现。
 - 本地玩家装配带相机的本地表现。
 - 远程玩家装配同步表现。
 - 每个客户端仅启用本地拥有者的 Camera、`ThirdPersonCamera` 和 `AudioListener`。
