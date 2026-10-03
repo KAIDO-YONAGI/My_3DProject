@@ -78,4 +78,4 @@ InitialScene
 - `AutoStartClient` 连接 `127.0.0.1`，断开后每 3 秒重试。
 - 客户端和服务器使用相同的网络组件布局与序列化字段。
 
-详细配置见 `UnityRuntime/Mirror_KCP_Config.md`，逐文件教学见 `docs/联机系统教学/README.md`。
+详细配置见 `UnityRuntime/Mirror_KCP_Config.md`。

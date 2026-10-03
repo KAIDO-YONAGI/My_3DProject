@@ -9,7 +9,6 @@
 |---|---|
 | Mirror 当前消息、序列化和同步边界 | `Protocol_Guide.md` |
 | 玩家同步方向和 NetworkTransform | `../Networking/Networking_Guide.md` |
-| InputFrame、状态快照、预测校正设计 | `docs/plan/00-改造计划总览.md`，仅作为 Proposal 读取 |
 
 ## 主要证据路径
 

@@ -140,8 +140,6 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 玩家从出生点依据重力和地形碰撞落地。
 - 角色切换后各端使用同一 `characterId` 对应的本地或同步 Prefab。
 
-逐文件代码讲解见 `docs/联机系统教学/README.md`。
-
 ## 维护触发
 
 修改 Mirror 版本、KCP 参数、NetworkManager、玩家 Prefab、角色装配、连接地址、出生点或构建配置时更新本文档。

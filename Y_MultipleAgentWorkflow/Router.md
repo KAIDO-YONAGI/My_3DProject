@@ -4,7 +4,7 @@
 状态：`Active`
 最后核验：`2026-09-30`
 
-本目录是项目权威文档入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，`Workflow` 管理文档路由与并发租约。`docs/` 存放计划和教学材料，工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
+本目录是项目权威文档入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
 ## 权威顺序
 
@@ -25,7 +25,6 @@
 - 场景框架：`Assets/FrameWork/Scripts/Scene/`。
 - 网络玩家 Prefab：`Assets/Core/Prefabs/Player_Network.prefab`。
 - Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`UnityRuntime/Mirror_KCP_Config.md`。
-- 联机系统教学入口：`docs/联机系统教学/README.md`。
 
 ## 任务路由
 
@@ -39,8 +38,7 @@
 | Unity 版本、Packages、Build Settings、场景和 Prefab | `UnityRuntime/UnityRuntime_Guide.md` |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `UnityRuntime/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
-| 八阶段计划、InputFrame、固定 Tick、快照、预测 | `docs/plan/00-改造计划总览.md`，仅作为计划读取 |
-| 场景配置、UDP/KCP、Mirror 生命周期、角色装配和联机验收 | `docs/联机系统教学/README.md` |
+| 场景配置、UDP/KCP、Mirror 生命周期、角色装配和联机验收 | `UnityRuntime/Mirror_KCP_Config.md`、`UnityRuntime/UnityRuntime_Guide.md` |
 
 跨知识域任务同时读取所有受影响入口。
 
