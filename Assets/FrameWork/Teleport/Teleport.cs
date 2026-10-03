@@ -13,7 +13,7 @@ public class SceneToggler : MonoBehaviour
     [SerializeField] private List<GameSceneSO> sceneToLoad = new List<GameSceneSO>();
     [SerializeField] private bool isToFade = true;
 
-    private void OnTriggerEnter2D(Collider2D collider)
+    private void OnTriggerEnter(Collider collider)
     {
         if (!collider.CompareTag(PlayerTag))
             return;
