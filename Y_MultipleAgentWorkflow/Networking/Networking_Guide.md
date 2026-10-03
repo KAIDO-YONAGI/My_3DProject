@@ -2,7 +2,7 @@
 
 文档 ID：`NETWORKING-GUIDE`
 状态：`Active`
-最后核验：`2026-09-30`
+最后核验：`2026-10-03`
 
 ## 当前组件
 
@@ -67,6 +67,16 @@ AutoStartClient.StartClient
 - `CmdSetCharacter` 将本地角色选择提交到服务器，服务器校验后更新 `SyncVar`。
 
 客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。
+
+## 源码字段说明
+
+`Assets/Core/Scripts/Networking/` 中的可配置字段通过中文 `Tooltip` 提供用途、单位和配置约束。运行时缓存与关键装配入口使用源码注释说明数据归属和调用关系。
+
+- `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；`connectAddress` 指定服务端地址；`reconnectInterval` 使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
+- `NetworkCharacterManager`：`localCharacterPrefabs` 与 `characterPrefabs` 按下标配对；`defaultCharacterId` 指定服务器生成玩家时的初始编号。实例缓存与编号缓存共同复用重复回调中的角色表现。
+- `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。角色选择经拥有者 `Command` 提交到服务器。
+- `NetworkPlayerController`：`moveSpeed` 与 `jumpSpeed` 使用世界单位每秒，分别表示水平移动速度和起跳竖直速度；`gravity` 使用世界单位每秒的平方，负值指向世界 Y 轴下方。
+- `LocalPlayerCamera`：源码说明本地身份判定、远程相机关闭范围，以及 `LateUpdate` 中使用的 Transform 引用和偏移坐标。
 
 ## 维护触发
 

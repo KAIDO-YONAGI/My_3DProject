@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-GUIDE`
 状态：`Active`
-最后核验：`2026-09-30`
+最后核验：`2026-10-03`
 
 ## 版本与依赖
 
@@ -100,6 +100,12 @@
 | `1` | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
 
 默认角色编号为 `1`。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型、Animator 和动画配置。
+
+## Inspector 配置提示
+
+`NetworkManager` Prefab 上的 `AutoStartClient` 字段显示中文 Tooltip，说明自动连接的运行环境、地址格式和重试间隔。地址使用 IP 或主机名，端口由同一 Prefab 上的 `KcpTransport.Port` 提供。
+
+`PersistentScene` 中 `NetworkCharacterManager` 的两个角色数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，两套数组的同一下标表示同一角色；默认编号对应的两个位置均配置有效 Prefab。
 
 ## 角色数量与相机规则
 
