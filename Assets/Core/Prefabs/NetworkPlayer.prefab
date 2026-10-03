@@ -15,8 +15,8 @@ GameObject:
   - component: {fileID: 8461200035157734512}
   - component: {fileID: 4149387868693482790}
   m_Layer: 0
-  m_Name: Player_Network
-  m_TagString: Untagged
+  m_Name: NetworkPlayer
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneId: 0
-  _assetId: 0
+  _assetId: 2423780791
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
@@ -113,7 +113,6 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  # 网络根节点的位置语义是角色脚底；碰撞体中心上移半个高度，避免地面把根节点顶到一米高。
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &8461200035157734512
 MonoBehaviour:
