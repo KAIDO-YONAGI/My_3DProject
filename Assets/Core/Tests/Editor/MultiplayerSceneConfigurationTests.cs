@@ -13,6 +13,82 @@ public sealed class MultiplayerSceneConfigurationTests
     private const string GameplayScenePath = "Assets/Core/Scenes/MultiplayerSampleScene.unity";
 
     [Test]
+    public void StandalonePlayerReferencePointsToSceneCharacter()
+    {
+        Scene persistentScene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
+
+        try
+        {
+            MonoBehaviour manager = FindComponent(persistentScene, "NetworkCharacterManager");
+            Assert.That(manager, Is.Not.Null);
+
+            SerializedProperty playerReference = new SerializedObject(manager)
+                .FindProperty("standalonePlayer");
+            Assert.That(playerReference, Is.Not.Null);
+
+            GameObject player = playerReference.objectReferenceValue as GameObject;
+            Assert.That(player, Is.Not.Null);
+            Assert.That(player.scene, Is.EqualTo(persistentScene));
+            Assert.That(FindStandalonePlayers(persistentScene), Does.Contain(player));
+        }
+        finally
+        {
+            CloseIfOpened(persistentScene, openedScene);
+        }
+    }
+
+    [Test]
+    public void StandalonePlayerToggleOnlyChangesReferencedCharacter()
+    {
+        Scene persistentScene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
+        GameObject unreferencedPlayer = null;
+        GameObject player = null;
+        bool wasActive = false;
+
+        try
+        {
+            MonoBehaviour manager = FindComponent(persistentScene, "NetworkCharacterManager");
+            Assert.That(manager, Is.Not.Null);
+            SerializedProperty playerReference = new SerializedObject(manager)
+                .FindProperty("standalonePlayer");
+            Assert.That(playerReference, Is.Not.Null);
+            player = playerReference.objectReferenceValue as GameObject;
+            Assert.That(player, Is.Not.Null);
+            wasActive = player.activeSelf;
+
+            unreferencedPlayer = UnityEngine.Object.Instantiate(player);
+            unreferencedPlayer.SetActive(true);
+
+            MethodInfo toggle = manager.GetType().GetMethod(
+                "SetStandalonePlayerEnabled",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(toggle, Is.Not.Null);
+
+            toggle.Invoke(manager, new object[] { false });
+            Assert.That(player.activeSelf, Is.False);
+            Assert.That(unreferencedPlayer.activeSelf, Is.True);
+
+            toggle.Invoke(manager, new object[] { true });
+            Assert.That(player.activeSelf, Is.True);
+            Assert.That(unreferencedPlayer.activeSelf, Is.True);
+        }
+        finally
+        {
+            if (unreferencedPlayer != null)
+            {
+                UnityEngine.Object.DestroyImmediate(unreferencedPlayer);
+            }
+
+            if (player != null)
+            {
+                player.SetActive(wasActive);
+            }
+
+            CloseIfOpened(persistentScene, openedScene);
+        }
+    }
+
+    [Test]
     public void LocalCharacterPrefabsReferenceCompletePrefabRoots()
     {
         Scene persistentScene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
@@ -103,6 +179,73 @@ public sealed class MultiplayerSceneConfigurationTests
     }
 
     [Test]
+    public void StandaloneCameraReferencesOnlyToggleConfiguredComponents()
+    {
+        Scene scene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
+        GameObject unreferencedCamera = null;
+        var configured = new List<Behaviour>();
+        var previousStates = new List<bool>();
+
+        try
+        {
+            MonoBehaviour manager = FindComponent(scene, "NetworkCharacterManager");
+            Assert.That(manager, Is.Not.Null);
+            var serialized = new SerializedObject(manager);
+            foreach (string field in new[]
+                     { "standaloneCameras", "standaloneCameraControllers", "standaloneListeners" })
+            {
+                SerializedProperty references = serialized.FindProperty(field);
+                Assert.That(references, Is.Not.Null, field);
+                Assert.That(references.arraySize, Is.GreaterThan(0), field);
+                for (int index = 0; index < references.arraySize; index++)
+                {
+                    var component = references.GetArrayElementAtIndex(index)
+                        .objectReferenceValue as Behaviour;
+                    Assert.That(component, Is.Not.Null, field);
+                    Assert.That(component.gameObject.scene, Is.EqualTo(scene));
+                    configured.Add(component);
+                    previousStates.Add(component.enabled);
+                }
+            }
+
+            unreferencedCamera = UnityEngine.Object.Instantiate(configured[0].gameObject);
+            Behaviour[] unreferenced = unreferencedCamera.GetComponents<Behaviour>();
+            foreach (Behaviour component in unreferenced)
+            {
+                component.enabled = true;
+            }
+
+            MethodInfo toggle = manager.GetType().GetMethod(
+                "SetStandaloneCameraEnabled", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(toggle, Is.Not.Null);
+            foreach (bool enabled in new[] { false, true })
+            {
+                toggle.Invoke(manager, new object[] { enabled });
+                foreach (Behaviour component in configured)
+                {
+                    Assert.That(component.enabled, Is.EqualTo(enabled));
+                }
+                foreach (Behaviour component in unreferenced)
+                {
+                    Assert.That(component.enabled, Is.True);
+                }
+            }
+        }
+        finally
+        {
+            for (int index = 0; index < configured.Count; index++)
+            {
+                configured[index].enabled = previousStates[index];
+            }
+            if (unreferencedCamera != null)
+            {
+                UnityEngine.Object.DestroyImmediate(unreferencedCamera);
+            }
+            CloseIfOpened(scene, openedScene);
+        }
+    }
+
+    [Test]
     public void NetworkCameraModeDisablesStandaloneCameras()
     {
         Scene persistentScene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
@@ -114,7 +257,7 @@ public sealed class MultiplayerSceneConfigurationTests
 
             MethodInfo setStandaloneCameraEnabled = manager.GetType().GetMethod(
                 "SetStandaloneCameraEnabled",
-                BindingFlags.Static | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(setStandaloneCameraEnabled, Is.Not.Null);
 
             List<Camera> standaloneCameras = FindStandaloneCameras(persistentScene);
@@ -122,7 +265,7 @@ public sealed class MultiplayerSceneConfigurationTests
 
             try
             {
-                setStandaloneCameraEnabled.Invoke(null, new object[] { false });
+                setStandaloneCameraEnabled.Invoke(manager, new object[] { false });
                 foreach (Camera camera in standaloneCameras)
                 {
                     Assert.That(
@@ -133,7 +276,7 @@ public sealed class MultiplayerSceneConfigurationTests
             }
             finally
             {
-                setStandaloneCameraEnabled.Invoke(null, new object[] { true });
+                setStandaloneCameraEnabled.Invoke(manager, new object[] { true });
             }
         }
         finally
@@ -266,7 +409,7 @@ public sealed class MultiplayerSceneConfigurationTests
 
             MethodInfo applyPresentationMode = manager.GetType().GetMethod(
                 "ApplyPresentationMode",
-                BindingFlags.Static | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(applyPresentationMode, Is.Not.Null);
 
             List<GameObject> standalonePlayers = FindStandalonePlayers(persistentScene);
@@ -277,13 +420,13 @@ public sealed class MultiplayerSceneConfigurationTests
 
             try
             {
-                applyPresentationMode.Invoke(null, new object[] { false });
+                applyPresentationMode.Invoke(manager, new object[] { false });
                 foreach (GameObject player in standalonePlayers)
                 {
                     Assert.That(player.activeSelf, Is.True, $"{player.name} 在单机模式下不应被隐藏。");
                 }
 
-                applyPresentationMode.Invoke(null, new object[] { true });
+                applyPresentationMode.Invoke(manager, new object[] { true });
                 foreach (GameObject player in standalonePlayers)
                 {
                     Assert.That(player.activeSelf, Is.False, $"{player.name} 在联机模式下仍然可见。");
@@ -296,7 +439,7 @@ public sealed class MultiplayerSceneConfigurationTests
             }
             finally
             {
-                applyPresentationMode.Invoke(null, new object[] { false });
+                applyPresentationMode.Invoke(manager, new object[] { false });
             }
         }
         finally

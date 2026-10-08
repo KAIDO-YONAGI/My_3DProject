@@ -23,6 +23,18 @@ public sealed class NetworkCharacterManager : MonoBehaviour
     [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号。编号从 0 开始，对应两套角色数组中同一下标，两个位置都需要配置有效 Prefab。")]
     [SerializeField, Min(0)] private int defaultCharacterId;
 
+    [Header("场景单机角色")]
+    [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用；请引用场景对象，不要引用角色 Prefab。")]
+    [SerializeField] private GameObject standalonePlayer;
+
+    [Header("场景单机相机")]
+    [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件，不要引用 Prefab。")]
+    [SerializeField] private Camera[] standaloneCameras = new Camera[0];
+    [Tooltip("需要随单机模式启停的场景 ThirdPersonCamera。")]
+    [SerializeField] private ThirdPersonCamera[] standaloneCameraControllers = new ThirdPersonCamera[0];
+    [Tooltip("需要随单机模式启停的场景 AudioListener。")]
+    [SerializeField] private AudioListener[] standaloneListeners = new AudioListener[0];
+
     // 单个玩家的装配结果，组件缓存与视觉实例共用生命周期。
     private sealed class CharacterPresentation
     {
@@ -282,36 +294,6 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         presentation.CameraIsLocal = enableLocalCamera;
     }
 
-    // 通过父级 NetworkIdentity 识别网络表现，相机模式切换作用于场景单机组件。
-    private static void SetStandaloneCameraEnabled(bool enabled)
-    {
-        foreach (Camera camera in FindObjectsOfType<Camera>(true))
-        {
-            if (camera.GetComponentInParent<Mirror.NetworkIdentity>() == null)
-            {
-                camera.enabled = enabled;
-            }
-        }
-
-        foreach (ThirdPersonCamera cameraController in
-                 FindObjectsOfType<ThirdPersonCamera>(true))
-        {
-            if (cameraController.GetComponentInParent<Mirror.NetworkIdentity>() == null)
-            {
-                cameraController.enabled = enabled;
-            }
-        }
-
-        foreach (AudioListener listener in FindObjectsOfType<AudioListener>(true))
-        {
-            if (listener.GetComponentInParent<Mirror.NetworkIdentity>() == null)
-            {
-                listener.enabled = enabled;
-            }
-        }
-    }
-
-
     private static bool IsNetworkPresentationActive()
     {
         // 客户端连接成功或进程采用批处理模式时使用联机表现，连接尝试期间保留单机表现。
@@ -319,7 +301,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
     }
 
     // 联机模式收起场景单机角色和相机，单机模式启用它们。
-    private static void ApplyPresentationMode(bool networkMode)
+    private void ApplyPresentationMode(bool networkMode)
     {
         bool standaloneEnabled = !networkMode;
         SetStandalonePlayerEnabled(standaloneEnabled);
@@ -327,19 +309,40 @@ public sealed class NetworkCharacterManager : MonoBehaviour
     }
 
     // 包含停用对象一起查找，按表现模式切换整个单机角色的激活状态。
-    private static void SetStandalonePlayerEnabled(bool enabled)
+    // 角色现由场景序列化引用提供，停用后仍可直接访问，不再执行全局查找。
+    private void SetStandalonePlayerEnabled(bool enabled)
     {
-        foreach (PlayerCharacterController characterController in
-                 FindObjectsOfType<PlayerCharacterController>(true))
+        if (standalonePlayer != null && standalonePlayer.activeSelf != enabled)
         {
-            if (characterController.GetComponentInParent<Mirror.NetworkIdentity>() != null)
-            {
-                continue;
-            }
+            standalonePlayer.SetActive(enabled);
+        }
+    }
 
-            if (characterController.gameObject.activeSelf != enabled)
+    // 通过父级 NetworkIdentity 识别网络表现，相机模式切换作用于场景单机组件。
+    // 单机组件现由场景显式引用区分，不再扫描场景或查询父级身份。
+    private void SetStandaloneCameraEnabled(bool enabled)
+    {
+        foreach (Camera camera in standaloneCameras)
+        {
+            if (camera != null)
             {
-                characterController.gameObject.SetActive(enabled);
+                camera.enabled = enabled;
+            }
+        }
+
+        foreach (ThirdPersonCamera cameraController in standaloneCameraControllers)
+        {
+            if (cameraController != null)
+            {
+                cameraController.enabled = enabled;
+            }
+        }
+
+        foreach (AudioListener listener in standaloneListeners)
+        {
+            if (listener != null)
+            {
+                listener.enabled = enabled;
             }
         }
     }
