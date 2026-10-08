@@ -36,7 +36,7 @@ Windows Server 构建启动
 
 连接认证完成后，客户端发送 Ready 和 AddPlayer。`NetworkManager.OnServerAddPlayer` 选择出生点并创建 `NetworkPlayer`。`NetworkServer.AddPlayerForConnection` 将对象归属给当前连接并向观察者发送 Spawn 数据。
 
-`NetworkCharacterSync.OnStartServer` 设置默认角色编号。客户端提交角色切换时，服务器执行 `CmdSetCharacter` 校验并更新 `SyncVar`。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
+`NetworkCharacterSync.OnStartServer` 设置默认角色编号。客户端提交角色切换时，服务器执行 `CommandSetCharacter` 校验并更新 `SyncVar`。Host 的本地玩家使用同一 Command 入口。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
 
 ## 构建与运行
 

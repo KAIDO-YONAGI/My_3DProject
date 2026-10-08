@@ -45,6 +45,8 @@ PlayerCharacterController
 
 角色切换时，管理器先清理旧表现和动画引用，再按相同流程装配新角色。
 
+`OnStartClient`、`OnStartLocalPlayer` 和 SyncVar hook 共用装配入口。管理器为每个玩家维护一条表现状态，缓存实例、编号、来源 Prefab、本地身份和相机组件。相同实例、编号、来源 Prefab 和身份的重复调用直接复用表现；身份变化且来源 Prefab 相同时重新配置相机，来源 Prefab 变化时重新装配。停用视觉控制器与读取动画配置共用一次组件查找，相机配置使用当前实例的缓存数组。
+
 ## 相机与移动方向
 
 本地网络角色的 `PlayerCharacterController.inputSpace` 指向本地角色 Prefab 中的 Camera。`CharacterMotor` 取该 Transform 的水平 forward 和 right，把输入转换成世界方向。因此相机偏航会同步改变前进方向。

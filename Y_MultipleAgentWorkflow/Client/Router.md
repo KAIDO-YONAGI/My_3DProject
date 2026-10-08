@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-CLIENT`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`1/5`
 最后更新：`2026-09-29`
 
 | 任务 | 必读文档 |
@@ -23,4 +23,3 @@
 - `workflow:Client`
 - `path:Assets/Core/Scripts/Movement`
 - `path:Assets/Core/Prefabs/CharactersForSync`
-

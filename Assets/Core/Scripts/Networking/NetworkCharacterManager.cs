@@ -3,51 +3,47 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// PersistentScene 中的联机角色表现管理器。
-/// 编辑器通过这个场景对象分别配置本地角色和远程同步角色，网络玩家只同步角色编号。
+/// 在 PersistentScene 中配置本地与远程角色资源，按网络玩家身份装配客户端表现。
+/// 每个玩家的视觉实例、角色编号、来源 Prefab 和相机组件统一保存在表现状态中。
 /// </summary>
 public sealed class NetworkCharacterManager : MonoBehaviour
 {
-    /// <summary>当前场景中供网络玩家访问的角色表现管理器。</summary>
+    /// <summary>网络玩家共用的角色表现管理器。</summary>
     public static NetworkCharacterManager Instance { get; private set; }
 
     [Header("CharactersForLocal 本地玩家配置")]
-    // 数组下标就是角色编号；本地拥有者使用这里的本地 Prefab。
-    // 这些 Prefab 可以保留本地 Camera、ThirdPersonCamera 和单机表现配置。
+    // 下标对应角色编号，本地拥有者从这里取得模型、动画配置和本地相机。
     [Tooltip("本地玩家的角色 Prefab 数组。下标从 0 开始作为角色编号，与 CharactersForSync 相同下标配置同一角色；本地 Prefab 提供模型、动画和本地相机。")]
     [SerializeField] private GameObject[] localCharacterPrefabs = new GameObject[0];
 
     [Header("CharactersForSync 远程角色配置")]
-    // 数组下标必须与 localCharacterPrefabs 对齐；远程拥有者只使用这里的同步 Prefab。
-    // 这里不应配置 CharactersForLocal，远程角色不应携带本地相机和输入表现。
+    // 与本地数组的同一下标配置同一角色，供当前客户端显示远程玩家的模型和动画。
     [Tooltip("远程玩家的同步表现 Prefab 数组。与 CharactersForLocal 按下标配对，配置 CharactersForSync 目录中的模型和动画资源；相机归属由本地玩家身份统一控制。")]
     [SerializeField] private GameObject[] characterPrefabs = new GameObject[0];
     [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号。编号从 0 开始，对应两套角色数组中同一下标，两个位置都需要配置有效 Prefab。")]
     [SerializeField, Min(0)] private int defaultCharacterId;
 
-    // 每个网络玩家对应的当前视觉实例，用于复用模型以及在切换角色或断线时销毁模型。
-    private readonly Dictionary<NetworkCharacterSync, GameObject> characterInstances = new();
-    // 已装配实例的角色编号，与实例缓存一起识别重复的初始化和 SyncVar 回调。
-    private readonly Dictionary<NetworkCharacterSync, int> appliedCharacterIds = new();
-    // null 表示首次应用表现规则；之后记录联机状态，状态变化时统一刷新单机角色和相机。
+    // 单个玩家的装配结果，组件缓存与视觉实例共用生命周期。
+    private sealed class CharacterPresentation
+    {
+        public GameObject Instance;
+        public int CharacterId;
+        // 最近一次相机配置使用的本地身份，用于判断后续回调是否需要刷新。
+        public bool CameraIsLocal;
+        public GameObject SourcePrefab;
+        public Camera[] Cameras;
+        public AudioListener[] Listeners;
+        public ThirdPersonCamera[] CameraControllers;
+    }
+    // 以网络玩家为键，统一查询、替换和清理其表现状态。
+    private readonly Dictionary<NetworkCharacterSync, CharacterPresentation> presentations = new();
+    // 缓存最近应用的表现模式；null 使首次 Update 执行场景角色和相机配置。
     private bool? networkPresentationMode;
 
     /// <summary>
-    /// 只返回 PersistentScene 中配置的初始角色编号，不创建玩家或模型。
-    ///
-    /// 初次生成玩家时，这个编号的去向：
-    /// 1. 客户端连接后请求添加玩家；服务器的 NetworkManager.OnServerAddPlayer
-    ///    实例化 Player_Network，并通过 NetworkServer.AddPlayerForConnection 关联玩家与连接。
-    /// 2. Mirror 在服务器生成这个网络对象时调用其 NetworkCharacterSync.OnStartServer；
-    ///    该方法读取本属性，把编号写入服务器上的 characterId。
-    /// 3. characterId 是 SyncVar：远端客户端通过玩家的 Spawn 状态收到初始值，
-    ///    后续值变化也会同步给观察该玩家的客户端；Host 在同一进程读取服务器状态。
-    ///    OnStartClient 应用当前编号，客户端收到编号变化时 SyncVar hook 再应用。
-    /// 4. NetworkCharacterSync.ApplyCharacter 把编号交给本管理器的 ApplyCharacter；
-    ///    每台客户端为自己的玩家从 CharactersForLocal 取模型，为其他玩家从 CharactersForSync
-    ///    取模型，并在本地实例化。网络同步的是编号，不是模型实例。
-    ///
-    /// 本属性不校验编号、不负责网络同步，也不实例化模型。
+    /// 供 NetworkCharacterSync.OnStartServer 读取的初始角色编号。
+    /// 服务器将编号写入 characterId，由 Mirror 同步给客户端。
+    /// 客户端根据编号和本地玩家身份，从对应数组装配角色表现。
     /// </summary>
     public int DefaultCharacterId => defaultCharacterId;
 
@@ -75,7 +71,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
-    // Additive 加载会带入新的场景对象，加载完成后再次应用当前角色和相机启用规则。
+    // 场景加载带入新的单机角色和相机，按当前表现模式统一设置其启用状态。
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         bool networkMode = IsNetworkPresentationActive();
@@ -93,7 +89,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
 
     private void Update()
     {
-        // 正在重试连接时仍属于单机表现；只有真正连上服务端后才切换到网络角色和网络相机。
+        // 表现模式变化时刷新场景对象，模式稳定期间沿用已配置的状态。
         bool networkMode = IsNetworkPresentationActive();
         if (networkPresentationMode == networkMode)
         {
@@ -104,10 +100,9 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         ApplyPresentationMode(networkMode);
     }
 
-    /// <summary>检查角色编号在本地和同步数组中均有对应的有效 Prefab。</summary>
+    /// <summary>检查角色编号在两套数组中均对应有效 Prefab，供客户端请求和服务器校验使用。</summary>
     public bool IsValidCharacterId(int requestedCharacterId)
     {
-        // 服务端和客户端都使用这个检查，保证同一个编号在两套配置中都可解析。
         return localCharacterPrefabs != null
             && characterPrefabs != null
             && requestedCharacterId >= 0
@@ -117,7 +112,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             && characterPrefabs[requestedCharacterId] != null;
     }
 
-    /// <summary>按角色编号取得远程同步表现的 Prefab，并校验两套数组的对应配置。</summary>
+    /// <summary>校验两套数组的对应项，返回远程角色表现的 Prefab。</summary>
     public bool TryGetCharacterPrefab(int requestedCharacterId, out GameObject characterPrefab)
     {
         if (IsValidCharacterId(requestedCharacterId))
@@ -130,7 +125,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         return false;
     }
 
-    // 本地装配直接读取本地数组中的资源，服务端角色选择校验由 IsValidCharacterId 承担。
+    // 本地装配检查本地数组，角色选择请求的双数组校验由 IsValidCharacterId 承担。
     private bool TryGetLocalCharacterPrefab(int requestedCharacterId, out GameObject characterPrefab)
     {
         if (requestedCharacterId >= 0
@@ -147,14 +142,14 @@ public sealed class NetworkCharacterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 在当前客户端根据同步到的编号装配视觉模型，而不是生成网络玩家。
-    /// player 是已生成的 Player_Network；它属于当前客户端时，从 CharactersForLocal
-    /// 取对应编号的 Prefab，否则从 CharactersForSync 取，并实例化为 player 的子物体。
-    /// 同一编号重复应用时复用已有实例；编号变化时替换视觉实例。
+    /// 角色编号下行链路的本地装配终点，由 NetworkCharacterSync 的启动回调和 SyncVar hook 调用。
+    /// 使用服务器确认的编号，按当前客户端的玩家身份选择 Prefab，将表现挂到已生成的网络根下。
+    /// 本地拥有者选择 localCharacterPrefabs，其他玩家选择 characterPrefabs；模型和相机来自本地资源。
+    /// 有效实例的角色编号和来源 Prefab 相同时复用，资源变化或实例销毁时重新装配。
     /// </summary>
     public void ApplyCharacter(NetworkCharacterSync player, int requestedCharacterId)
     {
-        // NetworkCharacterSync 传来网络编号；这里按当前客户端的拥有者身份选用本地或远程模型。
+        // 同步编号决定数组下标，本地玩家身份决定使用哪套资源。
         bool isLocalPlayer = player != null && player.IsLocalPlayerCharacter;
         GameObject prefab;
         bool hasPrefab = isLocalPlayer
@@ -168,29 +163,35 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             return;
         }
 
-        // 初始同步和本地身份回调可能重复到达；相同编号复用视觉实例，并重新确认相机归属。
-        if (characterInstances.TryGetValue(player, out GameObject currentInstance)
+        // 生命周期回调与 SyncVar hook 共用缓存；身份变化且资源相同时仅刷新相机配置。
+        if (presentations.TryGetValue(player, out CharacterPresentation currentInstance)
             && currentInstance != null
-            && appliedCharacterIds.TryGetValue(player, out int currentId)
-            && currentId == requestedCharacterId)
+            && currentInstance.Instance != null
+            && currentInstance.CharacterId == requestedCharacterId
+            && currentInstance.SourcePrefab == prefab)
         {
-            ConfigureLocalCamera(player, currentInstance);
+            if (currentInstance.CameraIsLocal != isLocalPlayer)
+            {
+                ConfigureLocalCamera(player, currentInstance);
+            }
+
             return;
         }
 
         RemoveCharacter(player);
 
         GameObject characterInstance = Instantiate(prefab, player.transform);
-        // 名称明确标出模型属于本地还是远程，便于在编辑器和运行时层级中排查混用问题。
+        // 实例名标出本地或远程身份，便于核对运行时使用的资源。
         characterInstance.name = $"{prefab.name}_{(isLocalPlayer ? "LocalCharacter" : "RemoteCharacter")}";
-        // 这里对齐视觉子对象与网络根；网络根的位置和物理运动由玩家控制器负责。
+        // 视觉实例与网络根对齐，世界位置和物理运动由根上的玩家控制器负责。
         characterInstance.transform.localPosition = Vector3.zero;
         characterInstance.transform.localRotation = Quaternion.identity;
         characterInstance.transform.localScale = Vector3.one;
 
-        // 角色 Prefab 保留单机组件，但联机移动由 Player_Network 根对象统一负责。
-        foreach (PlayerCharacterController characterController in
-                 characterInstance.GetComponentsInChildren<PlayerCharacterController>(true))
+        // 停用视觉子对象的移动和碰撞组件，由网络根统一驱动角色运动。
+        PlayerCharacterController[] visualControllers =
+            characterInstance.GetComponentsInChildren<PlayerCharacterController>(true);
+        foreach (PlayerCharacterController characterController in visualControllers)
         {
             characterController.enabled = false;
         }
@@ -201,28 +202,29 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             characterController.enabled = false;
         }
 
-        // 模型替换后，网络根对象必须重新绑定新模型的 Animator，
-        // 并复制当前类别 Prefab 上的动画素材配置。
+        // 网络根绑定新模型的 Animator，并从已找到的首个视觉控制器复制动画素材配置。
         PlayerCharacterController visualController =
-            characterInstance.GetComponentInChildren<PlayerCharacterController>(true);
+            visualControllers.Length > 0 ? visualControllers[0] : null;
         player.PlayerController?.RebindAnimator(
             characterInstance.GetComponentInChildren<Animator>(true),
             visualController);
 
-        // Camera 只允许存在并启用于本地 CharactersForLocal。
-        // CharactersForSync 不应包含 Camera；这里仍保留统一绑定入口，兼容旧资源并防止误启用。
-        foreach (ThirdPersonCamera cameraController in
-                 characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true))
+        // 每类相机组件在装配时查找一次，后续身份配置直接使用当前实例的缓存。
+        var presentation = new CharacterPresentation
         {
-            cameraController.SetTarget(player.transform);
-        }
+            Instance = characterInstance,
+            CharacterId = requestedCharacterId,
+            SourcePrefab = prefab,
+            Cameras = characterInstance.GetComponentsInChildren<Camera>(true),
+            Listeners = characterInstance.GetComponentsInChildren<AudioListener>(true),
+            CameraControllers = characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true)
+        };
 
-        characterInstances[player] = characterInstance;
-        appliedCharacterIds[player] = requestedCharacterId;
-        ConfigureLocalCamera(player, characterInstance);
+        ConfigureLocalCamera(player, presentation);
+        presentations[player] = presentation;
     }
 
-    /// <summary>解除网络根的表现引用，销毁视觉实例并清理该玩家的装配缓存。</summary>
+    /// <summary>解除网络根的动画和输入引用，销毁视觉实例并移除玩家的表现状态。</summary>
     public void RemoveCharacter(NetworkCharacterSync player)
     {
         if (player == null)
@@ -230,28 +232,28 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             return;
         }
 
-        // 清理网络根对象对旧模型的引用，避免旧 Animator 被销毁后仍被 Update/LateUpdate 访问。
+        // 先解除引用，再销毁这些引用所属的视觉实例。
         player.PlayerController?.RebindInputSpace(null);
         player.PlayerController?.RebindAnimator(null);
 
-        if (characterInstances.TryGetValue(player, out GameObject characterInstance)
-            && characterInstance != null)
+        if (presentations.TryGetValue(player, out CharacterPresentation presentation)
+            && presentation != null
+            && presentation.Instance != null)
         {
-            Destroy(characterInstance);
+            Destroy(presentation.Instance);
         }
 
-        characterInstances.Remove(player);
-        appliedCharacterIds.Remove(player);
+        presentations.Remove(player);
     }
 
-    // 相机、音频监听器与相机控制器共用本地身份开关，并将本地视角交给移动输入。
+    // 按当前本地身份配置缓存中的相机组件，同时绑定移动输入使用的视角。
     private static void ConfigureLocalCamera(
         NetworkCharacterSync player,
-        GameObject characterInstance)
+        CharacterPresentation presentation)
     {
         bool enableLocalCamera = player.IsLocalPlayerCharacter;
 
-        foreach (Camera camera in characterInstance.GetComponentsInChildren<Camera>(true))
+        foreach (Camera camera in presentation.Cameras)
         {
             camera.enabled = enableLocalCamera;
             if (enableLocalCamera)
@@ -260,27 +262,27 @@ public sealed class NetworkCharacterManager : MonoBehaviour
             }
         }
 
-        foreach (AudioListener listener in
-                 characterInstance.GetComponentsInChildren<AudioListener>(true))
+        foreach (AudioListener listener in presentation.Listeners)
         {
             listener.enabled = enableLocalCamera;
         }
 
-        foreach (ThirdPersonCamera cameraController in
-                 characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true))
+        // 跟随目标统一指向网络根，启用状态由本地玩家身份控制。
+        foreach (ThirdPersonCamera cameraController in presentation.CameraControllers)
         {
+            cameraController.SetTarget(player.transform);
             cameraController.enabled = enableLocalCamera;
         }
 
-        // 移动代码不能依赖全局 Camera.main：场景中可能同时存在单机相机、远程模型相机
-        // 或编辑器残留相机。只把本地 CharactersForLocal 的相机交给网络根对象作为输入参考。
-        Camera localCamera = enableLocalCamera
-            ? characterInstance.GetComponentInChildren<Camera>(true)
+        // 本地玩家以当前实例的首个 Camera 作为输入参考，远程玩家清空该引用。
+        Camera localCamera = enableLocalCamera && presentation.Cameras.Length > 0
+            ? presentation.Cameras[0]
             : null;
         player.PlayerController?.RebindInputSpace(localCamera != null ? localCamera.transform : null);
+        presentation.CameraIsLocal = enableLocalCamera;
     }
 
-    // 通过父级 NetworkIdentity 区分网络表现与场景单机相机，只切换后者。
+    // 通过父级 NetworkIdentity 识别网络表现，相机模式切换作用于场景单机组件。
     private static void SetStandaloneCameraEnabled(bool enabled)
     {
         foreach (Camera camera in FindObjectsOfType<Camera>(true))
@@ -312,12 +314,11 @@ public sealed class NetworkCharacterManager : MonoBehaviour
 
     private static bool IsNetworkPresentationActive()
     {
-        // NetworkClient.active 在连接尝试和重试阶段也会为 true，不能用它关闭单机表现。
-        // 专用服务器没有本地玩家；批处理模式下同样不应运行场景中的单机角色。
+        // 客户端连接成功或进程采用批处理模式时使用联机表现，连接尝试期间保留单机表现。
         return Mirror.NetworkClient.isConnected || Application.isBatchMode;
     }
 
-    // 连接成功或进入批处理时收起单机表现，离线开发时启用场景角色及其相机。
+    // 联机模式收起场景单机角色和相机，单机模式启用它们。
     private static void ApplyPresentationMode(bool networkMode)
     {
         bool standaloneEnabled = !networkMode;
@@ -325,7 +326,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
         SetStandaloneCameraEnabled(standaloneEnabled);
     }
 
-    // 扫描包含停用对象在内的单机控制器，按所属对象切换整个角色的激活状态。
+    // 包含停用对象一起查找，按表现模式切换整个单机角色的激活状态。
     private static void SetStandalonePlayerEnabled(bool enabled)
     {
         foreach (PlayerCharacterController characterController in

@@ -103,7 +103,7 @@
 
 ## Inspector 配置提示
 
-`NetworkManager` Prefab 上的 `AutoStartClient` 字段显示中文 Tooltip，说明自动连接的运行环境、地址格式和重试间隔。地址使用 IP 或主机名，端口由同一 Prefab 上的 `KcpTransport.Port` 提供。
+`NetworkManager` Prefab 上的 `AutoStartClient` 字段显示中文 Tooltip，说明自动连接的运行环境、地址配置入口和重试间隔。连接地址统一填写在 Mirror `NetworkManager` 的 `Network Address`，使用 IP 或主机名。自动连接和 HUD 连接共用 `networkAddress`，端口由同一 Prefab 上的 `KcpTransport.Port` 提供。
 
 `PersistentScene` 中 `NetworkCharacterManager` 的两个角色数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，两套数组的同一下标表示同一角色；默认编号对应的两个位置均配置有效 Prefab。
 
@@ -115,6 +115,8 @@
 - 本地玩家装配带相机的本地表现。
 - 远程玩家装配同步表现。
 - 每个客户端仅启用本地拥有者的 Camera、`ThirdPersonCamera` 和 `AudioListener`。
+- 表现缓存同时比较角色编号和来源 Prefab；身份变化时按对应数组选择资源，并更新相机归属。
+- 当前实例的相机组件在装配时缓存，重复初始化回调在身份相同时复用已配置状态。
 - Additive 场景加载完成后重新应用相同规则。
 
 ## 维护触发

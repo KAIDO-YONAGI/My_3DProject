@@ -11,7 +11,7 @@
 | Mirror 版本 | `96.11.2` | `Assets/Mirror/version.txt` |
 | Transport | `kcp2k.KcpTransport` | `NetworkManager.prefab` |
 | 服务器端口 | UDP `7777` | `KcpTransport.Port` |
-| 客户端地址 | `127.0.0.1` | NetworkManager 与 AutoStartClient |
+| 客户端地址 | `127.0.0.1` | NetworkManager.networkAddress |
 | 玩家 Prefab | `Assets/Core/Prefabs/NetworkPlayer.prefab` | NetworkManager |
 | 自动创建玩家 | `true` | NetworkManager |
 | 出生点模式 | `Random` | NetworkManager |
@@ -65,7 +65,7 @@ Mirror 的 `onlineScene` 保持为空。`SceneChanger` 负责玩法场景加载�
 `AutoStartClient` 在编辑器和普通客户端构建中运行：
 
 1. 检查当前进程类型和 Mirror 活动状态。
-2. 设置 `NetworkManager.networkAddress=127.0.0.1`。
+2. 使用 `NetworkManager.networkAddress` 指定连接目标，当前 Prefab 配置为 `127.0.0.1`。
 3. 调用 `NetworkManager.StartClient`。
 4. 连接结束后继续监视状态。
 5. 断开时等待 3 秒再次连接。
@@ -104,6 +104,8 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 远程 Camera、`ThirdPersonCamera` 和 `AudioListener` 保持关闭。
 - 连接完成后场景单机角色关闭。
 - Additive 场景加载完成后再次收拢相机和单机角色。
+
+`presentations` 按玩家保存实例、编号、来源 Prefab、相机身份和组件缓存。重复回调命中有效实例、相同编号与 Prefab 时复用状态；身份变化时更新相机配置，Prefab 变化时替换表现实例。Host 和远端客户端均通过 `CommandSetCharacter` 提交角色选择，服务器校验后更新 SyncVar。
 
 ## 移动、重力与高度
 

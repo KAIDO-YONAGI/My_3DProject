@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-PROTOCOL`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`1/5`
 最后更新：`2026-09-29`
 
 | 任务 | 必读文档 |
@@ -21,4 +21,3 @@
 - `workflow:Protocol`
 - `path:Assets/Core/Scripts/Networking`
 - `path:Assets/Core/Prefabs/CharactersForSync`
-

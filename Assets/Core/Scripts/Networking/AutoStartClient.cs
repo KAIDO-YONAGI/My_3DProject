@@ -2,13 +2,13 @@ using Mirror;
 using UnityEngine;
 
 /// <summary>
-/// 按编辑器和构建客户端的开关自动连接 Mirror，使用真实时间安排连接重试。
+/// 按运行环境的开关自动连接 NetworkManager 配置的地址，使用 Time.unscaledTime 安排重试。
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(100)]
 public sealed class AutoStartClient : MonoBehaviour
 {
-    [Tooltip("Unity 编辑器进入运行模式后自动连接服务端。连接目标由 Connect Address 指定。")]
+    [Tooltip("Unity 编辑器进入运行模式后自动连接服务端。连接目标由 NetworkManager 的 Network Address 指定。")]
     [SerializeField]
     private bool autoConnectInEditor = true;
 
@@ -16,22 +16,18 @@ public sealed class AutoStartClient : MonoBehaviour
     [SerializeField]
     private bool autoConnectInPlayer = true;
 
-    [Tooltip("服务端的 IP 地址或主机名。127.0.0.1 表示当前计算机；连接端口由 NetworkManager 的 KcpTransport.Port 配置。")]
-    [SerializeField]
-    private string connectAddress = "127.0.0.1";
-
     [Tooltip("两次连接尝试之间的最小间隔，单位为真实时间秒，最小值为 0.5。Mirror 客户端回到非活动状态后按此间隔重试。")]
     [SerializeField, Min(0.5f)]
     private float reconnectInterval = 3f;
 
-    // 下次允许发起连接的 Time.unscaledTime 时间戳，游戏时间缩放保持独立。
+    // 下次允许连接的未缩放时间，重试计时与游戏时间缩放独立。
     private float nextConnectAttempt;
-    // 等待 NetworkManager 期间只输出一次提示，找到管理器后重新允许提示。
+    // 等待管理器期间记录是否已提示，找到管理器后重置。
     private bool hasReportedMissingManager;
 
     private void Update()
     {
-        // NetworkClient.active 包含连接进行中的状态，当前尝试结束后才能再次 StartClient。
+        // 自动连接在普通客户端且 Mirror 空闲时执行；连接进行中也属于 NetworkClient.active。
         if (Application.isBatchMode || NetworkServer.active || NetworkClient.active)
         {
             return;
@@ -67,16 +63,15 @@ public sealed class AutoStartClient : MonoBehaviour
         }
 
         hasReportedMissingManager = false;
-        // 以发起尝试的时刻计算重试间隔，让连接失败和断线后的重试使用同一计时规则。
+        // 以当前尝试的起点计算下次允许时间，后续重试共用这一时间门槛。
         nextConnectAttempt = Time.unscaledTime + reconnectInterval;
-        manager.networkAddress = connectAddress;
         manager.StartClient();
         Debug.Log(
-            $"[AutoStartClient] {(Application.isEditor ? "编辑器" : "构建客户端")} 正在连接 {connectAddress}:{GetTransportPort(manager)}",
+            $"[AutoStartClient] {(Application.isEditor ? "编辑器" : "构建客户端")} 正在连接 {manager.networkAddress}:{GetTransportPort(manager)}",
             this);
     }
 
-    // 只用于诊断编辑器与构建版本是否使用了同一份 KCP 端口配置。
+    // 读取 KCP 端口供连接日志显示。
     private static int GetTransportPort(NetworkManager manager)
     {
         return manager.transport is kcp2k.KcpTransport kcpTransport

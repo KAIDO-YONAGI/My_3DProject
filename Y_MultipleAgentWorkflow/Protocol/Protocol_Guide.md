@@ -44,12 +44,14 @@ UDP Datagram
 
 ```text
 SetLocalCharacter
-  → CmdSetCharacter
+  → CommandSetCharacter
   → 服务器校验角色编号
   → 更新 characterId
   → SyncVar Hook
   → 各客户端重新装配对应表现
 ```
+
+Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色选择。服务器校验角色编号后写入 `characterId`，表现由 SyncVar hook 驱动。客户端装配状态按实例、编号、来源 Prefab 和本地身份判断复用与刷新。
 
 ## 兼容性规则
 

@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-NETWORKING`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`1/5`
 最后更新：`2026-09-29`
 
 | 任务 | 必读文档 |
@@ -25,4 +25,3 @@
 - `path:Assets/Core/Scripts/Networking`
 - `path:Assets/Core/Scenes/PersistentScene.unity`
 - `path:Assets/Core/Prefabs/CharactersForSync`
-

@@ -139,5 +139,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoConnectInEditor: 1
   autoConnectInPlayer: 1
-  connectAddress: 127.0.0.1
   reconnectInterval: 3
