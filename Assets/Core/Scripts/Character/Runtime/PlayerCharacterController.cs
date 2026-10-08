@@ -40,6 +40,8 @@ public sealed class PlayerCharacterController : MonoBehaviour
     private CharacterMotor motor;
     private CharacterAnimator animationDriver;
     private NetworkIdentity networkIdentity;
+    // 网络身份在根对象初始化时确定；查不到也缓存，避免单机角色每帧重查。
+    private bool networkIdentityInitialized;
     private Vector3 previousNetworkPosition;
     private bool hasPreviousNetworkPosition;
 
@@ -124,7 +126,11 @@ public sealed class PlayerCharacterController : MonoBehaviour
     {
         CacheReferences();
         EnsureSettings();
-        networkIdentity ??= GetComponent<NetworkIdentity>();
+        if (!networkIdentityInitialized)
+        {
+            networkIdentity = GetComponent<NetworkIdentity>();
+            networkIdentityInitialized = true;
+        }
 
         if (characterController == null)
         {

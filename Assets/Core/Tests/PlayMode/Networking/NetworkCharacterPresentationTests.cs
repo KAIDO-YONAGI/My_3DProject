@@ -54,6 +54,65 @@ public sealed class NetworkCharacterPresentationTests
     }
 
     [Test]
+    public void StandaloneControllerCachesMissingNetworkIdentity()
+    {
+        GameObject root = CreateObject("StandalonePlayer");
+        root.SetActive(false);
+        Component standalone = root.AddComponent(RuntimeType("PlayerCharacterController"));
+        ((Behaviour)standalone).enabled = false;
+        root.SetActive(true);
+        Assert.That(GetField(standalone, "networkIdentity"), Is.Null);
+
+        // 首次查询后再添加身份，用来检测后续初始化是否偷偷重复查找。
+        root.AddComponent(RuntimeType("Mirror.NetworkIdentity"));
+        MethodInfo ensureRuntimeState = standalone.GetType().GetMethod(
+            "EnsureRuntimeState", Fields);
+        for (int index = 0; index < 3; index++)
+        {
+            Assert.That(ensureRuntimeState.Invoke(standalone, null), Is.True);
+            Assert.That(GetField(standalone, "networkIdentity"), Is.Null);
+        }
+    }
+
+    [Test]
+    public void NetworkControllerCachesIdentityAvailableBeforeAwake()
+    {
+        Assert.That(GetField(controller, "networkIdentity"), Is.SameAs(identity));
+        MethodInfo ensureRuntimeState = controller.GetType().GetMethod(
+            "EnsureRuntimeState", Fields);
+        for (int index = 0; index < 3; index++)
+        {
+            ensureRuntimeState.Invoke(controller, null);
+            Assert.That(GetField(controller, "networkIdentity"), Is.SameAs(identity));
+        }
+
+        SetLocal(true);
+        Assert.That(((Component)GetField(controller, "networkIdentity")).GetType()
+            .GetProperty("isLocalPlayer").GetValue(identity), Is.True);
+        SetLocal(false);
+        Assert.That(((Component)GetField(controller, "networkIdentity")).GetType()
+            .GetProperty("isLocalPlayer").GetValue(identity), Is.False);
+    }
+
+    [Test]
+    public void AnimatorMountedAfterIdentityLookupStillInitializes()
+    {
+        Assert.That(GetField(controller, "animator"), Is.Null);
+        Assert.That(GetField(controller, "animationDriver"), Is.Null);
+        localPrefab.AddComponent<Animator>();
+        SetLocal(true);
+
+        Apply();
+
+        Animator mountedAnimator = Instance(Presentation()).GetComponentInChildren<Animator>(true);
+        Assert.That(mountedAnimator, Is.Not.Null);
+        Assert.That(GetField(controller, "animator"), Is.SameAs(mountedAnimator));
+        Assert.That(GetField(controller, "animationDriver"), Is.Not.Null);
+        Assert.That(mountedAnimator.runtimeAnimatorController, Is.Not.Null);
+        Assert.That(GetField(controller, "networkIdentity"), Is.SameAs(identity));
+    }
+
+    [Test]
     public void RepeatedLocalCallbacksReusePresentationAndSkipCameraConfiguration()
     {
         SetLocal(true);
