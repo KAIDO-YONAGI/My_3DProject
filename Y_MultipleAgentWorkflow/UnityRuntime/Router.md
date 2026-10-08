@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-UNITYRUNTIME`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`1/5`
 最后更新：`2026-10-08`
 
 ## 任务路由
@@ -24,7 +24,8 @@
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 - `Assets/Core/Prefabs/CharactersForSync/`
 - `Assets/Core/Scripts/Networking/`
-- `Assets/Core/Scripts/Movement/Runtime/`
+- `Assets/Core/Scripts/Camera/Runtime/`
+- `Assets/Core/Scripts/Character/Runtime/`
 - `Assets/Core/SO/EventSOs/`
 - `Assets/Plugins/Mirror/`
 - `Assets/Plugins/AddressableAssetsData/`
@@ -38,7 +39,8 @@
 - `path:Assets/Core/Scenes`
 - `path:Assets/Core/Prefabs/CharactersForSync`
 - `path:Assets/Core/Scripts/Networking`
-- `path:Assets/Core/Scripts/Movement/Runtime`
+- `path:Assets/Core/Scripts/Camera/Runtime`
+- `path:Assets/Core/Scripts/Character/Runtime`
 - `path:Assets/Core/SO/EventSOs`
 - `path:Assets/Plugins/AddressableAssetsData`
 

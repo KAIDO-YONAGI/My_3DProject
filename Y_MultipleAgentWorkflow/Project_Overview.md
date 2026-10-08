@@ -40,16 +40,18 @@ InitialScene
 - `Assets/Core/Prefabs/CharactersForLocal/`：本地拥有者使用的完整角色表现，包含本地相机。
 - `Assets/Core/Prefabs/CharactersForSync/`：远程玩家使用的同步角色表现。
 - `Assets/Core/Scripts/Networking/`：自动连接、角色编号同步和角色表现装配。
-- `Assets/Core/Scripts/Movement/`：输入、移动、重力、动画和第三人称相机。
+- `Assets/Core/Scripts/Character/`：输入、移动、重力与动画数据流。
+- `Assets/Core/Scripts/Camera/`：第三人称相机轨道、光标、避让与转向数学。
 - `Assets/Core/My_FrameWork/`：场景管理、时间管理、UI 与 ScriptableObject 基础设施。
 - `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码。
+- `Assets/Plugins/DynamicBone/`：骨骼跟随（发辫等）的第三方实现。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
 
 ## 代码模块地图
 
 | 模块 | 实际代码或资源边界 | 当前职责 |
 |---|---|---|
-| `Client` | `Assets/Core/Scripts/Movement/`、本地角色 Prefab、第三人称相机 | 输入、移动、重力、动画和本地视角 |
+| `Client` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、本地角色 Prefab | 输入、移动、重力、动画和本地视角 |
 | `Networking` | `Assets/Core/Scripts/Networking/`、Mirror 组件 | 自动连接、玩家身份、角色编号、表现装配和同步 |
 | `Server` | NetworkManager、KcpTransport、服务器构建 | UDP 监听、连接管理、玩家生成和状态转发 |
 | `Protocol` | Mirror 消息、SyncVar、Command、NetworkTransformReliable | 连接消息、角色编号和变换数据的序列化 |

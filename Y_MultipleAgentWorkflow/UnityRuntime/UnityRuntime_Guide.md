@@ -143,6 +143,10 @@
 - 当前实例的相机组件在装配时缓存，重复初始化回调在身份相同时复用已配置状态。
 - Additive 场景加载完成后重新应用相同规则。
 
+相机职责拆分不改变上述资产层级和归属规则。两个本地角色 Prefab 继续使用原 `ThirdPersonCamera` 脚本 GUID `f0e37541f912f8d45955a6b061f34025`，17 个序列化字段均可反序列化，朝向参数为 `targetRotateSmooth=15` 与 `targetRotateSpeed=360`。轨道、光标、避让和旋转数学辅助类均为普通 C# 对象，不需要新增组件或 Prefab 引用。
+
+停用相机只释放本实例持有的光标与输入资源，重新启用恢复锁定配置；目标失效后暂停，重新绑定可恢复。最终候选镜头位置的防穿墙优先于缩放下限与期望最低高度。具体算法与边界见 `../Client/Client_Guide.md`。`2026-10-08` 主工程 PlayMode 相机与网络装配回归合计 49/49、EditMode 5/5 通过，无失败或跳过，Console 无 error；本次不代表重新完成双客户端联机或构建验证。
+
 ## 维护触发
 
 修改 Unity 或包版本、Build Settings、场景、Prefab、角色数组、出生点、相机归属、移动配置或 Addressables 配置目录与分组时更新本文档。Mirror 与 KCP 参数统一维护在 `Mirror_KCP_Config.md`。

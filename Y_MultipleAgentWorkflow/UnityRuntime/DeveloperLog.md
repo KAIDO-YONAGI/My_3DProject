@@ -1,5 +1,12 @@
 # UnityRuntime 开发记录
 
+## 2026-10-08：相机运行时拆分与资产兼容验证
+
+- 证据：主编辑器 `My_3DProject@6d686e37950b774c` 的编译、Console、PlayMode 49/49、EditMode 5/5，以及两个本地角色 Prefab 的实时 `SerializedObject` 检查；测试无失败或跳过，结束后编辑器未播放、未编译。
+- `ThirdPersonCamera` 的 17 个序列化字段及脚本 GUID 不变；两个 Prefab 的 `targetRotateSmooth=15`、`targetRotateSpeed=360`，四个辅助类不作为组件，不修改任何场景或 Prefab。
+- 修复父级转向耦合、最终候选避让和光标生命周期；独立复审后补充外部解锁再捕获、起始重叠安全退出及双墙裁剪回归。参数优先级与目标失效重绑行为同步到 Guide，算法事实维护在 Client。
+- 本次仅编译、自动化回归与资产读取，不包含重新构建、双客户端联机或人工手感验证。维护计数 `0/5 -> 1/5`。
+
 ## 2026-09-20：建立 Unity 运行时权威指南
 
 - 证据：Unity 版本、Packages、Build Settings、场景、Prefab 和事件资产。
@@ -73,3 +80,9 @@
 - `ConfigFolder` 与 `GetContentStateBuildPath()` 指向 `Assets/Plugins/AddressableAssetsData/`，与 `Windows/addressables_content_state.bin` 的位置一致。
 - 目录迁移步骤与缓存求值条件写入 `UnityRuntime_Guide.md` 的 Addressables 章节，`Router.md` 补充证据路径与并发资源。
 - 维护计数保持 `0/5`。
+
+## 2026-10-08：脚本目录重组后的路径同步
+
+- 证据：`Assets/Core/Scripts/Camera/Runtime/`、`Assets/Core/Scripts/Character/`、`Assets/Plugins/DynamicBone/` 的实际磁盘清单；Unity Console 0 error；PlayMode 49/49 与 EditMode 5/5 通过（细节见 `../Client/DeveloperLog.md`）。
+- 相机脚本移入 `Assets/Core/Scripts/Camera/Runtime/`，角色脚本目录 `Movement/` 更名 `Character/`，第三方 `DynamicBone` 移入 `Assets/Plugins/`（无 asmdef，编译进 `Assembly-CSharp-firstpass`）。移动连同 `.meta` 一起执行，脚本 GUID 不变，编辑器内实测三个含相机的 Prefab 与角色 Prefab 的组件引用正常解析。
+- 序列化字段、Prefab 与场景内容均未改动，本次只同步 `Router.md` 的证据路径与并发资源，不增加维护计数。
