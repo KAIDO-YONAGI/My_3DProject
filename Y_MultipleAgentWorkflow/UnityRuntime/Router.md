@@ -26,7 +26,7 @@
 - `Assets/Core/Scripts/Networking/`
 - `Assets/Core/Scripts/Movement/Runtime/`
 - `Assets/Core/SO/EventSOs/`
-- `Assets/Mirror/`
+- `Assets/Plugins/Mirror/`
 - `D:/Unity/Releases/3D_MultiplayerGame/`
 
 ## 并发资源

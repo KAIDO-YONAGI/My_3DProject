@@ -17,13 +17,20 @@
 - Visual Scripting：`1.9.4`。
 - Unity MCP：Git 依赖的 `main` 分支。
 
+## 资产目录布局
+
+- 顶层 `Assets/` 只保留三个目录：`Core/`（项目自有代码、场景、Prefab、模型与地形）、`Materials/`（地形植被与地表贴图等素材）、`Plugins/`（第三方插件）。
+- `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`，全部由 `.gitignore` 的 `/Assets/Plugins/` 忽略，本地不入库；Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
+- 单机框架代码位于 `Assets/Core/My_FrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
+- 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
+
 ## Player Settings 与输入
 
 - `ProjectSettings/ProjectSettings.asset` 的 `activeInputHandler` 为 `1`，即 Active Input Handling 只启用 `Input System Package (New)`；旧 `UnityEngine.Input` API 在运行时不可用。
 - 输入资产是 `Assets/Core/Input/PlayerControls.inputactions`，其导入器设置 `generateWrapperCode` 会生成包装类 `Assets/Core/Input/PlayerControls.cs`（JSON 内嵌，无需 Inspector 引用）。
 - `ProjectSettings/InputManager.asset` 仍保留旧轴定义，但不再被项目脚本读取。
 - `PersistentScene` 的 `EventSystem` 使用 `InputSystemUIInputModule`，动作资产为包的 `DefaultInputActions`，`CursorLockBehavior` 保持默认 `OutsideScreen`。
-- `Assets/Mirror/`（本地不入库）中仍有 27 个脚本使用旧 `Input` API，包括 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs`。这些类型未被 `Assets/Core`、`Assets/FrameWork` 的场景、Prefab 或脚本引用，构建场景也不包含 Mirror 示例场景；只有主动运行 Mirror 示例场景才会在运行时报错。
+- `Assets/Plugins/Mirror/`（本地不入库）中仍有 27 个脚本使用旧 `Input` API，包括 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs`。这些类型未被 `Assets/Core`（含 `Assets/Core/My_FrameWork`）的场景、Prefab 或脚本引用，构建场景也不包含 Mirror 示例场景；只有主动运行 Mirror 示例场景才会在运行时报错。
 
 ## Build Settings
 

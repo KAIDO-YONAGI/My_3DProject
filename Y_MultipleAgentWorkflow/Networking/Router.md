@@ -3,7 +3,7 @@
 文档 ID：`BUS-NETWORKING`
 状态：`Active`
 维护计数：`1/5`
-最后更新：`2026-09-29`
+最后更新：`2026-10-08`
 
 | 任务 | 必读文档 |
 |---|---|
@@ -17,7 +17,7 @@
 - `Assets/Core/Scripts/Networking/`
 - `Assets/Core/Scenes/PersistentScene.unity`
 - `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`
-- `Assets/Mirror/`
+- `Assets/Plugins/Mirror/`
 
 ## 并发资源
 

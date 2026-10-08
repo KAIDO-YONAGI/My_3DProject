@@ -2,13 +2,13 @@
 
 文档 ID：`UNITY-NETCFG`
 状态：`Active`
-最后核验：`2026-09-30`
+最后核验：`2026-10-08`
 
 ## 配置总览
 
 | 配置项 | 当前值 | 配置位置 |
 |---|---|---|
-| Mirror 版本 | `96.11.2` | `Assets/Mirror/version.txt` |
+| Mirror 版本 | `96.11.2` | `Assets/Plugins/Mirror/version.txt` |
 | Transport | `kcp2k.KcpTransport` | `NetworkManager.prefab` |
 | 服务器端口 | UDP `7777` | `KcpTransport.Port` |
 | 客户端地址 | `127.0.0.1` | NetworkManager.networkAddress |

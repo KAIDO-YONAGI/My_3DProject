@@ -27,3 +27,10 @@
 - 权威知识域恢复为 `Workflow`、`Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`。
 - `Client` 对应 Movement、玩家输入、动画和相机；`Networking` 对应 Mirror 连接与玩家网络组件。
 - `Server` 和 `Protocol` 当前没有独立源码目录，分别由 Mirror Headless/NetworkManager 与 Mirror 内置消息/序列化边界承载；文档明确记录这一事实，不虚构实现。
+
+## 2026-10-08：按整理后的目录更新路径引用
+
+- 依据提交 `278c411 整理文件夹` 的实际目录，同步根路由、项目总览、UnityRuntime、Client、Networking、Protocol 文档中的路径引用。
+- `Assets/FrameWork/` 现为 `Assets/Core/My_FrameWork/`；第三方插件统一在 `Assets/Plugins/`（`Mirror`、`ParrelSync`、`TextMesh Pro`、`AddressableAssetsData`，由 `.gitignore` 忽略）；`Assets/forest/` 现为 `Assets/Materials/ForestMaterials/`。
+- 既有 DeveloperLog 条目中的旧路径保留原文，作为当时状态的证据，不做改写。
+- 纯文档维护，不增加各知识域维护计数。

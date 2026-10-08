@@ -5,7 +5,7 @@
 ## 包含内容
 
 ```text
-FrameWork/
+My_FrameWork/
   Scripts/Core/       单例基类与通用枚举
   Scripts/SO/         场景数据（GameSceneSO）与事件通道（SceneLoad/SceneLoaded/Void/ToggleCanvas）
   Scripts/Scene/      SceneChanger（多场景组切换）、InitialLoad、PersistentSceneRegistry、TimeManager
@@ -24,9 +24,9 @@ FrameWork/
 
 1. 确认项目已安装 `com.unity.inputsystem`（Active Input Handling 设为 Input System Package）。
 2. 在 `File > Build Settings` 手动加入并按此顺序排列：
-   - `Assets/FrameWork/Samples/Scenes/InitialScene.unity`（设为启动场景）
-   - `Assets/FrameWork/Samples/Scenes/PersistentScene.unity`
-   - `Assets/FrameWork/Samples/Scenes/LevelScene.unity`
+   - `Assets/Core/My_FrameWork/Samples/Scenes/InitialScene.unity`（设为启动场景）
+   - `Assets/Core/My_FrameWork/Samples/Scenes/PersistentScene.unity`
+   - `Assets/Core/My_FrameWork/Samples/Scenes/LevelScene.unity`
 3. 打开并运行 `InitialScene`：`InitialLoad` 以 Additive 加载 `PersistentScene`（并注册进常驻注册表），随后其中常驻的 `SceneChanger` 加载 `LevelScene`。
 4. 按 `ESC` 打开/关闭暂停面板（走 UIManager 焦点栈 + ToggleESCEvent）；进入关卡右侧的 Teleport 触发器会切回常驻场景组。
 
