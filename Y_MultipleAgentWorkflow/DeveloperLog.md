@@ -34,3 +34,11 @@
 - `Assets/FrameWork/` 现为 `Assets/Core/My_FrameWork/`；第三方插件统一在 `Assets/Plugins/`（`Mirror`、`ParrelSync`、`TextMesh Pro`、`AddressableAssetsData`，由 `.gitignore` 忽略）；`Assets/forest/` 现为 `Assets/Materials/ForestMaterials/`。
 - 既有 DeveloperLog 条目中的旧路径保留原文，作为当时状态的证据，不做改写。
 - 纯文档维护，不增加各知识域维护计数。
+
+## 2026-10-08：脚本按知识域重组后的路径同步
+
+- 依据提交 `7c5c8a5`、`21100d9` 的实际目录，同步根 `Project_Overview.md`、`Client` 与 `UnityRuntime` 的 `Router.md`、`Client_Guide.md`、`README.md` 中的路径引用。
+- 目录变化：`Assets/Core/Scripts/Movement/Runtime/` 的相机脚本现为 `Assets/Core/Scripts/Camera/Runtime/`；`Assets/Core/Scripts/Movement/` 现为 `Assets/Core/Scripts/Character/`（保留 `Config/`、`Runtime/`）；`Assets/Core/Scripts/Movement/DynamicBone/` 现为 `Assets/Plugins/DynamicBone/`；`Assets/Core/Tests/PlayMode/Movement/` 现为 `Assets/Core/Tests/PlayMode/Camera/`，程序集 `Core.Movement.PlayModeTests` 现为 `Core.Camera.PlayModeTests`；联机用例移入 `Assets/Core/Tests/PlayMode/Networking/`，程序集名不变。
+- 第三方插件汇总在 `Assets/Plugins/`（`Mirror`、`ParrelSync`、`TextMesh Pro`、`AddressableAssetsData`、`DynamicBone`），当前均已纳入版本控制。
+- 既有 `DeveloperLog` 条目中的旧路径继续保留原文，作为当时状态的证据，不做改写；新旧映射以本条与 `Client/DeveloperLog.md` 的对应条目为准。
+- 纯目录整理与文档维护，不改变业务实现，不增加各知识域维护计数（`Client` 保持 `0/5`）。

@@ -97,7 +97,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 回归证据
 
-`2026-10-08` 主编辑器验证：`Core.Camera.PlayModeTests` 40/40 与 `Core.Networking.PlayModeTests` 9/9（合计 49/49），`Core.EditorTests` 5/5，无失败或跳过。覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、20/140 个自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停/外部解锁后捕获、目标销毁重绑，以及 30/60/120 FPS 的限速积分一致性和暂停后平滑恢复。两个本地角色 Prefab 均保留 17 个序列化字段，原相机脚本 GUID、`targetRotateSmooth=15` 与 `targetRotateSpeed=360` 不变；本次未修改场景或 Prefab。
+`2026-10-08` 主编辑器验证：`Core.Camera.PlayModeTests`（原 `Core.Movement.PlayModeTests`）40/40 与 `Core.Networking.PlayModeTests` 9/9（合计 49/49），`Core.EditorTests` 5/5，无失败或跳过。覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、20/140 个自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停/外部解锁后捕获、目标销毁重绑，以及 30/60/120 FPS 的限速积分一致性和暂停后平滑恢复。两个本地角色 Prefab 均保留 17 个序列化字段，原相机脚本 GUID、`targetRotateSmooth=15` 与 `targetRotateSpeed=360` 不变；本次未修改场景或 Prefab。
 
 ## 维护触发
 
