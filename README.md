@@ -8,7 +8,7 @@
 |---|---|
 | Unity 编辑器 | `2022.3.62f3c1` |
 | 包依赖 | `Packages/manifest.json` |
-| 本地插件 | `Assets/Plugins/`（含 `Mirror/`），位于 `.gitignore` |
+| 第三方插件 | `Assets/Plugins/`（含 `Mirror/`） |
 
 ## 快速开始
 
@@ -96,7 +96,7 @@ InitialScene                启动引导，注册并加载常驻场景
 
 ## 插件与依赖
 
-### 本地插件
+### 第三方插件
 
 | 插件 | 位置 | 用途 |
 |---|---|---|

@@ -42,7 +42,7 @@ InitialScene
 - `Assets/Core/Scripts/Networking/`：自动连接、角色编号同步和角色表现装配。
 - `Assets/Core/Scripts/Movement/`：输入、移动、重力、动画和第三人称相机。
 - `Assets/Core/My_FrameWork/`：场景管理、时间管理、UI 与 ScriptableObject 基础设施。
-- `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码；`Assets/Plugins/` 由 `.gitignore` 忽略，第三方插件本地不入库。
+- `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
 
 ## 代码模块地图

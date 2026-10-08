@@ -32,7 +32,7 @@
 - 网络玩家 Prefab: `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - 角色 Prefab: `Assets/Core/Prefabs/CharactersForLocal/`、`Assets/Core/Prefabs/CharactersForSync/`
 - 场景: `Assets/Core/Scenes/InitialScene.unity`（初始）、`PersistentScene.unity`（常驻）、`MultiplayerSampleScene.unity`（玩法）
-- 第三方插件: `Assets/Plugins/`（含 `Mirror/`，本地不入库）
+- 第三方插件: `Assets/Plugins/`（含 `Mirror/`）
 - 构建产物: `D:/Unity/Releases/3D_MultiplayerGame/`
 
 ## 约定

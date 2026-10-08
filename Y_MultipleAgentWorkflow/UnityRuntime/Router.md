@@ -27,6 +27,7 @@
 - `Assets/Core/Scripts/Movement/Runtime/`
 - `Assets/Core/SO/EventSOs/`
 - `Assets/Plugins/Mirror/`
+- `Assets/Plugins/AddressableAssetsData/`
 - `D:/Unity/Releases/3D_MultiplayerGame/`
 
 ## 并发资源
@@ -39,6 +40,7 @@
 - `path:Assets/Core/Scripts/Networking`
 - `path:Assets/Core/Scripts/Movement/Runtime`
 - `path:Assets/Core/SO/EventSOs`
+- `path:Assets/Plugins/AddressableAssetsData`
 
 ## 能力边界
 

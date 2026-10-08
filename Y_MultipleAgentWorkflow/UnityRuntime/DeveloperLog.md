@@ -64,3 +64,12 @@
 - 全 `Assets` 扫描 639 个 `.cs` 文件：只有 `Assets/Mirror/` 下 27 个文件仍使用旧输入 API，其中运行时组件 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs` 未被 `Assets/Core`、`Assets/FrameWork` 的场景、Prefab 或脚本引用；Build Settings 只包含 4 个 `Assets/Core/Scenes` 场景。
 - `PersistentScene` 的 `EventSystem` 保持 `InputSystemUIInputModule` 与默认 `CursorLockBehavior`（`OutsideScreen`），未改动 UI 模块配置。
 - 维护计数 `4/5 -> 5/5`；达到阈值后复核 `UnityRuntime_Guide.md` 与实际配置，本次已更新该文档（新增“Player Settings 与输入”章节并更新核验日期），计数归零 `0/5`。
+
+## 2026-10-08：Addressables 配置目录
+
+- 证据：Unity 编辑器 `My_3DProject@6d686e37950b774c` 的实机探针读取 `AssetDatabase.GUIDToAssetPath`、`AddressableAssetSettingsDefaultObject.Settings`、`ConfigFolder` 与 `GetContentStateBuildPath`，以及 `Assets/Plugins/AddressableAssetsData/` 的磁盘清单。
+- Addressables 配置位于 `Assets/Plugins/AddressableAssetsData/`，随工程一起入库。
+- 插件按 GUID 解析配置，设置对象、两个分组与 `BuildScriptPackedMode` 正常解析，Console 0 error。
+- `ConfigFolder` 与 `GetContentStateBuildPath()` 指向 `Assets/Plugins/AddressableAssetsData/`，与 `Windows/addressables_content_state.bin` 的位置一致。
+- 目录迁移步骤与缓存求值条件写入 `UnityRuntime_Guide.md` 的 Addressables 章节，`Router.md` 补充证据路径与并发资源。
+- 维护计数保持 `0/5`。
