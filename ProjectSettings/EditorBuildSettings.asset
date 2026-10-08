@@ -14,5 +14,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Core/Scenes/MultiplayerSampleScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Core/Scenes/MultiplayerSampleScene 1.unity
+    guid: dd5051b5ff7cf9e43a73cdbdc43988b7
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 00520c7ebfe0ced4ea09c7be32769208, type: 2}
