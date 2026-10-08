@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// 单帧输入快照。
-/// PlayerCharacterController 从 Unity Input 采集数据后创建它，CharacterMotor 不再直接依赖输入 API。
+/// PlayerCharacterController 从 CharacterInputReader（Input System）采集数据后创建它，CharacterMotor 不再直接依赖输入 API。
 /// </summary>
 public readonly struct CharacterInput
 {

@@ -33,6 +33,9 @@ public sealed class PlayerCharacterController : MonoBehaviour
     // 可选修正项，在 Animator 完成骨骼更新后执行。
     [SerializeField] private CharacterBoneFollower ponytailFollower = new CharacterBoneFollower();
 
+    // 输入读取器按需创建 PlayerControls，只有真正读取输入的本地玩家才会占用输入资源。
+    private readonly CharacterInputReader input = new();
+
     // 两个运行时对象不参与序列化，分别管理运动状态和 AnimatorOverrideController。
     private CharacterMotor motor;
     private CharacterAnimator animationDriver;
@@ -97,6 +100,9 @@ public sealed class PlayerCharacterController : MonoBehaviour
     {
         // CharacterAnimator 内部创建了运行时覆盖器，需要显式释放。
         animationDriver?.Dispose();
+
+        // 生成的包装类在终结时会断言动作表仍然启用，必须显式释放输入资源。
+        input.Dispose();
     }
 
     // 自动引用只填补空字段，不覆盖 Inspector 中已经指定的对象。
@@ -259,17 +265,12 @@ public sealed class PlayerCharacterController : MonoBehaviour
     }
 
     /// <summary>
-    /// 从旧版 Unity Input Manager 读取一帧输入，并在进入运动层前完成归一化。
+    /// 从 Input System 读取一帧输入，并在进入运动层前完成归一化。
     /// </summary>
-    private static CharacterInput ReadInput()
+    private CharacterInput ReadInput()
     {
-        Vector2 move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-
-        // GetAxisRaw 保证键盘按下和松开没有输入平滑延迟，ClampMagnitude 防止斜向超速。
-        move = Vector2.ClampMagnitude(move, 1f);
-
-        bool sprintHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-        bool jumpPressed = Input.GetKeyDown(KeyCode.Space);
-        return new CharacterInput(move, sprintHeld, jumpPressed);
+        // 移动长度已在 CharacterInputReader 中截断到单位圆内，斜向不会超速。
+        Vector2 move = input.ReadMove();
+        return new CharacterInput(move, input.SprintHeld, input.JumpPressed);
     }
 }
