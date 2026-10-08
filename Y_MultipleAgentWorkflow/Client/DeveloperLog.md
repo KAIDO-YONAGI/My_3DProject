@@ -25,3 +25,13 @@
 - `PlayerCharacterController` 同步使用 `isConnected` 判断输入归属，未连接时单机角色继续输入、重力和碰撞运动。
 - 已连接时禁用 `PersistentScene` 中没有 `NetworkIdentity` 的场景单机角色；双编辑器只显示两个网络角色。
 - 单机角色保持场景初始高度，通过 `CharacterController` 重力自然落地，没有增加传送或位置钳制。
+
+## 2026-10-08：输入统一到 Input System 并新增 Alt 释放光标
+
+- 证据：`Assets/Core/Input/PlayerControls.inputactions` 与其导入器生成的 `PlayerControls.cs`、`Assets/Core/Scripts/Movement/Runtime/CharacterInputReader.cs`、`Assets/Core/Tests/PlayMode/Movement/ThirdPersonCameraCursorTests.cs`、Unity Console 0 error、PlayMode 6/6 通过、EditMode `Core.EditorTests` 5/5 通过、编辑器内长按 Alt 人工确认。
+- 新增输入资产 `PlayerControls.inputactions`，动作表 `Player` 含 `Move`、`Look`、`Zoom`、`Sprint`、`Jump`、`ReleaseCursor`、`FreeCursor`、`LockCursor`；`Move` 用 WASD 与方向键两个 2DVector 复合加手柄左摇杆，包装类由导入器生成，不需要 Inspector 或 Prefab 引用。
+- 新增 `CharacterInputReader` 作为唯一输入入口，集中处理旧轴量纲换算：`<Mouse>/delta * 0.1` 等价旧 `Mouse X/Y` 灵敏度 `0.1`，`<Mouse>/scroll/y * 0.1 / 120` 等价旧 `Mouse ScrollWheel` 每格 `0.1`（Windows 标定）。
+- `ThirdPersonCamera` 与 `PlayerCharacterController` 移除 legacy `UnityEngine.Input`，输入实例按需创建，`OnDestroy` 中 `Disable` 后 `Dispose`，专用服务器与远程玩家不创建实例。
+- 相机新增 Alt 自由光标：按住时强制释放并显示光标、忽略鼠标转动与滚轮缩放、左键不再重新锁定；松开时按进入前的意图恢复，窗口无焦点时不抢回鼠标，锁定状态跳变当帧跳过鼠标增量避免镜头跳变。
+- 自动化用例覆盖初始锁定、Alt 释放、Alt 松开恢复、Alt 之前已释放时保持释放、锁定期间转动 20 度与滚轮 0.2 的量纲、Escape 释放、左键重新捕获、按住 Alt 时左键不抢回光标。
+- 维护计数 `1/5 -> 2/5`。

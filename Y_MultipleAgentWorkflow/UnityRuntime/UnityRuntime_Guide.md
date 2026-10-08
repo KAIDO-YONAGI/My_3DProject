@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-GUIDE`
 状态：`Active`
-最后核验：`2026-10-03`
+最后核验：`2026-10-08`
 
 ## 版本与依赖
 
@@ -16,6 +16,14 @@
 - UGUI：`1.0.0`。
 - Visual Scripting：`1.9.4`。
 - Unity MCP：Git 依赖的 `main` 分支。
+
+## Player Settings 与输入
+
+- `ProjectSettings/ProjectSettings.asset` 的 `activeInputHandler` 为 `1`，即 Active Input Handling 只启用 `Input System Package (New)`；旧 `UnityEngine.Input` API 在运行时不可用。
+- 输入资产是 `Assets/Core/Input/PlayerControls.inputactions`，其导入器设置 `generateWrapperCode` 会生成包装类 `Assets/Core/Input/PlayerControls.cs`（JSON 内嵌，无需 Inspector 引用）。
+- `ProjectSettings/InputManager.asset` 仍保留旧轴定义，但不再被项目脚本读取。
+- `PersistentScene` 的 `EventSystem` 使用 `InputSystemUIInputModule`，动作资产为包的 `DefaultInputActions`，`CursorLockBehavior` 保持默认 `OutsideScreen`。
+- `Assets/Mirror/`（本地不入库）中仍有 27 个脚本使用旧 `Input` API，包括 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs`。这些类型未被 `Assets/Core`、`Assets/FrameWork` 的场景、Prefab 或脚本引用，构建场景也不包含 Mirror 示例场景；只有主动运行 Mirror 示例场景才会在运行时报错。
 
 ## Build Settings
 

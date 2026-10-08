@@ -56,3 +56,11 @@
 - `PlayerCharacterController` 使用同一连接完成条件限制输入，未连接时单机重力不再因 KCP 重试暂停。
 - 无服务端验证单机角色自然落地并保持唯一活动场景相机；双编辑器验证每端仅显示两个网络角色。
 - 新增编辑器回归测试，当前 `Core.EditorTests` 为 4/4 通过。
+
+## 2026-10-08：切换到 Input System 后端并记录旧输入边界
+
+- 证据：`ProjectSettings/ProjectSettings.asset` 的 `activeInputHandler: 1`（编辑器内 `SerializedObject` 实时读取同为 `1`）、`Assets/Core/Input/`、全 `Assets` 旧输入 API 扫描、构建场景表。
+- Active Input Handling 改为 `Input System Package (New)`；`ProjectSettings/InputManager.asset` 的旧轴定义保留，但项目脚本不再读取。
+- 全 `Assets` 扫描 639 个 `.cs` 文件：只有 `Assets/Mirror/` 下 27 个文件仍使用旧输入 API，其中运行时组件 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs` 未被 `Assets/Core`、`Assets/FrameWork` 的场景、Prefab 或脚本引用；Build Settings 只包含 4 个 `Assets/Core/Scenes` 场景。
+- `PersistentScene` 的 `EventSystem` 保持 `InputSystemUIInputModule` 与默认 `CursorLockBehavior`（`OutsideScreen`），未改动 UI 模块配置。
+- 维护计数 `4/5 -> 5/5`；达到阈值后复核 `UnityRuntime_Guide.md` 与实际配置，本次已更新该文档（新增“Player Settings 与输入”章节并更新核验日期），计数归零 `0/5`。
