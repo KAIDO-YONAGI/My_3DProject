@@ -47,6 +47,12 @@ public sealed class ThirdPersonCamera : MonoBehaviour
     private float pitch;
     private bool cursorLocked;
 
+    // 输入统一走 Input System；Alt 按住期间由 freeCursorHeld 表示相机把鼠标交还给系统。
+    private readonly CharacterInputReader input = new();
+    private bool freeCursorHeld;
+    private bool lockStateBeforeFree;
+    private bool skipLookThisFrame;
+
     // 只平滑“焦点到镜头”的相对偏移，不平滑角色世界坐标。
     private Vector3 smoothedOffset;
     private Vector3 offsetVelocity;
@@ -89,7 +95,7 @@ public sealed class ThirdPersonCamera : MonoBehaviour
         HandleCursor();
         ReadOrbitInput();
 
-        if (rotateTarget && HasMoveInput())
+        if (rotateTarget && input.HasMoveInput())
         {
             // 只同步 yaw，角色不会继承镜头俯仰。
             Quaternion targetRotation = Quaternion.Euler(0f, yaw, 0f);
@@ -105,16 +111,53 @@ public sealed class ThirdPersonCamera : MonoBehaviour
     private void OnDisable()
     {
         SetCursorLock(false);
+
+        // 停用或退出播放时清空 Alt 状态，重新启用后按 lockCursor 重新判断。
+        freeCursorHeld = false;
+        lockStateBeforeFree = false;
+        skipLookThisFrame = false;
+    }
+
+    private void OnDestroy()
+    {
+        // 生成的包装类在终结时会断言动作表仍然启用，必须显式释放输入资源。
+        input.Dispose();
     }
 
     private void HandleCursor()
     {
+        // Alt 是“临时交出鼠标”的修饰键：按住时释放光标并暂停注视，松开后按进入前的意图恢复。
+        bool freeHeld = input.FreeCursorHeld;
+        if (freeHeld != freeCursorHeld)
+        {
+            if (freeHeld)
+            {
+                lockStateBeforeFree = cursorLocked;
+                SetCursorLock(false);
+                skipLookThisFrame = true;
+            }
+            else if (lockStateBeforeFree && lockCursor && Application.isFocused)
+            {
+                // 焦点不在本程序时不抢回鼠标，避免把光标从编辑器或其它窗口拉走。
+                SetCursorLock(true);
+                skipLookThisFrame = true;
+            }
+
+            freeCursorHeld = freeHeld;
+        }
+
+        // 按住 Alt 期间不处理 Escape 和左键：此时的左键用于操作 UI，不能重新锁定光标。
+        if (freeCursorHeld)
+        {
+            return;
+        }
+
         // Escape 释放鼠标；需要锁定时点击画面可重新捕获。
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (input.ReleaseCursorPressed)
         {
             SetCursorLock(false);
         }
-        else if (lockCursor && Input.GetMouseButtonDown(0))
+        else if (lockCursor && input.LockCursorPressed)
         {
             SetCursorLock(true);
         }
@@ -122,18 +165,28 @@ public sealed class ThirdPersonCamera : MonoBehaviour
 
     private void ReadOrbitInput()
     {
-        if (cursorLocked)
+        // 锁定状态刚发生变化的这一帧鼠标增量不可靠（光标回中），跳过它避免镜头跳变。
+        bool skipLook = skipLookThisFrame;
+        skipLookThisFrame = false;
+
+        // Alt 按住期间相机完全不响应鼠标：转动和缩放都让给 UI 或编辑器。
+        if (cursorLocked && !freeCursorHeld && !skipLook)
         {
             // 鼠标只修改轨道角度，不直接累加世界位置。
-            yaw += Input.GetAxis("Mouse X") * sensitivity;
-            pitch -= Input.GetAxis("Mouse Y") * sensitivity;
+            Vector2 look = input.ReadLook();
+            yaw += look.x * sensitivity;
+            pitch -= look.y * sensitivity;
         }
 
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
-        distance = Mathf.Clamp(
-            distance - Input.GetAxis("Mouse ScrollWheel") * scrollSpeed,
-            minDistance,
-            maxDistance);
+
+        if (!freeCursorHeld)
+        {
+            distance = Mathf.Clamp(
+                distance - input.ReadZoom() * scrollSpeed,
+                minDistance,
+                maxDistance);
+        }
     }
 
     /// <summary>
@@ -209,14 +262,6 @@ public sealed class ThirdPersonCamera : MonoBehaviour
     {
         // 射线从角色内部发出，必须忽略角色自己的碰撞体。
         return hitTransform == target || hitTransform.IsChildOf(target);
-    }
-
-    // 与角色控制器同样读取原始轴，角色一松键就停止跟随镜头转向。
-    private static bool HasMoveInput()
-    {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        return horizontal * horizontal + vertical * vertical > 0.0001f;
     }
 
     // 统一更新内部状态和 Unity 光标状态，避免两者不同步。
