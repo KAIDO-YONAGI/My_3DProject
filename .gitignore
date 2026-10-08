@@ -38,16 +38,9 @@ Thumbs.db
 scripts/push.sh
 /push.sh
 
-# Third-party plugins (local only)
-/Assets/Plugins/
-/Assets/Plugins.meta
 # IDE / tool local config
 /.idea/
 /.codex/
-
-# Third-party plugin: Mirror
-/Assets/Mirror/
-/Assets/Mirror.meta
 
 # Temp converted log
 /MirrorExamplesPipelineConverted.txt
