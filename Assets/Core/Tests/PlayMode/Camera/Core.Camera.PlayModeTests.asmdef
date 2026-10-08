@@ -1,5 +1,5 @@
 {
-  "name": "Core.Movement.PlayModeTests",
+  "name": "Core.Camera.PlayModeTests",
   "references": [
     "Unity.InputSystem"
   ],

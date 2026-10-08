@@ -230,12 +230,14 @@ public sealed class ThirdPersonCameraCursorTests
 
     private bool CursorLocked()
     {
-        return (bool)GetField(cameraComponent, "cursorLocked");
+        object cursor = GetField(cameraComponent, "cursor");
+        return (bool)cursor.GetType().GetProperty("IsLocked").GetValue(cursor);
     }
 
     private float Yaw()
     {
-        return (float)GetField(cameraComponent, "yaw");
+        object orbit = GetField(cameraComponent, "orbit");
+        return (float)orbit.GetType().GetProperty("Yaw").GetValue(orbit);
     }
 
     private float Distance()
