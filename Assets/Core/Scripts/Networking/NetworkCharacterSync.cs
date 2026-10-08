@@ -7,13 +7,13 @@ using UnityEngine;
 /// 服务器按自身角色配置校验请求，将有效编号写入 characterId。
 /// 下行：Mirror 将 characterId 的初始值放入 Spawn，后续变化通过 SyncVar 状态同步发送。
 /// 接收该玩家的客户端包含拥有者，客户端将确认编号交给 NetworkCharacterManager 装配表现。
-/// </summary>
-/// <remarks>
+/// 
 /// 玩家位置与旋转由同一网络根上的 NetworkTransformReliable 独立同步。
 /// 变换上行：本地 PlayerCharacterController 驱动网络根，NetworkTransformReliable 将变换快照发送到服务器。
 /// 变换下行：服务器缓冲并插值更新网络根，再向其他观察客户端广播变换，接收端通过快照插值更新网络根。
 /// 本地拥有者持续使用本地运动结果，角色模型作为网络根子对象跟随其变换。
-/// </remarks>
+/// </summary>
+/// 
 public sealed class NetworkCharacterSync : NetworkBehaviour
 {
     // 下行状态由服务器写入：Spawn 携带初始编号，后续编号变化同步给拥有者和其他观察客户端。
