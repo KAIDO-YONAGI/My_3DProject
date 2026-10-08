@@ -103,6 +103,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 本地 Camera 成为 `inputSpace` 和 `MainCamera`。
 - 远程 Camera、`ThirdPersonCamera` 和 `AudioListener` 保持关闭。
 - 连接完成后场景单机角色关闭。
+- 单机角色通过 `NetworkCharacterManager.standalonePlayer` 场景引用启停，当前绑定常驻场景中的“娜娜莉（学园之星）”实例。单机相机、控制器和监听器分别由 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 引用该角色的 `Main Camera` 组件；不再全局查找或查询父级网络身份。
 - Additive 场景加载完成后再次收拢相机和单机角色。
 
 `presentations` 按玩家保存实例、编号、来源 Prefab、相机身份和组件缓存。重复回调命中有效实例、相同编号与 Prefab 时复用状态；身份变化时更新相机配置，Prefab 变化时替换表现实例。Host 和远端客户端均通过 `CommandSetCharacter` 提交角色选择，服务器校验后更新 SyncVar。

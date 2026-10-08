@@ -49,7 +49,11 @@ AutoStartClient.StartClient
 
 装配时一次取得视觉控制器数组，停用这些控制器并复用首个控制器的动画配置。Camera、`AudioListener` 和 `ThirdPersonCamera` 各扫描一次并保存到当前实例的状态中。配置 `ThirdPersonCamera` 时同时绑定网络根和设置启用状态。
 
+网络根的 `PlayerCharacterController` 首次初始化时缓存自身 `NetworkIdentity`，单机控制器也缓存身份缺失的结果，不再每帧查询。身份组件必须在初始化前配置；组件内的本地/远程归属值仍实时读取，不缓存身份属性快照。此缓存与客户端稍后挂载的模型、Animator 初始化独立，角色装配和模型替换继续使用原有重绑入口。
+
 ## 多余角色与相机收拢
+
+单机角色通过管理器的 `standalonePlayer` 场景序列化引用切换激活状态。单机相机、控制器和监听器分别通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法；单机表现切换不再全局扫描或检查父级网络身份，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件，不受单机引用切换影响。
 
 `PersistentScene` 保留一个单机 `LocalPlayer`，便于无服务端时直接开发移动、物理和相机。`NetworkCharacterManager` 在 `NetworkClient.isConnected=true` 后进入联机表现模式：
 

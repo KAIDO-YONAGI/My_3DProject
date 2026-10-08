@@ -1,5 +1,23 @@
 # Networking 开发记录
 
+## 2026-10-08：角色控制器身份查询改为一次性缓存
+
+- 控制器缓存自身网络身份组件及缺失结果；身份必须在首次初始化前配置，本地/远程归属属性仍实时读取。网络子模型和 Animator 的延迟装配不受影响。
+- 新增缺失缓存、已有身份和 Animator 后挂载测试。先验证旧代码的重复查询，再验证修复；PlayMode 网络任务成功，完成 12 项、未报告失败，EditMode 8/8；控制台无错误或警告。
+- 未修改网络协议、Prefab 或服务器配置，未构建或进行双客户端联机验收。维护计数 `3/5 -> 4/5`。
+
+## 2026-10-08：单机相机路径取消全局查找
+
+- `SetStandaloneCameraEnabled` 改为实例方法，直接切换配置的 Camera、ThirdPersonCamera、AudioListener；不再扫描场景或检查父级网络身份。动态网络表现的装配缓存逻辑不变。
+- EditMode 场景与连接配置测试 8/8；PlayMode 网络与相机测试任务成功，完成 49 项、未报告失败。未重新构建或执行双客户端联机验证。
+- 同步 Client 与 UnityRuntime 的场景配置说明。维护计数 `2/5 -> 3/5`。
+
+## 2026-10-08：单机角色切换移除全局查找
+
+- `ApplyPresentationMode`、`SetStandalonePlayerEnabled` 改为实例方法，通过 `standalonePlayer` 场景序列化引用调用 `SetActive`，移除角色全局查找和父级身份查询；相机查找不变。
+- 测试先确认缺失字段与实例入口导致失败；绑定场景引用并重新加载未保存修改为零的场景后，EditMode 7/7、网络表现 PlayMode 9/9 通过。
+- 不涉及消息协议、Mirror 参数或网络 Prefab。维护计数 `1/5 -> 2/5`。
+
 ## 2026-09-29：建立 Mirror 网络模块权威入口
 
 - 依据 `Assets/Core/Scripts/Networking/` 和 PersistentScene 建立模块文档。

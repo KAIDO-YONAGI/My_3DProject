@@ -31,6 +31,8 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `NetworkCharacterManager` 使用 `NetworkClient.isConnected` 判断表现模式。连接尝试期间保留单机角色和相机。连接完成后收起单机角色，把表现交给 Mirror 创建的网络玩家。
 
+单机角色的启停通过 `NetworkCharacterManager.standalonePlayer` 场景序列化引用直接调用 `SetActive`，不再全局查找 `PlayerCharacterController` 或检查其父级网络身份。当前绑定常驻场景中实际名为“娜娜莉（学园之星）”的单机实例（文档中的 `LocalPlayer` 指该职责对象）；停用后引用仍保留，断线可再次启用。单机相机通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 三组场景组件引用切换启用状态，当前均绑定该角色的 `Main Camera` 组件；不再扫描场景或查询父级网络身份。新相机必须显式配置，未配置对象不会被管理器切换。
+
 ## 网络角色装配
 
 服务器生成的 `NetworkPlayer` 是网络根。该对象不直接包含具体角色模型和相机，客户端通过以下流程完成装配：
@@ -70,6 +72,8 @@ CharacterInputReader（PlayerControls.inputactions）
 ## 输入归属
 
 `PlayerCharacterController` 是普通 `MonoBehaviour`。对象存在 `NetworkIdentity` 且客户端已经连接时，仅 `isLocalPlayer=true` 的实例读取输入。单机角色没有 `NetworkIdentity`，继续使用相同的移动代码。
+
+网络身份组件在首次 `EnsureRuntimeState`（通常由 `Awake` 调用）查询一次，`networkIdentityInitialized` 同时缓存“有身份”和“无身份”的结果；单机角色不再每帧尝试获取不存在的组件。身份组件应在初始化前配置，不支持通过每帧查询发现初始化后新加的身份组件。缓存的是组件引用，`isLocalPlayer` 等归属值仍实时读取。模型与 Animator 的延迟挂载及重绑仍由原有初始化链路处理，不因身份已查询而跳过。
 
 ## 输入系统与光标规则
 

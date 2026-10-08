@@ -131,6 +131,8 @@
 
 `PersistentScene` 中 `NetworkCharacterManager` 的两个角色数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，两套数组的同一下标表示同一角色；默认编号对应的两个位置均配置有效 Prefab。
 
+`standalonePlayer` 必须引用常驻场景内的单机角色实例，而非 Prefab 资源。当前绑定场景内“娜娜莉（学园之星）”根对象（fileID `2132654451`），通过该引用直接启停单机角色；不自动发现其他场景中新加入的单机角色。`standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 必须引用场景组件，当前均绑定该角色内的 `Main Camera`。单机表现路径不再全局查找或查询父级身份；新加入的相机需要手动配置引用。
+
 ## 角色数量与相机规则
 
 - 单机状态使用 `PersistentScene` 中的 `LocalPlayer`。

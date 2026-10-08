@@ -1,5 +1,23 @@
 # Client 开发记录
 
+## 2026-10-08：缓存网络身份缺失结果
+
+- `PlayerCharacterController` 新增 `networkIdentityInitialized`，首次身份查询即标记完成，单机角色不再每帧查询不存在的 `NetworkIdentity`；保留 Animator 延迟初始化、重绑和原有中文注释。
+- 回归测试先确认旧逻辑会重复发现后添加的身份，修改后验证缺失结果缓存、已有身份及归属变化、延迟挂载 Animator。PlayMode 网络任务成功，完成 12 项、未报告失败；EditMode 8/8；控制台无错误或警告。
+- 未修改场景、Prefab、相机兜底或碰撞逻辑，未构建或执行双客户端联机验证。维护计数 `2/5 -> 3/5`。
+
+## 2026-10-08：单机相机和音频启停改用显式引用
+
+- 新增 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组，绑定单机角色的 `Main Camera` 组件；移除单机相机路径的三次全局扫描和父级身份查询，原有中文注释保留。
+- 新增引用有效性、启停恢复和未配置对象隔离测试。EditMode `Core.EditorTests` 8/8；PlayMode 网络与相机测试任务成功，完成 49 项、未报告失败；未重新构建或进行双客户端联机验证。
+- 其他性能风险仅只读排查，未进行 Profiler 耗时测量或扩展代码修改。维护计数 `1/5 -> 2/5`。
+
+## 2026-10-08：单机角色启停改用场景引用
+
+- `NetworkCharacterManager.standalonePlayer` 直接引用常驻场景单机角色，启停不再扫描角色控制器；单机相机逻辑及原有中文注释保留。
+- 新增场景引用和仅切换指定对象的测试；停用后恢复及既有角色、相机联合切换均通过。主编辑器 EditMode `Core.EditorTests` 7/7、PlayMode `Core.Networking.PlayModeTests` 9/9，无失败或跳过。
+- 未重新构建或进行双客户端联机验证。维护计数 `0/5 -> 1/5`。
+
 ## 2026-09-29：建立客户端模块权威入口
 
 - 依据 `Assets/Core/Scripts/Movement/` 实际代码建立客户端模块。
