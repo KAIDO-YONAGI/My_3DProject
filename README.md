@@ -8,7 +8,7 @@
 |---|---|
 | Unity 编辑器 | `2022.3.62f3c1` |
 | 包依赖 | `Packages/manifest.json` |
-| 第三方插件 | `Assets/Plugins/`（含 `Mirror/`） |
+| 第三方插件 | `Assets/Plugins/`（含 `Mirror/`、`DynamicBone/`） |
 
 ## 快速开始
 
@@ -37,7 +37,8 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/Core/Scenes/` | 三个场景 |
 | `Assets/Core/Prefabs/` | `NetworkManager`、`NetworkPlayer`、`CharactersForLocal`、`CharactersForSync` |
 | `Assets/Core/Scripts/Networking/` | 自动连接、角色编号同步、角色表现装配 |
-| `Assets/Core/Scripts/Movement/` | 输入、移动、重力、动画、第三人称相机与 `DynamicBone` |
+| `Assets/Core/Scripts/Character/` | 输入、移动、重力与动画数据流（内含 `Config/`、`Runtime/`） |
+| `Assets/Core/Scripts/Camera/` | 第三人称相机轨道、光标、避让与转向数学 |
 | `Assets/Core/Models/` | 角色模型源文件与骨骼配置说明 |
 | `Assets/Core/Terrain/` | 玩法地形数据 |
 | `Assets/Core/SO/` | 场景与事件 ScriptableObject |
@@ -47,6 +48,7 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/Plugins/TextMesh Pro/` | TextMeshPro 资源 |
 | `Assets/Plugins/Mirror/MirrorScriptTemplates/` | Mirror 脚本模板 |
 | `Assets/Plugins/ParrelSync/` | 多编辑器实例工具 |
+| `Assets/Plugins/DynamicBone/` | 骨骼跟随（发辫、裙摆、尾巴）的第三方实现 |
 | `Y_MultipleAgentWorkflow/` | 项目权威文档 |
 | `docs/` | 计划、草案与教学材料 |
 
@@ -102,7 +104,7 @@ InitialScene                启动引导，注册并加载常驻场景
 |---|---|---|
 | Mirror `96.11.2` | `Assets/Plugins/Mirror/` | 网络框架，附带 KCP 传输 |
 | ParrelSync | `Assets/Plugins/ParrelSync/` | 多开 Unity 编辑器做联机联调 |
-| DynamicBone | `Assets/Core/Scripts/Movement/DynamicBone/` | 角色头发、裙摆与尾巴的骨骼物理 |
+| DynamicBone | `Assets/Plugins/DynamicBone/` | 角色头发、裙摆与尾巴的骨骼物理 |
 
 ### Unity 包
 
