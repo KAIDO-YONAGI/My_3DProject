@@ -131,3 +131,7 @@ InitialScene                启动引导，注册并加载常驻场景
 ## 文档
 
 `Y_MultipleAgentWorkflow/` 是项目权威文档入口，按 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime` 拆分知识域，`Workflow` 管理文档路由与并发租约。`docs/` 存放计划、草案与教学材料。
+
+### 工作流出处
+
+本项目的多智能体工作流出自作者本人维护的开源项目 [KAIDO-YONAGI/Y_MultipleAgentWorkflow](https://github.com/KAIDO-YONAGI/Y_MultipleAgentWorkflow)，不是移植或套用的第三方框架。仓库沉淀的是同一套可复用方案：分层路由与权威文档库、WorkingAgent 并发租约，以及多客户端 Skill 分发；本项目中的 `Y_MultipleAgentWorkflow/`、`AGENTS.md` 与 `CLAUDE.md` 入口均按该方案落地。
