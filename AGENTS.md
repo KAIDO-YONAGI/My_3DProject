@@ -39,3 +39,4 @@
 
 - Mirror 配置与构建的事实来源是 `Y_MultipleAgentWorkflow/UnityRuntime/Mirror_KCP_Config.md`。
 - 涉及多个知识域的任务，必须同时读取并维护所有受影响知识域的权威文档。
+- `DeveloperLog.md` 一律**最新记录在前**：新增条目插入文件开头，不追加到文件末尾；同一天的条目按实际完成顺序倒序，最后完成的写在最前面。
