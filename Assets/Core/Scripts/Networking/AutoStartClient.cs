@@ -6,15 +6,11 @@ using UnityEngine;
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(100)]
-public sealed class AutoStartClient : MonoBehaviour
+public class AutoStartClient : MonoBehaviour
 {
     [Tooltip("Unity 编辑器进入运行模式后自动连接服务端。连接目标由 NetworkManager 的 Network Address 指定。")]
     [SerializeField]
     private bool autoConnectInEditor = true;
-
-    [Tooltip("构建客户端启动后自动连接服务端。批处理进程和已启动的服务端保持各自的启动流程。")]
-    [SerializeField]
-    private bool autoConnectInPlayer = true;
 
     [Tooltip("两次连接尝试之间的最小间隔，单位为真实时间秒，最小值为 0.5。Mirror 客户端回到非活动状态后按此间隔重试。")]
     [SerializeField, Min(0.5f)]

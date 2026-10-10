@@ -14,19 +14,27 @@ using UnityEngine;
 /// 本地拥有者持续使用本地运动结果，角色模型作为网络根子对象跟随其变换。
 /// </summary>
 /// 
-public sealed class NetworkCharacterSync : NetworkBehaviour
+public class NetworkCharacterSync : NetworkBehaviour
 {
     // 下行状态由服务器写入：Spawn 携带初始编号，后续编号变化同步给拥有者和其他观察客户端。
     [SyncVar(hook = nameof(OnCharacterIdChanged))]
     private int characterId;
+
+    // [SyncVar(hook = nameof(OnCharacterMovementStateChanged))]
+    // private 
+    // void OnCharacterMovementStateChanged(int movementState)
+    // {
+    // }
 
     // 缓存网络根的运动控制器，供表现管理器绑定模型动画和本地输入参考空间。
     private PlayerCharacterController playerController;
 
     /// <summary>服务器确认的当前角色编号，对应管理器两套数组的下标。</summary>
     public int CharacterId => characterId;
+
     /// <summary>当前网络玩家是否为此客户端的本地玩家。</summary>
     public bool IsLocalPlayerCharacter => isLocalPlayer;
+
     /// <summary>按需查找并复用同一网络根上的运动控制器。</summary>
     public PlayerCharacterController PlayerController =>
         playerController != null

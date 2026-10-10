@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 /// 在 PersistentScene 中配置本地与远程角色资源，按网络玩家身份装配客户端表现。
 /// 每个玩家的视觉实例、角色编号、来源 Prefab 和相机组件统一保存在表现状态中。
 /// </summary>
-public sealed class NetworkCharacterManager : MonoBehaviour
+public class NetworkCharacterManager : MonoBehaviour
 {
     /// <summary>网络玩家共用的角色表现管理器。</summary>
     public static NetworkCharacterManager Instance { get; private set; }
@@ -36,7 +36,7 @@ public sealed class NetworkCharacterManager : MonoBehaviour
     [SerializeField] private AudioListener[] standaloneListeners = new AudioListener[0];
 
     // 单个玩家的装配结果，组件缓存与视觉实例共用生命周期。
-    private sealed class CharacterPresentation
+    private class CharacterPresentation
     {
         public GameObject Instance;
         public int CharacterId;
