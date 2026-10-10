@@ -86,7 +86,7 @@ public sealed class CharacterMovementStateMachineTests
 
     private static Type RuntimeType(string typeName)
     {
-        Type type = Type.GetType($"{typeName}, Assembly-CSharp");
+        Type type = Type.GetType($"Core.Scripts.Character.Movement.States.{typeName}, Assembly-CSharp");
         Assert.That(type, Is.Not.Null, $"找不到运行时类型 {typeName}。");
         return type;
     }

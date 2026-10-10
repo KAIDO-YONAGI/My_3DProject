@@ -340,9 +340,18 @@ public sealed class NetworkCharacterPresentationTests
 
     private static Type RuntimeType(string name)
     {
+        string qualifiedName = name switch
+        {
+            "PlayerCharacterController" => "Core.Scripts.Character.Control.PlayerCharacterController",
+            "ThirdPersonCamera" => "Core.Scripts.Camera.Runtime.ThirdPersonCamera",
+            "NetworkCharacterManager" => "Core.Scripts.Networking.NetworkCharacterManager",
+            "NetworkCharacterSync" => "Core.Scripts.Networking.NetworkCharacterSync",
+            _ => name
+        };
+
         foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Type type = assembly.GetType(name);
+            Type type = assembly.GetType(qualifiedName);
             if (type != null)
             {
                 return type;

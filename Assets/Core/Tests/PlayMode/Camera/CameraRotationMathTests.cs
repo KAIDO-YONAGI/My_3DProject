@@ -117,7 +117,7 @@ public sealed class CameraRotationMathTests
     {
         foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Type type = assembly.GetType(name);
+            Type type = assembly.GetType("Core.Scripts.Camera.Runtime." + name);
             if (type != null)
             {
                 return type;
