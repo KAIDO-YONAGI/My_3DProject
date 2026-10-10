@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 2299379603942041310}
   - component: {fileID: 8461200035157734512}
   - component: {fileID: 4149387868693482790}
-  - component: {fileID: 7814609285416083721}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Player
@@ -141,6 +140,7 @@ MonoBehaviour:
     jumpHeight: 1.2
     groundedPull: -2
     orientToMovement: 0
+    airborneTolerance: 0.3
   idleClip: {fileID: 0}
   runDirectionalSet:
     label: Run 2D Blend
@@ -171,21 +171,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMethod: 0
   syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
---- !u!114 &7814609285416083721
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1215133417561776989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b9dca0ce9ed4d9094a8df5c8901df22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMethod: 0
-  syncDirection: 1
   syncMode: 0
   syncInterval: 0

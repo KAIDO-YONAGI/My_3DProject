@@ -1614,7 +1614,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 516719938825738289, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: collisionLayers.m_Bits
-      value: 4294967295
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 694283088756168766, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1650,11 +1650,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1800306559856102363, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.63
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1800306559856102363, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.619
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1800306559856102363, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.z

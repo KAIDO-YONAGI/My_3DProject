@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d9fc1c3a8b15cb4bcce6b4043d95c72, type: 3}
   m_Name: MultiplayerSampleSceneSO 1
   m_EditorClassIdentifier: 
-  ID: 1e520e7a-b056-4c95-8f99-3ee5bed05b04
+  ID: 613fd2d7-a98f-4897-91ba-c6a1d883429c
   sceneAsset: {fileID: 102900000, guid: dd5051b5ff7cf9e43a73cdbdc43988b7, type: 3}
   sceneName: MultiplayerSampleScene 1
   sceneType: 0
