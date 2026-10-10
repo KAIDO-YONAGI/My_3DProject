@@ -8,7 +8,7 @@ using UnityEngine.UI;
 /// 编号校验和联机同步由 NetworkCharacterSync.SetLocalCharacter 与服务端 Command 完成。
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class CharacterSelectButton : MonoBehaviour
+public class CharacterSelectButton : MonoBehaviour
 {
     [Tooltip("被监听的按钮。留空时自动取用同一 GameObject 上的 Button。")]
     [SerializeField] private Button targetButton;

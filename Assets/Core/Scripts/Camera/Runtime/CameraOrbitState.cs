@@ -1,6 +1,6 @@
 using UnityEngine;
 
-internal sealed class CameraOrbitState
+internal class CameraOrbitState
 {
     public float Yaw { get; private set; }
     public float Pitch { get; private set; }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-internal sealed class CameraCollisionResolver
+internal class CameraCollisionResolver
 {
     // 使用固定数组接收无分配球形检测结果，容量足以覆盖镜头路径上的常见碰撞体。
     // 常见情况复用初始数组；结果填满时必须扩容重试，不能假定未排序的结果已包含最近障碍。

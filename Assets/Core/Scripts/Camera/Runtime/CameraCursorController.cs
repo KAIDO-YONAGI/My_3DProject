@@ -1,6 +1,6 @@
 using UnityEngine;
 
-internal sealed class CameraCursorController
+internal class CameraCursorController
 {
     private static CameraCursorController owner;
     private bool freeCursorHeld;

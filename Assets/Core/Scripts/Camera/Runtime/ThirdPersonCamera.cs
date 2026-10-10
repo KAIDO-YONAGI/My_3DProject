@@ -5,7 +5,7 @@ using UnityEngine;
 /// 它只读取跟随目标的位置，不读取 CharacterMotor 的速度，因此角色加减速不会改变镜头距离。
 /// 可配置字段按运行期能否生效分组，结论写在 Header 上（运行时可改 / 运行时不可改），Tooltip 只描述字段作用。
 /// </summary>
-public sealed class ThirdPersonCamera : MonoBehaviour
+public class ThirdPersonCamera : MonoBehaviour
 {
     [Header("目标（运行时可改）")]
     // target 通常是挂载 PlayerCharacterController 的角色根节点。
