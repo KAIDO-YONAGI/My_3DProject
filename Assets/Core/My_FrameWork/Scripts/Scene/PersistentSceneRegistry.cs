@@ -1,44 +1,48 @@
 using System.Collections.Generic;
+using Core.My_FrameWork.Scripts.SO;
 using UnityEngine;
 
-/// <summary>
-/// 保存绝不能由 SceneChanger 卸载的常驻场景运行时注册表。
-/// 由 InitialLoad 统一注册，业务代码无需重复配置。
-/// </summary>
-public static class PersistentSceneRegistry
+namespace Core.My_FrameWork.Scripts.Scene
 {
-    private static readonly HashSet<string> SceneNames = new HashSet<string>();
-
-    public static void Register(IEnumerable<GameSceneSO> scenes)
+    /// <summary>
+    /// 保存绝不能由 SceneChanger 卸载的常驻场景运行时注册表。
+    /// 由 InitialLoad 统一注册，业务代码无需重复配置。
+    /// </summary>
+    public static class PersistentSceneRegistry
     {
-        if (scenes == null)
-            return;
+        private static readonly HashSet<string> SceneNames = new HashSet<string>();
 
-        foreach (GameSceneSO scene in scenes)
-            Register(scene);
-    }
+        public static void Register(IEnumerable<GameSceneSO> scenes)
+        {
+            if (scenes == null)
+                return;
 
-    public static void Register(GameSceneSO scene)
-    {
-        if (scene == null || string.IsNullOrWhiteSpace(scene.sceneName))
-            return;
+            foreach (GameSceneSO scene in scenes)
+                Register(scene);
+        }
 
-        SceneNames.Add(scene.sceneName);
-    }
+        public static void Register(GameSceneSO scene)
+        {
+            if (scene == null || string.IsNullOrWhiteSpace(scene.sceneName))
+                return;
 
-    public static bool IsPersistent(GameSceneSO scene)
-    {
-        return scene != null && IsPersistent(scene.sceneName);
-    }
+            SceneNames.Add(scene.sceneName);
+        }
 
-    public static bool IsPersistent(string sceneName)
-    {
-        return !string.IsNullOrWhiteSpace(sceneName) && SceneNames.Contains(sceneName);
-    }
+        public static bool IsPersistent(GameSceneSO scene)
+        {
+            return scene != null && IsPersistent(scene.sceneName);
+        }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void Reset()
-    {
-        SceneNames.Clear();
+        public static bool IsPersistent(string sceneName)
+        {
+            return !string.IsNullOrWhiteSpace(sceneName) && SceneNames.Contains(sceneName);
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Reset()
+        {
+            SceneNames.Clear();
+        }
     }
 }

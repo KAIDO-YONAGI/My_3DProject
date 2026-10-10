@@ -120,7 +120,7 @@ MonoBehaviour:
   targetRotateSmooth: 15
   targetRotateSpeed: 360
   minHeightY: 1.5
-  collisionRadius: 0
+  collisionRadius: 0.1
   collisionLayers:
     serializedVersion: 2
     m_Bits: 4294967295

@@ -1,46 +1,50 @@
 using System.Collections;
 using System.Collections.Generic;
+using Core.My_FrameWork.Scripts.SO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class InitialLoad : MonoBehaviour
+namespace Core.My_FrameWork.Scripts.Scene
 {
-    [Tooltip("启动时以叠加模式加载并持续保留的场景。")]
-    public List<GameSceneSO> persistentScenes = new List<GameSceneSO>();
-
-    private void Awake()
+    public class InitialLoad : MonoBehaviour
     {
-        PersistentSceneRegistry.Register(persistentScenes);
-        StartCoroutine(LoadPersistentScenes());
-    }
+        [Tooltip("启动时以叠加模式加载并持续保留的场景。")]
+        public List<GameSceneSO> persistentScenes = new List<GameSceneSO>();
 
-    private IEnumerator LoadPersistentScenes()
-    {
-        foreach (GameSceneSO sceneReference in persistentScenes)
+        private void Awake()
         {
-            if (sceneReference == null)
-                continue;
+            PersistentSceneRegistry.Register(persistentScenes);
+            StartCoroutine(LoadPersistentScenes());
+        }
 
-            string sceneName = sceneReference.sceneName;
-            if (string.IsNullOrWhiteSpace(sceneName))
+        private IEnumerator LoadPersistentScenes()
+        {
+            foreach (GameSceneSO sceneReference in persistentScenes)
             {
-                Debug.LogError($"InitialLoad cannot load '{sceneReference.name}' because it has no scene assigned.");
-                continue;
+                if (sceneReference == null)
+                    continue;
+
+                string sceneName = sceneReference.sceneName;
+                if (string.IsNullOrWhiteSpace(sceneName))
+                {
+                    Debug.LogError($"InitialLoad cannot load '{sceneReference.name}' because it has no scene assigned.");
+                    continue;
+                }
+
+                UnityEngine.SceneManagement.Scene loadedScene = SceneManager.GetSceneByName(sceneName);
+                if (loadedScene.IsValid() && loadedScene.isLoaded)
+                    continue;
+
+                if (!Application.CanStreamedLevelBeLoaded(sceneName))
+                {
+                    Debug.LogError($"InitialLoad cannot load scene '{sceneName}'. Assign a scene in its GameSceneSO first.");
+                    continue;
+                }
+
+                AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+                while (loadOperation != null && !loadOperation.isDone)
+                    yield return null;
             }
-
-            Scene loadedScene = SceneManager.GetSceneByName(sceneName);
-            if (loadedScene.IsValid() && loadedScene.isLoaded)
-                continue;
-
-            if (!Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogError($"InitialLoad cannot load scene '{sceneName}'. Assign a scene in its GameSceneSO first.");
-                continue;
-            }
-
-            AsyncOperation loadOperation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-            while (loadOperation != null && !loadOperation.isDone)
-                yield return null;
         }
     }
 }

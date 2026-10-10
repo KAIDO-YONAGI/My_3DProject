@@ -1,31 +1,36 @@
+using Core.My_FrameWork.Scripts.Core;
+using Core.My_FrameWork.Scripts.UI.SystemCanvasManagers;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ESCButton : MonoBehaviour
+namespace Core.My_FrameWork.Scripts.UI
 {
-    [Tooltip("点击后请求关闭指定面板的按钮。")]
-    [SerializeField] private Button escButton;
-
-    [Tooltip("该按钮要关闭的面板类型。显式关闭不受 Close On Escape 限制。")]
-    [SerializeField] private MyEnums.CanvasToToggle canvasToESC;
-
-    private void OnEnable()
+    public class ESCButton : MonoBehaviour
     {
-        if (escButton != null)
-            escButton.onClick.AddListener(OnESC);
-    }
+        [Tooltip("点击后请求关闭指定面板的按钮。")]
+        [SerializeField] private Button escButton;
 
-    private void OnDisable()
-    {
-        if (escButton != null)
-            escButton.onClick.RemoveListener(OnESC);
-    }
+        [Tooltip("该按钮要关闭的面板类型。显式关闭不受 Close On Escape 限制。")]
+        [SerializeField] private CanvasToToggle canvasToESC;
 
-    private void OnESC()
-    {
-        if (UIManager.Instance == null)
-            return;
+        private void OnEnable()
+        {
+            if (escButton != null)
+                escButton.onClick.AddListener(OnESC);
+        }
 
-        UIManager.Instance.RequestCanvasClose(canvasToESC);
+        private void OnDisable()
+        {
+            if (escButton != null)
+                escButton.onClick.RemoveListener(OnESC);
+        }
+
+        private void OnESC()
+        {
+            if (UIManager.Instance == null)
+                return;
+
+            UIManager.Instance.RequestCanvasClose(canvasToESC);
+        }
     }
 }

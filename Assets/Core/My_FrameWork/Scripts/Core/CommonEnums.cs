@@ -1,4 +1,4 @@
-namespace MyEnums
+namespace Core.My_FrameWork.Scripts.Core
 {
     public enum SceneType
     {
