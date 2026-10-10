@@ -79,7 +79,7 @@ namespace Core.Scripts.Character.Control
             }
 
             // 网络模型是运行时挂载的，首次 Update 可能早于实例化后的依赖初始化，避免因此丢失移动能力。
-            if (!EnsureRuntimeState())
+            if (motor == null || characterController == null)
             {
                 return;
             }
@@ -92,7 +92,7 @@ namespace Core.Scripts.Character.Control
 
         private void LateUpdate()
         {
-            // 远程玩家不读取本地输入；动画只消费 NetworkCharacterMovementSync 已按网络时间采样的状态。
+            // 远程玩家不读取本地输入；运动状态网络同步尚未接入，当前直接使用 Idle 回退。
             if (IsRemoteNetworkPlayer())
             {
                 ApplyRemoteAnimation();
@@ -224,12 +224,12 @@ namespace Core.Scripts.Character.Control
         /// </summary>
         private void ApplyRemoteAnimation()
         {
-            if (!EnsureRuntimeState() || animationDriver == null)
+            if (motor == null || characterController == null || animationDriver == null)
             {
                 return;
             }
 
-            // 延迟装配或首个快照尚未到达时保留明确的 Idle 回退。
+            // 延迟装配或运动状态尚未接入时保留明确的 Idle 回退。
             animationDriver.Apply(new CharacterMotion(
                 CharacterMovementStateId.Idle,
                 Vector2.zero,
