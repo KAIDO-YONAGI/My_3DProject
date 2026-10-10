@@ -2,6 +2,16 @@
 
 跨知识域结构变更和根索引维护记录在此；业务证据记录到对应知识域的 `DeveloperLog.md`。
 
+## 2026-10-10：清理运动状态同步遗留残余
+
+- 背景：运动状态同步按用户要求暂缓后，代码、资产与文档中残留了指向未实现组件的记录。本轮按用户明确要求一次性清除。开工前工作区为干净状态（`HEAD` 为 `0a6afc2`），原计划文档所述“基于未提交改动继续”的前提不成立。
+- 资产：删除 `NetworkPlayer.prefab` 中 fileID `7814609285416083721`、脚本 GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的 Missing Script 记录，并同步移除其在 `m_Component` 数组中的引用（只删组件块会留下悬空引用）。删除孤儿资产 `Assets/Core/SO/EventSOs/BoolEventChannel.asset`：其脚本 `BoolEventChannelSO.cs` 已于提交 `a148055` 删除，该资产 GUID 在全工程零引用，`AddressableAssetsData` 也未引用该路径；连带删除其 `.meta` 与随之变空的 `EventSOs/` 目录。
+- 代码：删除 `NetworkCharacterSync.cs` 第 26-30 行半截注释残骸（`// [SyncVar(hook = nameof(OnCharacterMovementStateChanged))]`、`// private ` 等，语法本身不完整）；修正 `PlayerCharacterController.cs` 中指向不存在组件的注释与“首个快照尚未到达”的前瞻表述。
+- 文档：同步 `Project_Overview.md`、`Networking/Networking_Guide.md`、`Protocol/Protocol_Guide.md`、`UnityRuntime/UnityRuntime_Guide.md`、`UnityRuntime/Router.md`；`docs/网络同步速查手册.md` 第三节新增勘误，撤回把 `NetworkCharacterMovementSync` 写成已存在组件的表格行与段落。
+- 顺带核实：`MultiplayerSampleScene 1.unity` **不是**误复制残留。它由提交 `c5024fc` 显式注册进 Build Settings，与 `MultiplayerSampleScene` 互为往返传送的两张玩法图，两个场景的 `Teleport` 触发器交叉指向对方的 `GameSceneSO`（各 582 行，仅差该触发器对象）。已补入 `UnityRuntime_Guide.md`。
+- 验证：`Assets/Core` 脚本引用 213 处，缺失脚本 GUID 由 2 种归零；`NetworkPlayer.prefab` 内部 7 个锚点的引用全部可解析，无悬空；已删资产 GUID 全工程引用数为 0。Unity 编辑器未运行（仅 Unity Hub 在运行），未执行编译、PlayMode 或联机验收。
+- 本次为资产与注释清理，不改变业务实现；跨域变更按维护规则记入各知识域 `DeveloperLog.md`。
+
 ## 2026-10-08：脚本按知识域重组后的路径同步
 
 - 依据提交 `7c5c8a5`、`21100d9` 的实际目录，同步根 `Project_Overview.md`、`Client` 与 `UnityRuntime` 的 `Router.md`、`Client_Guide.md`、`README.md` 中的路径引用。

@@ -2,16 +2,16 @@
 
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
-最后核验：`2026-10-10`（角色功能目录与文档边界局部核验）
+最后核验：`2026-10-10`
 
-本目录是项目权威文档入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
+本目录是项目权威文档入口。项目知识按功能域拆分为 `Character`、`Multiplayer`、`Scene`、`Project`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
 ## 权威顺序
 
 1. 用户最新明确要求。
 2. 实际代码、资源、运行结果和可复现验证。
-3. 对应知识域的 Guide。
-4. 对应知识域的 Router。
+3. 对应功能域的 Guide。
+4. 对应功能域的 Router。
 5. DeveloperLog。
 6. `AGENTS.md`、`CLAUDE.md`、Skills 等入口与通用规则。
 
@@ -21,32 +21,42 @@
 
 - 初始场景：`Assets/Core/Scenes/InitialScene.unity`。
 - 常驻场景：`Assets/Core/Scenes/PersistentScene.unity`。
-- 玩法场景：`Assets/Core/Scenes/MultiplayerSampleScene.unity`。
+- 玩法场景：`Assets/Core/Scenes/MultiplayerSampleScene.unity`、`Assets/Core/Scenes/MultiplayerSampleScene 1.unity`。
 - 场景框架：`Assets/Core/My_FrameWork/Scripts/Scene/`。
 - 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
-- Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`UnityRuntime/Mirror_KCP_Config.md`。
+- Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`Project/Mirror_KCP_Config.md`。
 
-## 任务路由
+## 功能域路由
 
 | 触发词或目标 | 必读文档 |
 |---|---|
 | 项目定位、当前架构、联机链路、实施边界 | `Project_Overview.md` |
-| 客户端生命周期、玩家输入、移动、相机和客户端表现 | `Client/Client_Guide.md` |
-| 角色功能目录、代码状态机、状态内动画混合 | `Project_Overview.md`、`Client/Client_Guide.md` |
-| 运动表现快照、运动状态同步暂缓范围 | `Protocol/Protocol_Guide.md`、`Networking/Networking_Guide.md` |
-| Mirror、KCP、NetworkManager、自动连接、玩家网络组件 | `Networking/Networking_Guide.md` |
-| 专用服务器启动、Headless 构建、监听和部署事实 | `Server/Server_Guide.md` |
-| 客户端与服务器消息边界、同步字段和兼容规则 | `Protocol/Protocol_Guide.md` |
-| Unity 版本、Packages、Build Settings、场景和 Prefab | `UnityRuntime/UnityRuntime_Guide.md` |
-| Mirror 参数、玩家 Prefab、联机验证和构建产物 | `UnityRuntime/Mirror_KCP_Config.md` |
+| 玩家输入、角色移动、状态机、动画和本地相机 | `Character/Character_Guide.md` |
+| 角色模型、动画素材与相机 Prefab | `Character/Character_Guide.md`、`Project/Project_Guide.md` |
+| Mirror、KCP、NetworkManager、自动连接、玩家网络组件 | `Multiplayer/Multiplayer_Guide.md` |
+| 客户端与服务器消息边界、同步字段和兼容规则 | `Multiplayer/Sync_Protocol.md` |
+| 运动表现快照设计 | `Multiplayer/Sync_Protocol.md` |
+| 专用服务器启动、Headless 构建、监听和部署 | `Multiplayer/Dedicated_Server.md` |
+| 场景列表、场景职责、加载链路和表现模式切换 | `Scene/Scene_Guide.md` |
+| Unity 版本、Packages、Addressables、Player Settings 和 Prefab | `Project/Project_Guide.md` |
+| Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Project/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
-| 场景配置、UDP/KCP、Mirror 生命周期、角色装配和联机验收 | `UnityRuntime/Mirror_KCP_Config.md`、`UnityRuntime/UnityRuntime_Guide.md` |
 
-跨知识域任务同时读取所有受影响入口。
+跨功能域任务同时读取所有受影响入口。
+
+## 功能域导航
+
+| 功能域 | Router |
+|---|---|
+| `Character` | `Character\Router.md` |
+| `Multiplayer` | `Multiplayer\Router.md` |
+| `Scene` | `Scene\Router.md` |
+| `Project` | `Project\Router.md` |
+| `Workflow` | `Workflow\Router.md` |
 
 ## 开始步骤
 
-1. 通过本文档确定知识域。
+1. 通过本文档确定功能域。
 2. 阅读 `Workflow/Concurrency_Guide.md`。
 3. 轻量只读定位完成后，在详细分析、子代理、修改或状态变更前，使用 `Workflow/Scripts/WorkingAgent.ps1` 申请精确租约。
 4. 读取被路由的权威文档和完成任务所需的实际代码或资源。
@@ -58,19 +68,24 @@
 
 ## 文档索引
 
-| 文档 ID | 路径 | 职责 | 状态 | 最近核验 |
-|---|---|---|---|---|
-| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active | 2026-10-10（局部） |
-| `CLIENT-GUIDE` | `Client/Client_Guide.md` | 客户端生命周期、输入、移动和相机 | Active | 2026-10-10（局部） |
-| `NETWORKING-GUIDE` | `Networking/Networking_Guide.md` | Mirror 网络运行时组件与连接管理 | Active | 2026-10-10（局部） |
-| `SERVER-GUIDE` | `Server/Server_Guide.md` | 专用服务器运行与构建事实 | Active | 2026-10-10（局部） |
-| `PROTOCOL-GUIDE` | `Protocol/Protocol_Guide.md` | 协议边界、同步字段和兼容规则 | Active | 2026-10-10（局部） |
-| `UNITY-GUIDE` | `UnityRuntime/UnityRuntime_Guide.md` | Unity 场景、Prefab、资产和配置 | Active | 2026-10-10（局部） |
-| `UNITY-NETCFG` | `UnityRuntime/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证方式 | Active | 2026-10-10（局部） |
-| `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active | 2026-09-20 |
-| `WF-CONCURRENCY` | `Workflow/Concurrency_Guide.md` | WorkingAgent 租约规则 | Active | 2026-09-20 |
-| `WF-CONFIG-METHOD` | `Workflow_Configuration_Guide.md` | 工作流配置通用方法 | Active | 2026-09-20 |
+| 文档 ID | 路径 | 职责 | 状态 |
+|---|---|---|---|
+| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active |
+| `BUS-CHARACTER` | `Character/Router.md` | Character 域路由 | Active |
+| `CHARACTER-GUIDE` | `Character/Character_Guide.md` | 输入、移动、状态机、动画和本地相机 | Active |
+| `BUS-MULTIPLAYER` | `Multiplayer/Router.md` | Multiplayer 域路由 | Active |
+| `MULTIPLAYER-GUIDE` | `Multiplayer/Multiplayer_Guide.md` | Mirror 网络运行时组件与连接管理 | Active |
+| `SYNC-PROTOCOL` | `Multiplayer/Sync_Protocol.md` | 协议边界、同步字段和兼容规则 | Active |
+| `DEDICATED-SERVER` | `Multiplayer/Dedicated_Server.md` | 专用服务器运行与构建事实 | Active |
+| `BUS-SCENE` | `Scene/Router.md` | Scene 域路由 | Active |
+| `SCENE-GUIDE` | `Scene/Scene_Guide.md` | 场景列表、职责、加载链路和表现模式 | Active |
+| `BUS-PROJECT` | `Project/Router.md` | Project 域路由 | Active |
+| `PROJECT-GUIDE` | `Project/Project_Guide.md` | Unity 工程配置、依赖和资产布局 | Active |
+| `UNITY-NETCFG` | `Project/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证方式 | Active |
+| `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active |
+| `WF-CONCURRENCY` | `Workflow/Concurrency_Guide.md` | WorkingAgent 租约规则 | Active |
+| `WF-CONFIG-METHOD` | `Workflow_Configuration_Guide.md` | 工作流配置通用方法 | Active |
 
 ## 维护
 
-只有成功且实质影响业务实现的任务才增加对应知识域的维护计数。只读分析、租约操作和纯文档维护不计数。计数达到 `5/5` 时，根据实际项目状态复核权威文档并重置计数。
+只有成功且实质影响业务实现的任务才增加对应功能域的维护计数。只读分析、租约操作和纯文档维护不计数。计数达到 `5/5` 时，根据实际项目状态复核权威文档并重置计数。

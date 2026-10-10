@@ -49,7 +49,7 @@ InitialScene
 
 ## 代码模块地图
 
-角色目录按功能划分，不再使用顶层 `Config/` 和 `Runtime/`：
+角色目录按功能划分：
 
 ```text
 Assets/Core/Scripts/
@@ -63,16 +63,15 @@ Assets/Core/Scripts/
 └─ Networking/            AutoStartClient、NetworkCharacterManager、NetworkCharacterSync
 ```
 
-原有 `Networking/` 脚本不归入角色目录。五个运动状态是独立类，但集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`，不再拆散为大量小文件。
+五个运动状态是独立类，集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`。
 
 | 模块 | 实际代码或资源边界 | 当前职责 |
 |---|---|---|
-| `Client` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、本地角色 Prefab | 输入、移动、重力、动画和本地视角 |
-| `Networking` | `Assets/Core/Scripts/Networking/`、Mirror 组件 | 自动连接、玩家身份、角色编号、表现装配和同步 |
-| `Server` | NetworkManager、KcpTransport、服务器构建 | UDP 监听、连接管理、玩家生成和状态转发 |
-| `Protocol` | Mirror 消息、SyncVar、Command、NetworkTransformReliable | 连接消息、角色编号和变换数据的序列化 |
-| `UnityRuntime` | `ProjectSettings/`、`Packages/`、场景和 Prefab | Unity 配置、构建列表、组件序列化和资源引用 |
-| `Workflow` | `Y_MultipleAgentWorkflow/` | 权威文档路由、知识域租约和维护规则 |
+| `Character` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、`Assets/Core/Input/`、角色 Prefab | 输入、移动、重力、动画、本地视角和骨骼表现 |
+| `Multiplayer` | `Assets/Core/Scripts/Networking/`、Mirror 组件、服务器构建 | 自动连接、玩家身份、角色编号、表现装配、同步协议和专用服务器 |
+| `Scene` | `Assets/Core/Scenes/`、`Assets/Core/SO/`、`My_FrameWork/Scripts/Scene/` | 场景引导、常驻层、玩法层、加载链路和表现模式切换 |
+| `Project` | `ProjectSettings/`、`Packages/`、Prefab、Addressables 配置 | Unity 配置、包依赖、资产布局、组件序列化和构建产物 |
+| `Workflow` | `Y_MultipleAgentWorkflow/` | 权威文档路由、功能域租约和维护规则 |
 
 ## 角色表现结构
 
@@ -91,7 +90,7 @@ Assets/Core/Scripts/
 
 本地采用“代码状态机 + 状态内动画混合”：代码维护 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`，Animator 保留原 Grounded 内 Idle/Run/Sprint 与方向混合，上升和下降继续共用既有 Jump 素材。`CharacterMotor` 每帧只执行一次位移，保留既有加减速、空中控制、相机参考方向与重力积分顺序。
 
-运动状态网络同步按用户最新要求暂缓，不作为已完成能力。当前远程动画入口固定回退到 Idle，不能据此宣称远程跑步、冲刺和跳跃动画已与拥有者同步；待接入协议见 `Protocol/Protocol_Guide.md`。当前磁盘 `NetworkPlayer.prefab` 尚有待接入同步组件的序列化记录，脚本已不存在，资产清理由网络同步工作另行处理，本轮只维护文档。
+远程动画入口使用 Idle。运动状态、局部方向和动画权重的上行同步设计见 `Multiplayer/Sync_Protocol.md` 的 Proposal 一节。
 
 ## 当前网络事实
 
@@ -103,4 +102,4 @@ Assets/Core/Scripts/
 - `AutoStartClient` 连接 `127.0.0.1`，断开后每 3 秒重试。
 - 客户端和服务器使用相同的网络组件布局与序列化字段。
 
-详细配置见 `UnityRuntime/Mirror_KCP_Config.md`。
+详细配置见 `Project/Mirror_KCP_Config.md`。

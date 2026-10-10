@@ -1,4 +1,10 @@
-# Client 开发记录
+# Character 开发记录
+
+## 2026-10-10：修正远程动画注释中的失效组件引用
+
+- `PlayerCharacterController` 的 `LateUpdate` 注释原称动画“只消费 `NetworkCharacterMovementSync` 已按网络时间采样的状态”，但该组件在磁盘上不存在；改为如实描述当前直接使用 Idle 回退。`ApplyRemoteAnimation` 内的“首个快照尚未到达”同步改为“运动状态尚未接入”。
+- 只改注释：`IsRemoteNetworkPlayer` 判定、`ApplyRemoteAnimation` 的 Idle 回退行为、`CharacterMotor` 与状态机代码均未动。
+- 验证：未执行编译与 PlayMode 回归（Unity 编辑器未运行）。本次不改变业务实现，维护计数保持 `3/5`。
 
 ## 2026-10-10：修复第三人称相机避让的 y 轴高频抖动
 

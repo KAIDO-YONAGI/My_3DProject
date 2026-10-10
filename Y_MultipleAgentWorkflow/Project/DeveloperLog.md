@@ -1,4 +1,12 @@
-# UnityRuntime 开发记录
+# Project 开发记录
+
+## 2026-10-10：清理运动同步残留组件与孤儿事件资产
+
+- `NetworkPlayer.prefab` 删除 fileID `7814609285416083721`、GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的 Missing Script 记录及其 `m_Component` 引用。根节点现为 6 个组件：`Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync`，顺序未变、末尾仍为 `NetworkCharacterSync`。
+- 删除 `Assets/Core/SO/EventSOs/BoolEventChannel.asset` 及其 `.meta`，并删除变空的 `EventSOs/` 目录。证据：其脚本 `BoolEventChannelSO.cs` 已于提交 `a148055` 删除；资产 GUID `0ae334929aa1e354d818f91aeeac1bc9` 在全工程零引用；`AddressableAssetsData` 无该路径规则。
+- `UnityRuntime_Guide.md` 删除“待后续确认清理”的待办表述，补记 Build Settings 第 4 项 `MultiplayerSampleScene 1.unity`（提交 `c5024fc` 显式注册）及两张图互为往返传送的实测关系；`Router.md` 移除已失效的 `Assets/Core/SO/EventSOs/` 证据路径与并发资源。
+- 验证：`Assets/Core` 脚本引用 213 处，缺失脚本 GUID 归零；Prefab 内部 7 个锚点引用无悬空。Unity 编辑器未运行，未执行编译或 PlayMode 回归，未重新构建。
+- 维护计数 `3/5 -> 4/5`。
 
 ## 2026-10-10：角色功能路径与资产待处理项同步
 

@@ -8,7 +8,7 @@
 
 源码摘录对应项目实际实现。“扩展练习”用于说明新增功能的接入写法，组件位置、接口职责和配置与代码一起说明。投掷与爆炸章节采用扩展练习的方式给出设计和落地步骤。
 
-框架规则结合 Mirror 官方文档说明，具体接口与组件行为结合工程内的 Mirror 源码核对。各章附有官方阅读入口。工程运行配置以 [Mirror 与 KCP 工程配置](/D:/Unity/Projects/My_3DProject/Y_MultipleAgentWorkflow/UnityRuntime/Mirror_KCP_Config.md) 为准。
+框架规则结合 Mirror 官方文档说明，具体接口与组件行为结合工程内的 Mirror 源码核对。各章附有官方阅读入口。工程运行配置以 [Mirror 与 KCP 工程配置](/D:/Unity/Projects/My_3DProject/Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md) 为准。
 
 ## 按问题查阅
 

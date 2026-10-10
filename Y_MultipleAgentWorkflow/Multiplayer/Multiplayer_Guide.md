@@ -1,19 +1,19 @@
 # Mirror 网络运行时
 
-文档 ID：`NETWORKING-GUIDE`
+文档 ID：`MULTIPLAYER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-10`（目录、装配边界与暂缓事项局部核验）
+最后核验：`2026-10-10`
 
 ## 当前组件
 
-- `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，当前 Prefab 地址为 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
+- `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，Prefab 地址为 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
 - `NetworkCharacterManager`：按角色编号维护本地角色 Prefab 与同步角色 Prefab，装配网络玩家表现，管理相机归属，并切换单机与联机表现。
 - `NetworkCharacterSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地拥有者的角色选择。
-- `NetworkPlayer.prefab`：承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
+- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
 
-上述项目网络脚本继续位于 `Assets/Core/Scripts/Networking/`，不随角色功能目录整理而迁移。运动状态同步按用户最新要求暂缓：当前磁盘不存在 `NetworkCharacterMovementSync.cs`，控制器也不再调用它；不得将其列为已接入组件。`NetworkPlayer.prefab` 尚保留 GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的组件序列化记录，但对应脚本缺失，属于待网络工作处理的资产一致性问题，本次文档维护不修改 Prefab。
+项目网络脚本位于 `Assets/Core/Scripts/Networking/`。
 
 ## 连接与玩家生成
 
@@ -45,21 +45,21 @@ AutoStartClient.StartClient
 8. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
 9. 本地 Camera 绑定为 `inputSpace`，远程相机、远程音频监听器和远程本地控制组件保持关闭。
 
-装配边界不变：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机；不向视觉子预制件添加网络同步组件。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
+装配边界为：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机，网络同步组件只放在根节点。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
 
-两个 Prefab 数组使用相同下标表达同一角色编号。当前默认角色编号为 `1`。
+两个 Prefab 数组使用相同下标表达同一角色编号。默认角色编号为 `1`。角色资源对照见 `../Project/Project_Guide.md`。
 
 每个网络玩家在 `presentations` 字典中对应一条 `CharacterPresentation`，保存视觉实例、角色编号、来源 Prefab、已配置的本地身份以及相机组件数组。实例有效、编号和来源 Prefab 相同时复用该状态；身份相同时直接返回，身份变化时使用缓存组件重新配置相机和输入参考空间。编号或来源 Prefab 变化时替换实例，已销毁的实例重新装配。
 
 装配时一次取得视觉控制器数组，停用这些控制器并复用首个控制器的动画配置。Camera、`AudioListener` 和 `ThirdPersonCamera` 各扫描一次并保存到当前实例的状态中。配置 `ThirdPersonCamera` 时同时绑定网络根和设置启用状态。
 
-网络根的 `PlayerCharacterController` 首次初始化时缓存自身 `NetworkIdentity`，单机控制器也缓存身份缺失的结果，不再每帧查询。身份组件必须在初始化前配置；组件内的本地/远程归属值仍实时读取，不缓存身份属性快照。此缓存与客户端稍后挂载的模型、Animator 初始化独立，角色装配和模型替换继续使用原有重绑入口。
+网络根的 `PlayerCharacterController` 首次初始化时缓存自身 `NetworkIdentity`，单机控制器也缓存身份缺失的结果。身份组件在初始化前配置；组件内的本地与远程归属值实时读取。此缓存与客户端稍后挂载的模型、Animator 初始化独立，角色装配和模型替换继续使用原有重绑入口。
 
-## 多余角色与相机收拢
+## 表现模式与相机收拢
 
-单机角色通过管理器的 `standalonePlayer` 场景序列化引用切换激活状态。单机相机、控制器和监听器分别通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法；单机表现切换不再全局扫描或检查父级网络身份，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件，不受单机引用切换影响。
+单机角色通过管理器的 `standalonePlayer` 场景序列化引用切换激活状态。单机相机、控制器和监听器分别通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件。
 
-`PersistentScene` 保留一个单机 `LocalPlayer`，便于无服务端时直接开发移动、物理和相机。`NetworkCharacterManager` 在 `NetworkClient.isConnected=true` 后进入联机表现模式：
+`NetworkCharacterManager` 在 `NetworkClient.isConnected=true` 后进入联机表现模式：
 
 - 收起场景单机角色。
 - 保留所有 Mirror 创建的网络根。
@@ -78,9 +78,9 @@ AutoStartClient.StartClient
 - `NetworkCharacterSync.characterId` 是 `SyncVar`。
 - `CommandSetCharacter` 将本地角色选择提交到服务器，服务器校验后更新 `SyncVar`。Host 和远端客户端使用同一入口，表现刷新交给 SyncVar hook。
 
-客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。
+客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。消息分层、字段约束和兼容规则见 `Sync_Protocol.md`。
 
-代码状态机在本地生成 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`，但这些状态目前没有网络传输入口。远程控制器不读取输入、不运行 `CharacterMotor.Tick`，也不再根据位置差猜状态；当前动画固定回退为 Idle。未来状态快照、插值与 Host 分流属于 Proposal，详见 `../Protocol/Protocol_Guide.md`，不表示现有联机动画一致。
+代码状态机在本地生成 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`。远程控制器不读取输入，不运行 `CharacterMotor.Tick`，当前位置由变换快照驱动，动画使用 Idle。运动状态的网络传输设计见 `Sync_Protocol.md`。
 
 ## 源码字段说明
 

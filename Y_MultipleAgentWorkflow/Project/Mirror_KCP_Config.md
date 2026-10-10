@@ -114,9 +114,9 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 
 `NetworkTransformReliable` 负责同步移动结果。项目移动链路不调用 Transform 传送方法，也不执行运行时高度钳制。
 
-本地运动代码采用 `Idle`、`Run`、`Sprint`、`Rising`、`Falling` 状态机，脚本位于 `Character/Movement/States/`，Animator 仍保留状态内方向混合。网络脚本继续位于原 `Assets/Core/Scripts/Networking/`。
+本地运动代码采用 `Idle`、`Run`、`Sprint`、`Rising`、`Falling` 状态机，脚本位于 `Character/Movement/States/`，Animator 保留状态内方向混合。网络脚本位于 `Assets/Core/Scripts/Networking/`。
 
-运动表现状态网络同步按用户要求暂缓，当前远程控制器只应用 Idle 动画回退；不能宣称已完成远程跑步/冲刺/跳跃一致性。当前 `NetworkPlayer.prefab` 还有对应缺失脚本的待接入组件记录，详情见 `UnityRuntime_Guide.md`；本次不修改网络实现或资产。
+远程控制器不读取输入，位置由变换快照驱动，动画使用 Idle。运动表现状态的传输设计见 `../Multiplayer/Sync_Protocol.md` 的 Proposal 一节。
 
 ## 构建
 
@@ -133,6 +133,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 1. `InitialScene`
 2. `PersistentScene`
 3. `MultiplayerSampleScene`
+4. `MultiplayerSampleScene 1`
 
 客户端与服务器使用相同的 `NetworkPlayer` 组件布局、NetworkBehaviour 顺序和序列化字段。
 
@@ -147,7 +148,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 玩家从出生点依据重力和地形碰撞落地。
 - 角色切换后各端使用同一 `characterId` 对应的本地或同步 Prefab。
 
-以上为验收要求，不代表本轮重新完成联机验证。`2026-10-10` 仅完成 EditMode 10/10 与迁移脚本 GUID 对照；运动状态协议、Host 与双客户端、专用服务器和延迟时序验证仍待网络工作接入。
+联机验收覆盖以上各项。运动状态协议、Host 与双客户端、专用服务器和延迟时序验证在运动表现同步接入后进行。
 
 ## 维护触发
 
