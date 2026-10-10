@@ -1,0 +1,61 @@
+@startuml CharacterStateSync
+scale 2
+' ============================================================================
+' 角色状态与网络边界图
+' 事实来源以代码为准：
+'   Assets/Core/Scripts/Character/Control/PlayerCharacterController.cs
+'   线格式与传输约定：Y_MultipleAgentWorkflow/Multiplayer/Sync_Protocol.md
+' ============================================================================
+skinparam classAttributeIconSize 0
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam arrowColor #404040
+skinparam SequenceLifeLineBorderColor #2C6FA8
+skinparam SequenceGroupBorderColor #C8871B
+skinparam NoteBackgroundColor #FFFDF0
+skinparam NoteBorderColor #C8871B
+
+title 角色状态与网络边界图 - 状态在哪个节点产生，在哪个节点消费
+
+participant "本地玩家客户端" as Owner
+participant "服务器" as Server
+participant "其他玩家客户端" as Remote
+
+== 本地玩家客户端 ==
+
+Owner -> Owner : 每帧推进运动状态机\n得到状态、移动方向、移动权重
+activate Owner
+Owner -> Owner : 驱动本人动画\n待机、跑动、冲刺、起跳、下落
+Owner -> Server : 上传位置与旋转
+note right of Owner
+  运动快照含三项：
+  状态编号、角色自身坐标系中的移动方向、移动权重。
+  权重取自输入幅度，与物理速度各自独立。
+end note
+deactivate Owner
+
+== 服务器 ==
+
+Server -> Server : 专用服务器跳过角色运动\n角色保持在出生位置
+note over Server
+  服务器只负责转发变换数据，
+  角色运动由控制该角色的客户端推进。
+end note
+Server -> Remote : 广播位置与旋转
+
+== 其他玩家客户端 ==
+
+Remote -> Remote : 插值显示移动
+Remote -> Remote : 用待机快照驱动动画
+
+note over Owner, Remote
+  位置保持客户端权威。运动状态的线格式、
+  校验规则和转发时序记录在 Sync_Protocol.md。
+end note
+
+@enduml

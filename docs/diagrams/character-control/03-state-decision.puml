@@ -1,0 +1,107 @@
+@startuml CharacterStateDecision
+scale 2
+' ============================================================================
+' 状态判定顺序图
+' 事实来源以代码为准：
+'   Assets/Core/Scripts/Character/Movement/States/CharacterMovementStates.cs
+'   CharacterMovementStateBase.ResolveGroundedState
+' 判定顺序即代码分支顺序，网络同步沿用同一顺序
+' ============================================================================
+skinparam classAttributeIconSize 0
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam arrowColor #404040
+skinparam ActivityBackgroundColor #F2F8FF
+skinparam ActivityBorderColor #2C6FA8
+skinparam ActivityDiamondBackgroundColor #FFF6E0
+skinparam ActivityDiamondBorderColor #C8871B
+skinparam PartitionBackgroundColor #FBFDFF
+skinparam PartitionBorderColor #9DBBD6
+skinparam NoteBackgroundColor #FFFDF0
+skinparam NoteBorderColor #C8871B
+
+title 状态判定顺序图 - 每帧判定一次，判定顺序与代码分支顺序一致
+
+start
+
+:收集本帧运动结果\n移动后的贴地结果、移动输入、冲刺键、跳跃事件、竖直速度;
+
+partition "按当前状态分派" {
+
+  if (当前状态？) then (待机、跑动、冲刺)
+    if (本帧起跳？) then (是)
+      #FFF0D6:下一个状态是上升;
+    else (否)
+      :进入落地判定;
+    endif
+
+  elseif (上升？) then (是)
+    if (移动后已经落地？) then (是)
+      :进入落地判定;
+    else (否)
+      if (竖直速度大于零？) then (是)
+        #FFE9A8:下一个状态是上升;
+      else (否)
+        #FFC9C9:下一个状态是下落;
+      endif
+    endif
+
+  else (下落)
+    if (移动后已经落地？) then (是)
+      :进入落地判定;
+    else (否)
+      if (竖直速度大于零？) then (是)
+        #FFE9A8:下一个状态是上升;
+      else (否)
+        #FFC9C9:下一个状态是下落;
+      endif
+    endif
+  endif
+}
+
+partition "落地判定，按此顺序执行" {
+
+  note
+    **三处调用落地判定**
+    地面状态未起跳时、上升落地时、下落落地时。
+    三处共用同一段判定，因此地面状态的离开条件完全相同。
+  end note
+
+  if (移动后仍然离地？) then (是)
+    if (竖直速度大于零？) then (是)
+      #FFE9A8:下一个状态是上升\n被抛出或仍在上升;
+    else (否)
+      #FFC9C9:下一个状态是下落\n走出边缘或仍在下降;
+    endif
+  else (否)
+    if (有移动输入？) then (否)
+      #C8F0C8:下一个状态是待机;
+    else (是)
+      if (按住冲刺键？) then (是)
+        #C8F0C8:下一个状态是冲刺;
+      else (否)
+        #C8F0C8:下一个状态是跑动;
+      endif
+    endif
+  endif
+}
+
+:比较下一个状态与当前状态;
+if (编号变化？) then (否)
+  #D6F5D6:保持当前状态\n不产生状态切换事件;
+  stop
+endif
+:切换状态;
+note right
+  编号变化时产生一次状态切换事件，
+  网络同步按这个粒度上报。
+end note
+
+stop
+
+@enduml

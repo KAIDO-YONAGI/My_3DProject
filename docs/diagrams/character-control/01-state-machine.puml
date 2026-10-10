@@ -1,0 +1,48 @@
+@startuml CharacterMovementStates
+scale 2
+' ============================================================================
+' 角色运动状态图
+' 事实来源以代码为准：
+'   Assets/Core/Scripts/Character/Movement/States/CharacterMovementStates.cs
+'   Assets/Core/Scripts/Character/Movement/States/CharacterMovementStateMachine.cs
+' 完整转换条件表与字段名对照写在同目录 README.md
+' ============================================================================
+skinparam classAttributeIconSize 0
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam arrowColor #404040
+skinparam StateFontSize 14
+skinparam LegendBackgroundColor #FCFCFC
+skinparam LegendBorderColor #BFBFBF
+
+title 角色运动状态图
+
+state "地面状态\n待机 0 · 跑动 1 · 冲刺 2" as Ground #C8F0C8
+state "上升\n编号 3" as Rising #FFE9A8
+state "下落\n编号 4" as Falling #FFC9C9
+
+[*] --> Ground : 角色创建
+
+Ground --> Rising : 站在地面按下跳跃
+Ground --> Falling : 走出地面边缘
+Rising --> Falling : 升到最高点
+Falling --> Rising : 被向上顶起
+Rising --> Ground : 落地
+Falling --> Ground : 落地
+
+legend right
+  |= 要点 |= 说明 |
+  | **地面状态是输入的取值结果** | 三个地面状态靠移动输入与冲刺键选定：有移动输入并按住冲刺取冲刺，有移动输入取跑动，没有移动输入取待机。 |
+  | **上升与下落是时序过程** | 两个空中状态构成先后关系：起跳或走出边缘后先进入上升，竖直速度降到零转下落，落地回到地面状态。 |
+  | **状态编号** | 编号即网络线格式。待机 0、跑动 1、冲刺 2、上升 3、下落 4。 |
+  | **状态保持** | 判定结果等于当前状态时不发生切换，状态切换只在编号变化时产生，网络同步按这个粒度上报。 |
+  | **上升与下落的分界** | 分界取自竖直速度的符号。该数值保存在运动模块内部，由控制角色的客户端随编号一起上传，其他客户端直接采用收到的编号。 |
+  | **落地后的去向** | 落地当帧按当时的移动输入与冲刺键选择地面状态。 |
+end legend
+
+@enduml

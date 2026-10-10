@@ -1,0 +1,116 @@
+@startuml CharacterMotionFrame
+scale 2
+' ============================================================================
+' 角色一帧运动的流程图
+' 事实来源以代码为准：
+'   Assets/Core/Scripts/Character/Control/PlayerCharacterController.cs
+'   Assets/Core/Scripts/Character/Movement/CharacterMotor.cs
+'   Assets/Core/Scripts/Character/Movement/CharacterMovementSettings.cs
+' 数值取自移动参数的序列化默认值
+' ============================================================================
+skinparam classAttributeIconSize 0
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam defaultFontSize 13
+skinparam arrowColor #404040
+skinparam ActivityBackgroundColor #F2F8FF
+skinparam ActivityBorderColor #2C6FA8
+skinparam ActivityDiamondBackgroundColor #FFF6E0
+skinparam ActivityDiamondBorderColor #C8871B
+skinparam NoteBackgroundColor #FFFDF0
+skinparam NoteBorderColor #C8871B
+
+title 角色一帧运动的流程图
+
+start
+:每帧读取一次输入\n移动方向、冲刺键、跳跃键;
+
+if (本机是专用服务器？) then (是)
+  #FFE4E4:跳过角色运动;
+  note right
+    专用服务器没有本地输入和摄像头，
+    在服务器上推进角色运动会把玩家推出场景。
+  end note
+  stop
+endif
+
+if (这个角色由本机控制？) then (否)
+  #FFE4E4:跳过角色运动;
+  note right
+    其他玩家的位置由变换同步驱动，
+    动画由待机快照驱动。
+  end note
+  stop
+endif
+
+partition "确定移动方向" {
+  :以相机朝向为基准\n把移动输入转换成世界方向;
+  note right
+    相机缺失时退回角色自身朝向。
+    斜向输入归一化，斜走与直走速度一致。
+  end note
+  if (开启朝向跟随\n且正在移动？) then (是)
+    :角色转向移动方向\n限速每秒 360 度;
+  endif
+}
+
+partition "起跳判定" {
+  :读取移动前的贴地状态;
+  note right
+    贴地拉扯速度让角色稳定站在地面。
+    这一项在移动之前读取，
+    因为移动产生的向上位移会立刻解除贴地。
+  end note
+  if (移动前贴地\n且本帧按下跳跃？) then (是)
+    :赋予起跳竖直速度\n起跳高度 1.2 米;
+  endif
+}
+
+partition "计算速度" {
+  :确定目标速度\n跑动 6.8 米每秒，冲刺 10.8 米每秒;
+  :水平速度向目标速度靠拢\n有输入时加速度 32，无输入时减速度 38;
+  if (处于空中？) then (是)
+    :空中操控力降到 45%;
+    note right
+      空中降低改变水平速度的能力，
+      重力照常计算。
+    end note
+  endif
+  :施加重力\n每秒 28 米;
+}
+
+partition "位移与碰撞" {
+  :水平速度与竖直速度合成位移\n交给角色碰撞体执行;
+  note right
+    每帧只执行一次位移，
+    最终位置由碰撞约束决定。
+  end note
+  if (撞到上方？) then (是)
+    :上升速度清零;
+  endif
+  if (位移后接触地面？) then (是)
+    :判定为贴地\n贴地拉扯速度重新生效;
+  endif
+  note right
+    状态判定读取移动之后的贴地结果，
+    离地当帧就进入空中状态，触地当帧就回到地面状态。
+  end note
+}
+
+partition "输出表现" {
+  :推进运动状态机\n得到本帧状态;
+  :输出移动方向与移动权重;
+  note right
+    移动方向取自角色自身坐标系。
+    移动权重直接取自输入幅度，松开按键当帧就回到待机。
+  end note
+  :交动画系统播放;
+}
+
+stop
+
+@enduml
