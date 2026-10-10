@@ -118,8 +118,9 @@ MonoBehaviour:
   lockCursor: 1
   rotateTarget: 1
   targetRotateSmooth: 15
+  targetRotateSpeed: 360
   minHeightY: 1.5
-  collisionRadius: 0.2
+  collisionRadius: 0
   collisionLayers:
     serializedVersion: 2
     m_Bits: 4294967295

@@ -541,18 +541,6 @@ Transform:
   - {fileID: 1737825092}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!134 &1617364917
-PhysicMaterial:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  dynamicFriction: 0.6
-  staticFriction: 0.6
-  bounciness: 0
-  frictionCombine: 0
-  bounceCombine: 0
 --- !u!1 &1737825091
 GameObject:
   m_ObjectHideFlags: 0
@@ -1620,6 +1608,14 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: 0.00000023096783
       objectReference: {fileID: 0}
+    - target: {fileID: 516719938825738289, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
+      propertyPath: collisionRadius
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 516719938825738289, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
+      propertyPath: collisionLayers.m_Bits
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 694283088756168766, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.086842254
@@ -1692,10 +1688,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2044625464796274550, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
-      propertyPath: m_Material
-      value: 
-      objectReference: {fileID: 1617364917}
     - target: {fileID: 2909376797886835507, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.0623896
