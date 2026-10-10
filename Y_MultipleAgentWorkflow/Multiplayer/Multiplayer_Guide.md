@@ -55,6 +55,8 @@ AutoStartClient.StartClient
 
 网络根的 `PlayerCharacterController` 首次初始化时缓存自身 `NetworkIdentity`，单机控制器也缓存身份缺失的结果。身份组件在初始化前配置；组件内的本地与远程归属值实时读取。此缓存与客户端稍后挂载的模型、Animator 初始化独立，角色装配和模型替换继续使用原有重绑入口。
 
+根控制器在 `Awake` 初始化运动依赖，角色装配通过 `RebindAnimator` 绑定 Animator、动画配置和素材可用性缓存。逐帧更新使用缓存依赖，模型解绑后保持空动画引用，后续装配再次显式绑定。运动驱动在模型替换过程中沿用同一实例。
+
 ## 表现模式与相机收拢
 
 单机角色通过管理器的 `standalonePlayer` 场景序列化引用切换激活状态。单机相机、控制器和监听器分别通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件。
