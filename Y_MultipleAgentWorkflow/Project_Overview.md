@@ -2,7 +2,7 @@
 
 文档 ID：`PROJ-OVERVIEW`
 状态：`Active`
-最后核验：`2026-10-08`
+最后核验：`2026-10-10`（角色目录与状态机局部核验）
 
 ## 项目定位
 
@@ -49,6 +49,22 @@ InitialScene
 
 ## 代码模块地图
 
+角色目录按功能划分，不再使用顶层 `Config/` 和 `Runtime/`：
+
+```text
+Assets/Core/Scripts/
+├─ Character/
+│  ├─ Control/            PlayerCharacterController
+│  ├─ Input/              CharacterInputReader、CharacterInput
+│  ├─ Movement/           CharacterMotor、CharacterMovementSettings
+│  │  └─ States/          CharacterMovementStateMachine、CharacterMovementStates
+│  ├─ Animation/          CharacterAnimator、CharacterMotion、方向与跳跃动画配置
+│  └─ Presentation/       CharacterBoneFollower
+└─ Networking/            AutoStartClient、NetworkCharacterManager、NetworkCharacterSync
+```
+
+原有 `Networking/` 脚本不归入角色目录。五个运动状态是独立类，但集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`，不再拆散为大量小文件。
+
 | 模块 | 实际代码或资源边界 | 当前职责 |
 |---|---|---|
 | `Client` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、本地角色 Prefab | 输入、移动、重力、动画和本地视角 |
@@ -68,7 +84,14 @@ InitialScene
 - 视觉子对象自带的移动控制器和 `CharacterController` 在装配后停用，网络根上的组件负责运动和碰撞。
 - 本地相机绑定到网络根的 `PlayerCharacterController.inputSpace`。
 - 远程表现不启用相机、音频监听器和本地输入。
+- 网络 Transform、角色控制器和同步职责位于 `NetworkPlayer` 根节点，不向视觉子预制件添加网络同步组件。
 - 连接完成后，场景里的单机角色由 `NetworkCharacterManager` 收起，活动角色数量与 Mirror 玩家数量一致。
+
+## 角色改造边界
+
+本地采用“代码状态机 + 状态内动画混合”：代码维护 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`，Animator 保留原 Grounded 内 Idle/Run/Sprint 与方向混合，上升和下降继续共用既有 Jump 素材。`CharacterMotor` 每帧只执行一次位移，保留既有加减速、空中控制、相机参考方向与重力积分顺序。
+
+运动状态网络同步按用户最新要求暂缓，不作为已完成能力。当前远程动画入口固定回退到 Idle，不能据此宣称远程跑步、冲刺和跳跃动画已与拥有者同步；待接入协议见 `Protocol/Protocol_Guide.md`。当前磁盘 `NetworkPlayer.prefab` 尚有待接入同步组件的序列化记录，脚本已不存在，资产清理由网络同步工作另行处理，本轮只维护文档。
 
 ## 当前网络事实
 

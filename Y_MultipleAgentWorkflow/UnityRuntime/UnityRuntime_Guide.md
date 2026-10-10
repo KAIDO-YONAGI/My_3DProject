@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-GUIDE`
 状态：`Active`
-最后核验：`2026-10-08`
+最后核验：`2026-10-10`（角色目录与资产差异局部核验）
 
 ## 版本与依赖
 
@@ -23,6 +23,8 @@
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`；Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
 - 单机框架代码位于 `Assets/Core/My_FrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
+
+角色脚本的当前目录为 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`，不再使用顶层 `Config/`、`Runtime/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画配置位于 `Animation/`。11 个迁移脚本连同 `.meta` 移动，GUID 与迁移前 `HEAD` 一致；原网络管理与同步脚本仍在 `Assets/Core/Scripts/Networking/`。
 
 ## Addressables
 
@@ -110,6 +112,8 @@
 - `PlayerCharacterController`
 - `NetworkCharacterSync`
 
+以上为有效职责组件。当前磁盘 Prefab 末尾另有 fileID `7814609285416083721`、脚本 GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的待接入运动同步组件记录，但对应 `NetworkCharacterMovementSync.cs` 与 `.meta` 已不存在。该记录应由后续网络工作确认清理或补齐；本轮只写文档，未修改资产，也未完成 Missing Script 全量验证。
+
 `NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。`CharacterController` 的高度为 `2`，半径为 `0.5`，中心为 `(0, 1, 0)`。
 
 `PlayerCharacterController` 的移动配置为运行速度 `6.8`、疾跑速度 `10.8`、加速度 `32`、减速度 `38`、空中控制 `0.45`、旋转速度 `360`、重力 `-28`、跳跃高度 `1.2`、接地吸附速度 `-2`。
@@ -124,6 +128,8 @@
 | `1` | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
 
 默认角色编号为 `1`。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型、Animator 和动画配置。
+
+模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用；网络 Transform、根控制器和同步组件不移到视觉子预制件。重绑只复制动画配置和本地相机参考，不重置根 `CharacterMotor`。
 
 ## Inspector 配置提示
 
@@ -148,6 +154,10 @@
 相机职责拆分不改变上述资产层级和归属规则。两个本地角色 Prefab 继续使用原 `ThirdPersonCamera` 脚本 GUID `f0e37541f912f8d45955a6b061f34025`，17 个序列化字段均可反序列化，朝向参数为 `targetRotateSmooth=15` 与 `targetRotateSpeed=360`。轨道、光标、避让和旋转数学辅助类均为普通 C# 对象，不需要新增组件或 Prefab 引用。
 
 停用相机只释放本实例持有的光标与输入资源，重新启用恢复锁定配置；目标失效后暂停，重新绑定可恢复。最终候选镜头位置的防穿墙优先于缩放下限与期望最低高度。具体算法与边界见 `../Client/Client_Guide.md`。`2026-10-08` 主工程 PlayMode 相机与网络装配回归合计 49/49、EditMode 5/5 通过，无失败或跳过，Console 无 error；本次不代表重新完成双客户端联机或构建验证。
+
+## 本轮核验
+
+`2026-10-10` 局部验证：EditMode `Core.EditorTests` 10/10 通过，11 个角色迁移脚本 GUID 对照一致。未重新执行相机/角色装配 PlayMode、同输入同帧长位移对比、双客户端/Host 联机和构建。运动表现状态协议暂缓，详见 `../Protocol/Protocol_Guide.md`。
 
 ## 维护触发
 

@@ -1,5 +1,11 @@
 # Networking 开发记录
 
+## 2026-10-10：记录角色装配边界与运动同步暂缓
+
+- `AutoStartClient`、`NetworkCharacterManager`、`NetworkCharacterSync` 保留在 `Assets/Core/Scripts/Networking/`。视觉角色继续装配到带 NetworkTransform 的 NetworkPlayer 根下，视觉子预制件不添加网络同步组件。
+- 当前磁盘运动同步脚本已不存在，控制器远程动画仅回退 Idle；Guide 不再将运动状态协议视为已接入能力。Prefab 残留的缺失脚本 GUID 记录列为待网络工作处理，未擅自修改资产。
+- 同步 Protocol、Server 与 UnityRuntime 的待接入边界；未执行新网络验收。本次纯文档维护，计数保持 `4/5`。
+
 ## 2026-10-08：角色控制器身份查询改为一次性缓存
 
 - 控制器缓存自身网络身份组件及缺失结果；身份必须在首次初始化前配置，本地/远程归属属性仍实时读取。网络子模型和 Animator 的延迟装配不受影响。

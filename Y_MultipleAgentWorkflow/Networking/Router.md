@@ -3,20 +3,22 @@
 文档 ID：`BUS-NETWORKING`
 状态：`Active`
 维护计数：`4/5`
-最后更新：`2026-10-08`
+最后更新：`2026-10-10`
 
 | 任务 | 必读文档 |
 |---|---|
 | Mirror 组件、连接、自动连接、玩家网络行为 | `Networking_Guide.md` |
 | KCP 参数、NetworkManager、玩家 Prefab、构建 | `../UnityRuntime/Mirror_KCP_Config.md` |
 | 客户端输入和角色移动 | `../Client/Client_Guide.md` |
+| 运动表现同步、快照、暂缓范围 | `../Protocol/Protocol_Guide.md`、`Networking_Guide.md` |
 | 服务端 Headless 启动 | `../Server/Server_Guide.md` |
 
 ## 主要证据路径
 
 - `Assets/Core/Scripts/Networking/`
+- `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Scenes/PersistentScene.unity`
-- `Assets/Core/Prefabs/CharactersForSync/娜娜莉（华丽飞踢）.prefab`
+- `Assets/Core/Prefabs/CharactersForSync/`
 - `Assets/Plugins/Mirror/`
 
 ## 并发资源

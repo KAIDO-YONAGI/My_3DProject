@@ -2,7 +2,7 @@
 
 文档 ID：`CLIENT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-08`
+最后核验：`2026-10-10`（角色目录与状态机局部核验）
 
 ## 客户端角色链路
 
@@ -10,7 +10,7 @@
 CharacterInputReader（PlayerControls.inputactions）
   → PlayerCharacterController
   → CharacterInput
-  → CharacterMotor
+  → CharacterMotor（内部维护 CharacterMovementStateMachine）
   → CharacterMotion
   → CharacterAnimator
   → CharacterBoneFollower
@@ -20,10 +20,21 @@ CharacterInputReader（PlayerControls.inputactions）
 - `PlayerCharacterController` 读取输入并组织移动和表现更新。
 - `CharacterInput` 保存当前帧的移动、疾跑和跳跃输入。
 - `CharacterMotor` 根据相机水平朝向计算世界移动方向，处理加减速、重力、跳跃和 `CharacterController.Move`。
+- `CharacterMovementStateMachine` 接收 `CharacterMotor` 的运动后反馈，维护五个离散状态；`CharacterMotion.State` 明确记录当前状态。
 - `CharacterMotion` 保存动画层使用的移动状态。
 - `CharacterAnimator` 配置方向动画和 AnimatorOverrideController。
 - `CharacterBoneFollower` 在动画更新后执行骨骼跟随。
 - `ThirdPersonCamera` 保留序列化配置、`SetTarget` 和生命周期编排；普通 C# 对象 `CameraOrbitState`、`CameraCursorController`、`CameraCollisionResolver` 与 `CameraRotationMath` 分别负责轨道状态、光标状态、最终候选避让和旋转数学。
+
+## 运动状态与动画
+
+- `Movement/States/CharacterMovementStateMachine.cs` 集中定义状态枚举、反馈上下文、状态接口、共用基类和状态机；`CharacterMovementStates.cs` 集中定义五个独立状态类。状态转换统一经过 `Exit`、状态替换和 `Enter`。
+- `Idle`、`Run`、`Sprint` 根据移动输入和冲刺意图选择地面状态；离地后根据竖直速度进入 `Rising` 或 `Falling`。`Rising` 在速度不再为正时进入 `Falling`，移动后接地时恢复对应地面状态。
+- `CharacterMotor` 在移动前读取 `CharacterController.isGrounded` 决定跳跃许可，依次处理跳跃、目标水平速度、加减速/空中控制和重力，每帧只调用一次 `CharacterController.Move`，再清除顶碰上升速度、处理接地拉力并更新代码状态。
+- 不新增固定步长、跳跃缓冲或土狼时间。松开输入后物理速度仍按原参数减速，动画权重直接使用输入幅度。
+- Animator 保留既有 Grounded 内 Idle/Run/Sprint 与方向混合；Rising/Falling 继续使用既有 Jump 素材，保留落地权重重置和缺失素材回退。状态机不是 Animator 状态图的替代资源。
+
+当前状态机对运动意图的处理仍通过 `CharacterMotor` 中的输入/速度计算完成；控制器尚无公开只读当前快照属性和远程快照接收入口。这些是原方案的后续接入点，不能写成已提供接口。
 
 ## 单机入口
 
@@ -48,6 +59,8 @@ CharacterInputReader（PlayerControls.inputactions）
 9. 远程玩家保持相机、音频监听器和本地输入关闭，只显示模型和动画。
 
 角色切换时，管理器先清理旧表现和动画引用，再按相同流程装配新角色。
+
+重绑 Animator 不重新创建既有 `CharacterMotor`，因此不会因换模型主动清空其速度与代码状态。当前已删除按远程位置差猜接地、冲刺的路径，远程动画入口直接使用 Idle 回退；运动状态同步暂缓，不承诺远程运动动画与本地一致。视觉子预制件不承担网络同步，网络组件只放在根节点。
 
 `OnStartClient`、`OnStartLocalPlayer` 和 SyncVar hook 共用装配入口。管理器为每个玩家维护一条表现状态，缓存实例、编号、来源 Prefab、本地身份和相机组件。相同实例、编号、来源 Prefab 和身份的重复调用直接复用表现；身份变化且来源 Prefab 相同时重新配置相机，来源 Prefab 变化时重新装配。停用视觉控制器与读取动画配置共用一次组件查找，相机配置使用当前实例的缓存数组。
 
@@ -95,11 +108,14 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 目录约定
 
-- 客户端脚本按知识域分目录：`Assets/Core/Scripts/Camera/Runtime/`（`ThirdPersonCamera` 与轨道状态、光标、避让、转向数学）、`Assets/Core/Scripts/Character/`（输入、运动、动画与外观装配，内含 `Config/` 与 `Runtime/`）、`Assets/Core/Scripts/Networking/`、`Assets/Core/Scripts/UI/`。新增脚本按域归位，域内再分 `Config/` 与 `Runtime/`。
+- 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`，不再使用顶层 `Config/` 与 `Runtime/`。移动参数随运动代码，动画配置随动画代码。
+- 相机继续位于 `Assets/Core/Scripts/Camera/Runtime/`；原有 `AutoStartClient`、`NetworkCharacterManager`、`NetworkCharacterSync` 继续位于 `Assets/Core/Scripts/Networking/`，不移入角色目录。
 - 第三方插件统一放 `Assets/Plugins/`：`Mirror/`（带 asmdef）与 `DynamicBone/`（无 asmdef，编译进 `Assembly-CSharp-firstpass`，被角色 Prefab 以 GUID 引用）。
 - 测试目录与运行时代码同构：`Assets/Core/Tests/PlayMode/Camera/`（`Core.Camera.PlayModeTests`）、`Assets/Core/Tests/PlayMode/Networking/`（`Core.Networking.PlayModeTests`）、`Assets/Core/Tests/Editor/`（`Core.EditorTests`）。移动脚本必须连同 `.meta` 一起移动，否则 Prefab 与场景引用会断开。
 
 ## 回归证据
+
+`2026-10-10` 主编辑器 EditMode `Core.EditorTests` 10/10 通过，无失败或跳过；其中新增两个状态机测试覆盖地面状态、起跳、最高点、下降、平台边缘掉落和落地。顶碰当帧与重构前后相同输入/步长的位移对比尚未完成。11 个迁移脚本的 `.meta` GUID 与迁移前 `HEAD` 对照一致。当前未重新执行角色装配和相机 PlayMode 回归，也未完成 Missing Script 全资产检查、人工手感、双客户端、Host 或专用服务器构建验收；本条不能替代以下历史验证。
 
 `2026-10-08` 主编辑器验证：`Core.Camera.PlayModeTests`（原 `Core.Movement.PlayModeTests`）40/40 与 `Core.Networking.PlayModeTests` 9/9（合计 49/49），`Core.EditorTests` 5/5，无失败或跳过。覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、20/140 个自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停/外部解锁后捕获、目标销毁重绑，以及 30/60/120 FPS 的限速积分一致性和暂停后平滑恢复。两个本地角色 Prefab 均保留 17 个序列化字段，原相机脚本 GUID、`targetRotateSmooth=15` 与 `targetRotateSpeed=360` 不变；本次未修改场景或 Prefab。
 

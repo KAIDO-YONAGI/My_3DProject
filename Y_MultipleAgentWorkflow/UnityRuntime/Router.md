@@ -3,7 +3,7 @@
 文档 ID：`BUS-UNITYRUNTIME`
 状态：`Active`
 维护计数：`3/5`
-最后更新：`2026-10-08`
+最后更新：`2026-10-10`
 
 ## 任务路由
 
@@ -23,9 +23,15 @@
 - `Assets/Core/Scenes/PersistentScene.unity`
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 - `Assets/Core/Prefabs/CharactersForSync/`
+- `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Scripts/Networking/`
 - `Assets/Core/Scripts/Camera/Runtime/`
-- `Assets/Core/Scripts/Character/Runtime/`
+- `Assets/Core/Scripts/Character/Control/`
+- `Assets/Core/Scripts/Character/Input/`
+- `Assets/Core/Scripts/Character/Movement/`
+- `Assets/Core/Scripts/Character/Movement/States/`
+- `Assets/Core/Scripts/Character/Animation/`
+- `Assets/Core/Scripts/Character/Presentation/`
 - `Assets/Core/SO/EventSOs/`
 - `Assets/Plugins/Mirror/`
 - `Assets/Plugins/AddressableAssetsData/`
@@ -40,7 +46,7 @@
 - `path:Assets/Core/Prefabs/CharactersForSync`
 - `path:Assets/Core/Scripts/Networking`
 - `path:Assets/Core/Scripts/Camera/Runtime`
-- `path:Assets/Core/Scripts/Character/Runtime`
+- `path:Assets/Core/Scripts/Character`
 - `path:Assets/Core/SO/EventSOs`
 - `path:Assets/Plugins/AddressableAssetsData`
 

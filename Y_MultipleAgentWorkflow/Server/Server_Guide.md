@@ -2,7 +2,7 @@
 
 文档 ID：`SERVER-GUIDE`
 状态：`Active`
-最后核验：`2026-09-30`
+最后核验：`2026-10-10`（角色运动职责局部核验）
 
 ## 当前实现
 
@@ -37,6 +37,10 @@ Windows Server 构建启动
 连接认证完成后，客户端发送 Ready 和 AddPlayer。`NetworkManager.OnServerAddPlayer` 选择出生点并创建 `NetworkPlayer`。`NetworkServer.AddPlayerForConnection` 将对象归属给当前连接并向观察者发送 Spawn 数据。
 
 `NetworkCharacterSync.OnStartServer` 设置默认角色编号。客户端提交角色切换时，服务器执行 `CommandSetCharacter` 校验并更新 `SyncVar`。Host 的本地玩家使用同一 Command 入口。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
+
+纯专用服务器上的 `PlayerCharacterController.Update` 不读取输入、不积分重力、不运行本地位移。客户端 `CharacterMotor` 中的五态代码状态机不代表服务器物理模拟。
+
+运动表现状态同步目前暂缓，没有已接入的 `NetworkCharacterMovementSync` 源码或服务端运动状态缓冲。本轮没有重新构建或进行双客户端/Host/延迟验收。未来仅计划校验和转发拥有者状态，不改变客户端权威位移；协议边界见 `../Protocol/Protocol_Guide.md` 的 Proposal。
 
 ## 构建与运行
 

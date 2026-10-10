@@ -2,7 +2,7 @@
 
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
-最后核验：`2026-10-08`
+最后核验：`2026-10-10`（角色功能目录与文档边界局部核验）
 
 本目录是项目权威文档入口。项目知识按代码职责拆分为 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
@@ -32,6 +32,8 @@
 |---|---|
 | 项目定位、当前架构、联机链路、实施边界 | `Project_Overview.md` |
 | 客户端生命周期、玩家输入、移动、相机和客户端表现 | `Client/Client_Guide.md` |
+| 角色功能目录、代码状态机、状态内动画混合 | `Project_Overview.md`、`Client/Client_Guide.md` |
+| 运动表现快照、运动状态同步暂缓范围 | `Protocol/Protocol_Guide.md`、`Networking/Networking_Guide.md` |
 | Mirror、KCP、NetworkManager、自动连接、玩家网络组件 | `Networking/Networking_Guide.md` |
 | 专用服务器启动、Headless 构建、监听和部署事实 | `Server/Server_Guide.md` |
 | 客户端与服务器消息边界、同步字段和兼容规则 | `Protocol/Protocol_Guide.md` |
@@ -58,13 +60,13 @@
 
 | 文档 ID | 路径 | 职责 | 状态 | 最近核验 |
 |---|---|---|---|---|
-| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active | 2026-09-30 |
-| `CLIENT-GUIDE` | `Client/Client_Guide.md` | 客户端生命周期、输入、移动和相机 | Active | 2026-09-30 |
-| `NETWORKING-GUIDE` | `Networking/Networking_Guide.md` | Mirror 网络运行时组件与连接管理 | Active | 2026-09-30 |
-| `SERVER-GUIDE` | `Server/Server_Guide.md` | 专用服务器运行与构建事实 | Active | 2026-09-30 |
-| `PROTOCOL-GUIDE` | `Protocol/Protocol_Guide.md` | 协议边界、同步字段和兼容规则 | Active | 2026-09-30 |
-| `UNITY-GUIDE` | `UnityRuntime/UnityRuntime_Guide.md` | Unity 场景、Prefab、资产和配置 | Active | 2026-09-30 |
-| `UNITY-NETCFG` | `UnityRuntime/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证方式 | Active | 2026-09-30 |
+| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active | 2026-10-10（局部） |
+| `CLIENT-GUIDE` | `Client/Client_Guide.md` | 客户端生命周期、输入、移动和相机 | Active | 2026-10-10（局部） |
+| `NETWORKING-GUIDE` | `Networking/Networking_Guide.md` | Mirror 网络运行时组件与连接管理 | Active | 2026-10-10（局部） |
+| `SERVER-GUIDE` | `Server/Server_Guide.md` | 专用服务器运行与构建事实 | Active | 2026-10-10（局部） |
+| `PROTOCOL-GUIDE` | `Protocol/Protocol_Guide.md` | 协议边界、同步字段和兼容规则 | Active | 2026-10-10（局部） |
+| `UNITY-GUIDE` | `UnityRuntime/UnityRuntime_Guide.md` | Unity 场景、Prefab、资产和配置 | Active | 2026-10-10（局部） |
+| `UNITY-NETCFG` | `UnityRuntime/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证方式 | Active | 2026-10-10（局部） |
 | `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active | 2026-09-20 |
 | `WF-CONCURRENCY` | `Workflow/Concurrency_Guide.md` | WorkingAgent 租约规则 | Active | 2026-09-20 |
 | `WF-CONFIG-METHOD` | `Workflow_Configuration_Guide.md` | 工作流配置通用方法 | Active | 2026-09-20 |

@@ -1,5 +1,12 @@
 # Client 开发记录
 
+## 2026-10-10：角色功能目录与五态代码边界文档同步
+
+- 当前角色目录改为 `Control/`、`Input/`、`Movement/States/`、`Animation/`、`Presentation/`；运动参数归 `Movement/`，动画配置归 `Animation/`。状态基础结构和五个独立状态类集中为两个文件，原 Networking 脚本保持原目录。
+- 依据实际 `CharacterMotor`、状态机、`CharacterMotion` 与根控制器更新 Guide；运动状态网络同步按用户最新要求暂缓，远程动画当前固定回退 Idle。只读当前快照/远程接收接口、顶碰当帧与相同输入帧长位移对比仍未完成。
+- 主编辑器 EditMode `Core.EditorTests` 10/10 通过，无失败或跳过；11 个迁移脚本 GUID 与 `HEAD` 对照一致。未重新执行 PlayMode、双客户端、Host 或构建。历史日志路径不改写。
+- 本次收尾只维护文档，不再修改代码或资产；维护计数保持 `3/5`，不将未完成整体验收计为成功业务改造。
+
 ## 2026-10-08：缓存网络身份缺失结果
 
 - `PlayerCharacterController` 新增 `networkIdentityInitialized`，首次身份查询即标记完成，单机角色不再每帧查询不存在的 `NetworkIdentity`；保留 Animator 延迟初始化、重绑和原有中文注释。

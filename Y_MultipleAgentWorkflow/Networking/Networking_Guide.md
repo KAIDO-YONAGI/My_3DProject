@@ -2,7 +2,7 @@
 
 文档 ID：`NETWORKING-GUIDE`
 状态：`Active`
-最后核验：`2026-10-03`
+最后核验：`2026-10-10`（目录、装配边界与暂缓事项局部核验）
 
 ## 当前组件
 
@@ -12,6 +12,8 @@
 - `NetworkPlayer.prefab`：承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
+
+上述项目网络脚本继续位于 `Assets/Core/Scripts/Networking/`，不随角色功能目录整理而迁移。运动状态同步按用户最新要求暂缓：当前磁盘不存在 `NetworkCharacterMovementSync.cs`，控制器也不再调用它；不得将其列为已接入组件。`NetworkPlayer.prefab` 尚保留 GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的组件序列化记录，但对应脚本缺失，属于待网络工作处理的资产一致性问题，本次文档维护不修改 Prefab。
 
 ## 连接与玩家生成
 
@@ -42,6 +44,8 @@ AutoStartClient.StartClient
 7. 视觉实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
 8. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
 9. 本地 Camera 绑定为 `inputSpace`，远程相机、远程音频监听器和远程本地控制组件保持关闭。
+
+装配边界不变：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机；不向视觉子预制件添加网络同步组件。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
 
 两个 Prefab 数组使用相同下标表达同一角色编号。当前默认角色编号为 `1`。
 
@@ -75,6 +79,8 @@ AutoStartClient.StartClient
 - `CommandSetCharacter` 将本地角色选择提交到服务器，服务器校验后更新 `SyncVar`。Host 和远端客户端使用同一入口，表现刷新交给 SyncVar hook。
 
 客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。
+
+代码状态机在本地生成 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`，但这些状态目前没有网络传输入口。远程控制器不读取输入、不运行 `CharacterMotor.Tick`，也不再根据位置差猜状态；当前动画固定回退为 Idle。未来状态快照、插值与 Host 分流属于 Proposal，详见 `../Protocol/Protocol_Guide.md`，不表示现有联机动画一致。
 
 ## 源码字段说明
 

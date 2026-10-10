@@ -1,5 +1,11 @@
 # UnityRuntime 开发记录
 
+## 2026-10-10：角色功能路径与资产待处理项同步
+
+- Router 与 Guide 更新角色功能目录，移除当前入口中 `Character/Runtime/` 路径；原 Networking 路径保留。11 个迁移脚本 GUID 对照 `HEAD` 一致。
+- 实际磁盘 `NetworkPlayer.prefab` 留有 fileID `7814609285416083721`、GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的同步组件记录，对应源码已不存在。按用户要求只记录资产待处理问题，不修改网络实现或 Prefab，不宣称全量 Missing Script 检查通过。
+- 主编辑器 EditMode 10/10 通过；未重新执行 PlayMode、联机或构建。历史记录保持原文，本次纯文档维护，计数保持 `3/5`。
+
 ## 2026-10-08：常驻场景显式绑定单机相机组件
 
 - `PersistentScene` 的管理器新增三组相机组件引用，绑定“娜娜莉（学园之星）”内的 `Main Camera`；源组件 fileID 经编辑器查询确认，未改写角色 Prefab。

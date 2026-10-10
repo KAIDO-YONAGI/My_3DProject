@@ -3,12 +3,13 @@
 文档 ID：`BUS-CLIENT`
 状态：`Active`
 维护计数：`3/5`
-最后更新：`2026-10-08`
+最后更新：`2026-10-10`
 
 | 任务 | 必读文档 |
 |---|---|
 | 客户端启动、输入、移动、动画、本地相机 | `Client_Guide.md` |
 | 角色运动算法和输入数据流 | `Client_Guide.md`，并读取 `Assets/Core/Scripts/Character/` |
+| Idle、Run、Sprint、Rising、Falling、状态机与状态内混合 | `Client_Guide.md`，并读取 `Assets/Core/Scripts/Character/Movement/States/` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Client_Guide.md`，并读取 `Assets/Core/Input/` |
 | 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Client_Guide.md`，并读取 `Assets/Core/Scripts/Camera/Runtime/` 与相机回归测试 |
 | Mirror 本地玩家归属、连接和玩家网络行为 | `../Networking/Networking_Guide.md` |
@@ -17,6 +18,9 @@
 ## 主要证据路径
 
 - `Assets/Core/Scripts/Character/`
+- `Assets/Core/Scripts/Character/Control/`
+- `Assets/Core/Scripts/Character/Movement/States/`
+- `Assets/Core/Tests/Editor/CharacterMovementStateMachineTests.cs`
 - `Assets/Core/Scripts/Camera/`
 - `Assets/Core/Input/`
 - `Assets/Core/Tests/PlayMode/Camera/`
