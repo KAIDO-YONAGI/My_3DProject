@@ -30,6 +30,9 @@ namespace Core.Scripts.Character.Movement
         [SerializeField] private float groundedPull = -2f;
         [SerializeField] private bool orientToMovement;
 
+        // 非跳跃离地的容忍时长（秒）：下坡与台阶造成的短暂悬空在此窗口内仍按贴地处理，避免误播跳跃动画。
+        [SerializeField, Min(0f)] private float airborneTolerance = 0.3f;
+
         public float Acceleration => acceleration;
         public float Deceleration => deceleration;
         public float AirControlMultiplier => airControlMultiplier;
@@ -37,6 +40,7 @@ namespace Core.Scripts.Character.Movement
         public float Gravity => gravity <= 0f ? gravity : -gravity;
         public float GroundedPull => groundedPull <= 0f ? groundedPull : -groundedPull;
         public bool OrientToMovement => orientToMovement;
+        public float AirborneTolerance => airborneTolerance;
 
         /// <summary>
         /// 根据当前是否冲刺返回本帧目标水平速度。

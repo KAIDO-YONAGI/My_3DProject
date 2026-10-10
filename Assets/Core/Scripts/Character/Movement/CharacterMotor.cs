@@ -20,6 +20,9 @@ namespace Core.Scripts.Character.Movement
         // 水平与竖直速度跨帧保存，才能实现物理上的加减速、重力和跳跃。
         private Vector3 planarVelocity;
         private float verticalVelocity;
+
+        // 非跳跃离地的持续时长，用于判断下坡与台阶造成的悬空是否仍在容忍窗口内。
+        private float airborneDuration;
         private readonly CharacterMovementStateMachine stateMachine = new CharacterMovementStateMachine();
 
         /// <summary>
@@ -89,6 +92,17 @@ namespace Core.Scripts.Character.Movement
                 verticalVelocity = settings.GroundedPull;
             }
 
+            // 非跳跃的短暂离地（下坡、台阶）在容忍窗口内仍按贴地处理；
+            // 主动跳跃当帧清零计时，保证起跳立即进入 Rising，不受容忍窗口影响。
+            if (groundedAfterMove || jumpStarted)
+            {
+                airborneDuration = 0f;
+            }
+            else
+            {
+                airborneDuration += deltaTime;
+            }
+
             // Animator 的二维方向以角色自身坐标为准，不受世界朝向或相机朝向影响。
             Vector3 localVelocity = owner.InverseTransformDirection(planarVelocity);
             Vector2 localPlanarVelocity = new Vector2(localVelocity.x, localVelocity.z);
@@ -103,7 +117,8 @@ namespace Core.Scripts.Character.Movement
                     hasMoveInput,
                     input.SprintHeld,
                     jumpStarted,
-                    verticalVelocity));
+                    verticalVelocity,
+                    airborneDuration < settings.AirborneTolerance));
 
             return new CharacterMotion(
                 state,

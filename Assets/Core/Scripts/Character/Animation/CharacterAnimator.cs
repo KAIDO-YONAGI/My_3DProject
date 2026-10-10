@@ -53,6 +53,8 @@ namespace Core.Scripts.Character.Animation
         // 覆盖器由本类创建和销毁；wasGrounded 用于只在落地边沿执行一次 Idle 重置。
         private AnimatorOverrideController overrideController;
         private bool wasGrounded = true;
+        private bool hasRunAnimations;
+        private bool hasSprintAnimations;
 
         /// <summary>
         /// 接收 Animator 与角色素材配置，实际模板加载延迟到 Initialize。
@@ -89,6 +91,10 @@ namespace Core.Scripts.Character.Animation
                 Debug.LogError($"缺少 Resources/{TemplateResourcePath}.controller，角色动画无法初始化。", animator);
                 return false;
             }
+
+            // 素材可用性与本次绑定保持一致，逐帧混合只读取缓存。
+            hasRunAnimations = HasAnimations(runAnimations);
+            hasSprintAnimations = HasAnimations(sprintAnimations);
 
             // fallback 保证个别方向缺素材时，覆盖器仍能得到可播放片段。
             AnimationClip fallback = ResolveFallbackClip();
@@ -219,8 +225,6 @@ namespace Core.Scripts.Character.Animation
         private void ApplyGroundedBlend(CharacterMotion motion)
         {
             float locomotionWeight = Mathf.Clamp01(motion.LocomotionWeight01);
-            bool hasRunAnimations = HasAnimations(runAnimations);
-            bool hasSprintAnimations = HasAnimations(sprintAnimations);
             bool useSprint = motion.WantsSprint && hasSprintAnimations;
             bool useRun = !useSprint && hasRunAnimations;
 

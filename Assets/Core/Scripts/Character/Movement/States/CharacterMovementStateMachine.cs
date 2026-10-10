@@ -20,13 +20,17 @@ namespace Core.Scripts.Character.Movement.States
     /// </summary>
     public readonly struct CharacterMovementStateContext
     {
+        /// <summary>
+        /// 使用离地容忍判定创建上下文；withinAirborneTolerance 由 CharacterMotor 按配置的容忍时长计算。
+        /// </summary>
         public CharacterMovementStateContext(
             bool groundedBeforeMove,
             bool groundedAfterMove,
             bool hasMoveInput,
             bool sprintHeld,
             bool jumpStarted,
-            float verticalVelocity)
+            float verticalVelocity,
+            bool withinAirborneTolerance)
         {
             GroundedBeforeMove = groundedBeforeMove;
             GroundedAfterMove = groundedAfterMove;
@@ -34,6 +38,28 @@ namespace Core.Scripts.Character.Movement.States
             SprintHeld = sprintHeld;
             JumpStarted = jumpStarted;
             VerticalVelocity = verticalVelocity;
+            WithinAirborneTolerance = withinAirborneTolerance;
+        }
+
+        /// <summary>
+        /// 兼容未提供离地容忍判定的调用方：等同于“已超出容忍窗口”，保持原有空中状态判定。
+        /// </summary>
+        public CharacterMovementStateContext(
+            bool groundedBeforeMove,
+            bool groundedAfterMove,
+            bool hasMoveInput,
+            bool sprintHeld,
+            bool jumpStarted,
+            float verticalVelocity)
+            : this(
+                groundedBeforeMove,
+                groundedAfterMove,
+                hasMoveInput,
+                sprintHeld,
+                jumpStarted,
+                verticalVelocity,
+                false)
+        {
         }
 
         public bool GroundedBeforeMove { get; }
@@ -42,6 +68,9 @@ namespace Core.Scripts.Character.Movement.States
         public bool SprintHeld { get; }
         public bool JumpStarted { get; }
         public float VerticalVelocity { get; }
+
+        // 非跳跃离地仍在容忍窗口内时按贴地处理，避免下坡与台阶造成的悬空帧误播跳跃动画。
+        public bool WithinAirborneTolerance { get; }
     }
 
     internal interface ICharacterMovementState
@@ -68,7 +97,9 @@ namespace Core.Scripts.Character.Movement.States
 
         protected static CharacterMovementStateId ResolveGroundedState(CharacterMovementStateContext context)
         {
-            if (!context.GroundedAfterMove)
+            // 下坡与台阶会造成短暂悬空；容忍窗口内继续解析地面状态，
+            // 避免动画在 Grounded 与 Jump 之间来回切换。
+            if (!context.GroundedAfterMove && !context.WithinAirborneTolerance)
             {
                 return context.VerticalVelocity > 0f
                     ? CharacterMovementStateId.Rising
