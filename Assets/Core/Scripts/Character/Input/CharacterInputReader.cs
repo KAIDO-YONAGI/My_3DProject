@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 /// 使 ThirdPersonCamera 的 sensitivity、scrollSpeed 等既有数值保持改造前的手感。
 /// 输入实例按需创建：专用服务器和远程角色走不到采集路径，因此不会创建 PlayerControls。
 /// </summary>
-public sealed class CharacterInputReader : System.IDisposable
+public class CharacterInputReader : System.IDisposable
 {
     // 旧 Mouse X/Y 轴的 sensitivity 是 0.1，而 Input System 的 <Mouse>/delta 是原始像素增量，
     // 乘上该系数后 sensitivity 字段的含义才与改造前一致。

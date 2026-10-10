@@ -6,7 +6,7 @@ using UnityEngine;
 /// PlayerCharacterController 负责序列化配置，CharacterMotor 只读取这里暴露的安全值完成实际位移。
 /// </summary>
 [Serializable]
-public sealed class CharacterMovementSettings
+public class CharacterMovementSettings
 {
     // 地面移动速度；冲刺键只负责在两档速度之间选择。
     [SerializeField, Min(0f)] private float runSpeed = 6.8f;

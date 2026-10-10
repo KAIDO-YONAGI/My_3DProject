@@ -7,7 +7,7 @@ using UnityEngine;
 /// PlayerCharacterController 保存该配置，CharacterAnimator 根据模板方向槽位查询最接近的片段。
 /// </summary>
 [Serializable]
-public sealed class DirectionalAnimationSet
+public class DirectionalAnimationSet
 {
     // label 仅用于区分 Inspector 中的动画组。
     [SerializeField] private string label = "Directional Blend";

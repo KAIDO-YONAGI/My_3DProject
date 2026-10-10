@@ -6,7 +6,7 @@ using UnityEngine;
 /// DirectionalAnimationSet 会聚合多个采样点，CharacterAnimator 再用它们填充二维 Blend Tree。
 /// </summary>
 [Serializable]
-public sealed class DirectionalAnimationSample
+public class DirectionalAnimationSample
 {
     // label 只用于 Inspector 辨认素材，不参与运行时计算。
     [SerializeField] private string label;

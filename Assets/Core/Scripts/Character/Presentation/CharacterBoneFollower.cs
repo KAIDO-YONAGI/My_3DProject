@@ -6,7 +6,7 @@ using UnityEngine;
 /// PlayerCharacterController 在 Awake 初始化、LateUpdate 应用，使修正发生在 Animator 更新骨骼之后。
 /// </summary>
 [Serializable]
-public sealed class CharacterBoneFollower
+public class CharacterBoneFollower
 {
     // 关闭后不查找骨骼，也不执行运行时修正。
     [SerializeField] private bool enabled = true;

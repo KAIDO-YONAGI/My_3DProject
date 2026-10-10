@@ -6,7 +6,7 @@ using UnityEngine;
 /// CharacterAnimator 会从这里选出一个片段，替换通用 Animator 模板中的跳跃占位动画。
 /// </summary>
 [Serializable]
-public sealed class CharacterJumpAnimationSet
+public class CharacterJumpAnimationSet
 {
     // 素材本身已经包含完整起跳和落地时，优先使用这一段。
     [SerializeField] private AnimationClip fullJumpClip;

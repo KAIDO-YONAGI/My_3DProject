@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -5,7 +6,7 @@ using UnityEngine;
 /// PlayerCharacterController 每帧传入 CharacterInput，本类驱动 CharacterController，
 /// 再把动画所需结果整理成 CharacterMotion 交给 CharacterAnimator。
 /// </summary>
-public sealed class CharacterMotor
+public class CharacterMotor
 {
     // owner 用于坐标转换和可选转向，CharacterController 负责碰撞约束后的最终位移。
     private readonly Transform owner;
@@ -15,6 +16,7 @@ public sealed class CharacterMotor
     // 水平与竖直速度跨帧保存，才能实现物理上的加减速、重力和跳跃。
     private Vector3 planarVelocity;
     private float verticalVelocity;
+    private readonly CharacterMovementStateMachine stateMachine = new CharacterMovementStateMachine();
 
     /// <summary>
     /// 绑定运动对象、碰撞控制器和参数配置，并用贴地拉力初始化竖直速度。
@@ -48,7 +50,7 @@ public sealed class CharacterMotor
             verticalVelocity = settings.GroundedPull;
         }
 
-        bool jumpStarted = groundedBeforeMove && input.JumpPressed;
+        bool jumpStarted = stateMachine.CanJump(groundedBeforeMove) && input.JumpPressed;
         if (jumpStarted)
         {
             verticalVelocity = settings.GetJumpSpeed();
@@ -90,9 +92,17 @@ public sealed class CharacterMotor
 
         // 物理速度允许平滑加减速；动画权重直接读取输入，保证按下和松开都立即响应。
         float locomotionWeight01 = Mathf.Clamp01(input.MoveInput.magnitude);
+        CharacterMovementStateId state = stateMachine.Update(
+            new CharacterMovementStateContext(
+                groundedBeforeMove,
+                groundedAfterMove,
+                hasMoveInput,
+                input.SprintHeld,
+                jumpStarted,
+                verticalVelocity));
+
         return new CharacterMotion(
-            groundedAfterMove,
-            input.SprintHeld && hasMoveInput,
+            state,
             localDirection,
             locomotionWeight01);
     }
@@ -103,7 +113,7 @@ public sealed class CharacterMotor
     private Vector3 ResolveMoveDirection(Vector2 moveInput, Transform inputSpace)
     {
         Transform basis = inputSpace;
-        if (basis == null && Camera.main != null)
+        if (basis is null&& Camera.main is not null)
         {
             // 本地玩家的相机属于 CharactersForLocal 子模型；
             // 即使相机是网络根对象的子节点，也必须用它作为前进方向基准。
@@ -112,7 +122,7 @@ public sealed class CharacterMotor
 
         Vector3 forward;
         Vector3 right;
-        if (basis != null)
+        if (basis is not null)
         {
             forward = Vector3.ProjectOnPlane(basis.forward, Vector3.up).normalized;
             right = Vector3.ProjectOnPlane(basis.right, Vector3.up).normalized;

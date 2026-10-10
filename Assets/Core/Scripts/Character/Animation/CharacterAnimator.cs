@@ -7,7 +7,7 @@ using UnityEngine;
 /// 初始化时把角色自己的 Idle、Run、Sprint、Jump 片段覆盖到通用 Animator 模板；
 /// 运行时读取 CharacterMotion，得到最终的待机、方向移动、冲刺、跳跃和落地表现。
 /// </summary>
-public sealed class CharacterAnimator : IDisposable
+public class CharacterAnimator : IDisposable
 {
     // Resources.Load 使用不带扩展名的相对路径加载通用 Animator 模板。
     public const string TemplateResourcePath = "CharacterLocomotion";
@@ -29,16 +29,16 @@ public sealed class CharacterAnimator : IDisposable
     // 每个槽位同时定义模板后缀和二维方向，用于从角色素材中寻找最近动画。
     private static readonly DirectionSlot[] DirectionSlots =
     {
-        new DirectionSlot("Forward", new Vector2(0f, 1f)),
-        new DirectionSlot("FrontRight", new Vector2(0.7071f, 0.7071f)),
-        new DirectionSlot("RightForward", new Vector2(1f, 0.25f)),
-        new DirectionSlot("RightBackward", new Vector2(1f, -0.25f)),
-        new DirectionSlot("BackRight", new Vector2(0.7071f, -0.7071f)),
-        new DirectionSlot("Backward", new Vector2(0f, -1f)),
-        new DirectionSlot("BackLeft", new Vector2(-0.7071f, -0.7071f)),
-        new DirectionSlot("LeftBackward", new Vector2(-1f, -0.25f)),
-        new DirectionSlot("LeftForward", new Vector2(-1f, 0.25f)),
-        new DirectionSlot("FrontLeft", new Vector2(-0.7071f, 0.7071f)),
+        new ("Forward", new Vector2(0f, 1f)),
+        new ("FrontRight", new Vector2(0.7071f, 0.7071f)),
+        new ("RightForward", new Vector2(1f, 0.25f)),
+        new ("RightBackward", new Vector2(1f, -0.25f)),
+        new ("BackRight", new Vector2(0.7071f, -0.7071f)),
+        new ("Backward", new Vector2(0f, -1f)),
+        new ("BackLeft", new Vector2(-0.7071f, -0.7071f)),
+        new ("LeftBackward", new Vector2(-1f, -0.25f)),
+        new ("LeftForward", new Vector2(-1f, 0.25f)),
+        new("FrontLeft", new Vector2(-0.7071f, 0.7071f)),
     };
 
     // Animator 是最终输出端，其余字段来自 PlayerCharacterController 的角色专属配置。
