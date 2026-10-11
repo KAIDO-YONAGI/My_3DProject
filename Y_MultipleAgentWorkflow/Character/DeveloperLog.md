@@ -1,5 +1,15 @@
 # Character 开发记录
 
+## 2026-10-11：修复华丽飞踢运行时嘴部下移
+
+- 根因：FBX 自动 Humanoid 映射将脸部控制根 `mouth` 错映射为 `Jaw`。该骨骼下挂嘴唇、嘴角和牙齿控制骨骼，实际待机片段 `Idle_Wait_A` 使其局部旋转偏离初始姿势 `10.28555°`；局部位置不变也会通过蒙皮造成嘴部下移。
+- 因果对照：同一动画姿势下先 `BakeMesh`，再仅恢复 `mouth.localRotation` 后重新烘焙。原 Avatar 的 1122 个脸部顶点受影响，最大位移 `0.01277462 m`，最大向下位移 `0.0118413 m`。临时 Avatar 仅移除 Jaw 映射后，嘴部旋转、受影响顶点数与顶点差均为零，确认导入映射是原因。
+- 正式修复：通过 `ModelImporter` 更新 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，仅移除 Jaw 映射，将人形映射从 55 项改为 54 项，显式保存 351 项骨架描述，并关闭 `autoGenerateAvatarMappingIfUnspecified`。导入后的 `Avatar.isValid`、`Avatar.isHuman` 均为真，Jaw 映射数为零。模型 GUID 保持 `f75e3b29cf8cbb4458c41c2184aeb2da`，Local、Sync Prefab 的 Avatar 引用不变。
+- 动画验证：隔离预览场景中两套 Prefab 各核验全部 22 个配置片段、88 个采样点，合计 176 个。最大嘴部旋转与嘴部引起的蒙皮差均为零，播放片段不匹配为零；左大腿动画旋转达到 `105.3603°`，身体动画仍正常求值。
+- 实际初始化链路：按两套 Prefab 的配置分别调用项目 `CharacterAnimator.Initialize`，各以 `1/60` 秒推进 Animator 120 帧，实际播放片段均为 `Idle_Wait_A`，最大嘴部旋转均为零。Unity Console 为 0 错误、0 警告，临时实例、覆盖器和网格已销毁，临时预览场景已关闭。
+- 验收边界：未修改运行时代码、材质、着色器或用户场景；本次验证为编辑器内 Animator 求值与蒙皮顶点对照，未进入用户场景 PlayMode，未执行双客户端联机或构建验收。过程证据见 `Logs/MouthAnimationFix_20261011.md`。
+- 文档与计数：本次补齐 Character、Project 两域 Guide、Router 与置顶开发记录。补记上轮已落地且经上述验证的实质修复，Character 维护计数 `3/5 -> 4/5`；此次纯文档同步不另计数。
+
 ## 2026-10-11：脸部与眼睛类材质开启 _IsFace
 
 - 需求：用户确认把脸部/眼睛类材质的 `_IsFace` 由 `0` 改为 `1`。

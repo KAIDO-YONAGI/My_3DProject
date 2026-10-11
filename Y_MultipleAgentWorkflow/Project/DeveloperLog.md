@@ -1,5 +1,14 @@
 # Project 开发记录
 
+## 2026-10-11：固化华丽飞踢 Avatar 映射并同步嘴部修复事实
+
+- 根因与修复：华丽飞踢 FBX 的自动 Humanoid 映射将脸部控制根 `mouth` 错映射为 `Jaw`。实际待机动画使嘴部旋转 `10.28555°`，同姿势蒙皮对照显示最大向下位移 `0.0118413 m`；仅移除 Jaw 映射后，嘴部旋转与该骨骼引起的顶点差均为零。修复在模型导入层完成，没有增加运行时骨骼覆盖代码。
+- 配置事实：`Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta` 保持 `animationType: 3`，保留其余 54 项人形映射并显式保存 351 项骨架描述，`autoGenerateAvatarMappingIfUnspecified: 0`。导入后的 `Avatar.isValid`、`Avatar.isHuman` 均为真，Jaw 映射数为零。
+- 引用事实：模型 GUID 保持 `f75e3b29cf8cbb4458c41c2184aeb2da`。`CharactersForLocal/娜娜莉（华丽飞踢）.prefab` 与 `CharactersForSync/娜娜莉（华丽飞踢）_Sync.prefab` 的 `m_Avatar` 仍引用该 GUID 的 `fileID: 9000000`，不需要改动两套 Prefab。
+- 验证：隔离预览场景中两套 Prefab 各播放全部 22 个配置片段、88 个采样点，共 176 个；嘴部旋转与嘴部引起的蒙皮差均为零，动画片段不匹配为零，身体动画仍正常求值。按实际配置调用项目 `CharacterAnimator.Initialize` 后各推进 120 帧，实际待机片段 `Idle_Wait_A` 的最大嘴部旋转仍为零。Unity Console 为 0 错误、0 警告，临时对象与预览场景已清理。
+- 验收边界：本次未进入用户场景 PlayMode，未执行双客户端联机或构建验收；未修改运行时代码、材质、着色器或用户场景。过程证据见 `Logs/MouthAnimationFix_20261011.md`，关键事实已同步到 Character、Project 两域 Guide 与置顶开发记录。
+- 维护复核：补记上轮已落地且经上述验证的实质修复，计数 `4/5 -> 5/5`。复核 FBX 显式映射、自动映射开关、模型 GUID 与两套 Prefab 引用，补齐 Project Guide 和 Router；同时核对 Unity 与 Guide 所列相关包版本一致，纠正目录说明中已失效的 `Assets/Core/Editor/Toon/` 为实际路径 `Assets/Core/ToonEditor/`。完成复核更新后计数重置为 `0/5`；此次纯文档同步不额外增加计数，原开发记录保持不变。
+
 ## 2026-10-11：接入 URP 14.0.12 并实装三渲二着色器
 
 - 依据：用户指定迁移路线为「全量迁 URP」，作用范围为「角色 + 场景植被全量三渲二」，草地保留风动画。

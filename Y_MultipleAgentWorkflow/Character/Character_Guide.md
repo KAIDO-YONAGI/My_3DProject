@@ -91,6 +91,16 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `CharacterMotion` 是 `CharacterMotor` 输出给 `CharacterAnimator` 的单帧表现快照，字段为离散状态 `State`、角色自身坐标系的移动方向 `LocalDirection` 和移动权重 `LocomotionWeight01`。`IsGrounded` 与 `WantsSprint` 由 `State` 派生。网络传输该快照的字段约定见 `../Multiplayer/Sync_Protocol.md`。
 
+## 人形映射与面部骨骼
+
+华丽飞踢的模型导入配置位于 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`。该模型的 `mouth` 是脸部控制根，其下挂嘴唇、嘴角和牙齿控制骨骼，不应映射为 Humanoid 的 `Jaw`。
+
+原自动映射把 `mouth` 当成 `Jaw`，播放实际待机片段 `Idle_Wait_A` 时使其局部旋转偏离初始姿势 `10.28555°`，导致嘴部蒙皮向下变形。`mouth.localPosition` 不变、脸网格没有 BlendShape，都不能排除这种旋转驱动的蒙皮位移。诊断时应在同一动画姿势下用 `SkinnedMeshRenderer.BakeMesh` 烘焙网格，再仅恢复 `mouth.localRotation` 后重新烘焙，对比顶点以隔离该骨骼的影响。原配置影响 1122 个脸部顶点，最大位移 `0.01277462 m`，最大向下位移 `0.0118413 m`；只移除错误的 Jaw 映射后，上述旋转与顶点差均为零。
+
+2026-10-11 已通过 `ModelImporter` 保存原 Avatar 的人形描述，仅移除 `humanName == "Jaw"` 的映射，并关闭 `autoGenerateAvatarMappingIfUnspecified`。其余 54 项人形映射保留，骨架描述显式保存 351 项；导入后的 `Avatar.isValid` 与 `Avatar.isHuman` 均为真。Local、Sync 两套华丽飞踢 Prefab 继续共用原 GUID 的 Avatar，引用与导入约定见 `../Project/Project_Guide.md` 的“角色表现资源”。
+
+后续重新导入或替换该模型时，必须核对 `mouth` 没有重新进入 Jaw 映射，并保持显式映射及关闭自动补映射的配置。此问题修复在模型导入层，不需要在动画更新后强制覆盖嘴部骨骼旋转。
+
 ## 相机与移动方向
 
 本地网络角色的 `PlayerCharacterController.inputSpace` 指向本地角色 Prefab 中的 Camera。`CharacterMotor` 取该 Transform 的水平 forward 和 right，把输入转换成世界方向，相机偏航同步改变前进方向。
@@ -147,6 +157,8 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `Core.EditorTests` 覆盖地面状态、起跳、最高点、下降、平台边缘掉落和落地。`CharacterUpdateLoopTests` 覆盖显式模型绑定、解绑后保留空引用、重绑时沿用运动驱动、动画素材可用性缓存、缺失素材回退与落地首帧权重重置。`Core.Camera.PlayModeTests` 与 `Core.Networking.PlayModeTests` 覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停与外部解锁后捕获、目标销毁重绑，以及 30/60/120 FPS 的限速积分一致性和暂停后平滑恢复。两个本地角色 Prefab 保留 17 个序列化字段，`targetRotateSmooth=15` 与 `targetRotateSpeed=360`。
 
+2026-10-11 的嘴部修复使用隔离预览场景中的实际 Animator 求值验证：Local、Sync 两套华丽飞踢 Prefab 各播放全部 22 个配置片段（待机 1、跑步 10、冲刺 10、跳跃 1），每片段连续推进 `0.05 / 0.17 / 0.31 / 0.53` 秒，共 176 个采样点。最大嘴部旋转与嘴部引起的蒙皮顶点差均为零，播放片段不匹配为零；左大腿动画旋转达到 `105.3603°`，确认身体动画仍正常求值。另按两套 Prefab 实际配置调用项目 `CharacterAnimator.Initialize`，各以 `1/60` 秒推进 120 帧，实际播放 `Idle_Wait_A`，嘴部旋转仍为零。核验结束时 Unity Console 为 0 错误、0 警告，临时对象与预览场景已清理。本次未进入用户场景 PlayMode，未执行双客户端联机或构建验收；过程证据保存在 `Logs/MouthAnimationFix_20261011.md`，关键结论同时记录于本域 `DeveloperLog.md`。
+
 ## 维护触发
 
-修改 Character 目录、Camera 目录、输入资产、输入系统设置、角色输入、CharacterController、动画数据流、本地相机、朝向参数与 Tooltip 约定或光标规则时更新本文档。
+修改 Character 目录、Camera 目录、输入资产、输入系统设置、角色输入、CharacterController、动画数据流、本地相机、朝向参数与 Tooltip 约定或光标规则时更新本文档。角色 FBX 导入、人形 Avatar 映射或面部骨骼配置变化时，同时维护本文档与 `../Project/Project_Guide.md`。

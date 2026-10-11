@@ -46,7 +46,7 @@
 | `Plugins/` | 第三方插件 |
 
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`。Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
-- 自写代码位于 `Assets/Core/Shaders/Toon/`（三渲二着色器与说明）与 `Assets/Core/Editor/Toon/`（管线与材质迁移工具）。
+- 自写代码位于 `Assets/Core/Shaders/Toon/`（三渲二着色器与说明）与 `Assets/Core/ToonEditor/`（管线与材质迁移工具）。
 - 单机框架代码位于 `Assets/Core/My_FrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画配置位于 `Animation/`。
@@ -123,6 +123,14 @@
 
 模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用，根节点承担网络 Transform、运动和碰撞。重绑只复制动画配置和本地相机参考，保留根 `CharacterMotor` 的速度与代码状态。
 
+### 华丽飞踢模型与 Avatar 导入
+
+模型配置文件为 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，模型 GUID 为 `f75e3b29cf8cbb4458c41c2184aeb2da`。Local、Sync 两套华丽飞踢 Prefab 的 `m_Avatar` 均引用该 GUID、`fileID: 9000000`，共用同一模型 Avatar。
+
+2026-10-11 为修复运行时嘴部下移，已通过 `ModelImporter` 固化原 Avatar 的 `humanDescription`，仅移除脸部控制根 `mouth` 的 `Jaw` 映射。导入类型保持 Humanoid（`animationType: 3`），人形映射由 55 项变为 54 项，其余映射保留；骨架描述显式保存 351 项，`autoGenerateAvatarMappingIfUnspecified: 0`，避免重新自动补入错误下颌映射。导入结果 `Avatar.isValid = true`、`Avatar.isHuman = true`、Jaw 映射数为零，模型 GUID 与两套 Prefab 的引用不变。
+
+该模型的 `mouth` 不是通用人体下颌骨，而是嘴唇、嘴角和牙齿控制骨骼的父节点；映射为 Jaw 会在通用人形动画求值时引起面部蒙皮变形。重新导入或替换模型时，应检查显式映射、自动映射开关与两套 Prefab 的 Avatar 引用。根因对照与骨骼验证方法见 `../Character/Character_Guide.md` 的“人形映射与面部骨骼”，不要用运行时旋转补丁掩盖导入配置错误。
+
 ## Inspector 配置提示
 
 `NetworkManager` Prefab 上的 `AutoStartClient` 字段显示中文 Tooltip，说明自动连接的运行环境、地址配置入口和重试间隔。连接地址统一填写在 Mirror `NetworkManager` 的 `Network Address`，使用 IP 或主机名。自动连接和 HUD 连接共用 `networkAddress`，端口由同一 Prefab 上的 `KcpTransport.Port` 提供。
@@ -135,6 +143,8 @@
 
 `Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、本地角色 Prefab 完整性和出生点高度。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
 
+2026-10-11 的华丽飞踢 Avatar 修复已核验导入有效性、Jaw 映射数与 Local、Sync Prefab 引用。隔离预览场景中，两套 Prefab 各播放 22 个配置片段，共 176 个采样点，嘴部旋转及嘴部引起的蒙皮差均为零；项目 `CharacterAnimator.Initialize` 的实际配置链路另各推进 120 帧，结果一致，Unity Console 为 0 错误、0 警告。上述验证未包含用户场景 PlayMode、双客户端联机或构建验收。过程证据见 `Logs/MouthAnimationFix_20261011.md`，关键配置与结果同时记录于本域 `DeveloperLog.md`。
+
 ## 维护触发
 
-修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
+修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
