@@ -1,7 +1,6 @@
 using Core.Scripts.Character.Animation;
 using Core.Scripts.Character.Input;
 using Core.Scripts.Character.Movement;
-using Core.Scripts.Character.Movement.States;
 using Core.Scripts.Character.Presentation;
 using Mirror;
 using UnityEngine;
@@ -49,7 +48,13 @@ namespace Core.Scripts.Character.Control
         private NetworkIdentity networkIdentity;
         // 网络身份在根对象初始化时确定；查不到也缓存，避免单机角色每帧重查。
         private bool networkIdentityInitialized;
+        //控制器保存快照，为网络包的接入留入口
+        public CharacterMotion CurrentMotion { get; private set; }
 
+        public void ReceiveRemoteMotion(CharacterMotion motion)
+        {
+            CurrentMotion = motion;
+        }
         // 添加组件或在 Inspector 重置时自动补齐最常见引用和默认配置。
         private void Reset()
         {
@@ -86,8 +91,8 @@ namespace Core.Scripts.Character.Control
 
             // 保持固定数据流，动画永远读取本帧移动后的碰撞与方向结果。
             CharacterInput input = ReadInput();
-            CharacterMotion motion = motor.Tick(input, inputSpace, Time.deltaTime);
-            animationDriver?.Apply(motion);
+            CurrentMotion = motor.Tick(input, inputSpace, Time.deltaTime);
+            animationDriver?.Apply(CurrentMotion);
         }
 
         private void LateUpdate()
@@ -228,12 +233,7 @@ namespace Core.Scripts.Character.Control
             {
                 return;
             }
-
-            // 延迟装配或运动状态尚未接入时保留明确的 Idle 回退。
-            animationDriver.Apply(new CharacterMotion(
-                CharacterMovementStateId.Idle,
-                Vector2.zero,
-                0f));
+            animationDriver.Apply(CurrentMotion);
         }
 
         // Unity 旧序列化数据可能把可序列化类保存为 null，这里统一补回默认对象。
