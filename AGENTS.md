@@ -25,7 +25,7 @@
 
 ## 项目结构
 
-本项目是物理派对游戏：Unity 客户端 + Mirror 专用服务器，按 `docs/开发计划/00-改造计划总览.md` 的八个阶段执行。
+本项目是物理派对游戏：Unity 客户端 + Mirror 专用服务器，按 `docs/开发计划/改造计划总览.md` 的八个阶段执行。
 
 - 联机脚本: `Assets/Core/Scripts/Networking/`
 - 单机框架: `Assets/Core/Scripts/GamePlayFrameWork/`
