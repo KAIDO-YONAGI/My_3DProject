@@ -3359,6 +3359,7 @@ Transform:
   - {fileID: 4958683470291981196}
   - {fileID: 7525752442743195762}
   - {fileID: 3925343618303376800}
+  - {fileID: 514764234115958178}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &5628326989325308321
@@ -3434,6 +3435,7 @@ MonoBehaviour:
     jumpHeight: 1.2
     groundedPull: -2
     orientToMovement: 0
+    airborneTolerance: 0.3
   idleClip: {fileID: 7400000, guid: 6ecc931ef52f4498aabccd9cb9b23164, type: 3}
   runDirectionalSet:
     label: Run 2D Blend
@@ -18742,6 +18744,28 @@ Transform:
   - {fileID: 5467059561443160530}
   m_Father: {fileID: 8845815066414335044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &396191091277222519
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1800306559856102363}
+    m_Modifications:
+    - target: {fileID: 1389837676140640766, guid: 47908e728c2eaa44b88ef34840d658dd, type: 3}
+      propertyPath: m_Name
+      value: CharacterRimLight
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47908e728c2eaa44b88ef34840d658dd, type: 3}
+--- !u!4 &514764234115958178 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 169802963333552085, guid: 47908e728c2eaa44b88ef34840d658dd, type: 3}
+  m_PrefabInstance: {fileID: 396191091277222519}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1117411469450946615
 PrefabInstance:
   m_ObjectHideFlags: 0
