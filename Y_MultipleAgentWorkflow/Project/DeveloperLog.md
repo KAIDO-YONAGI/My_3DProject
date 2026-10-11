@@ -1,5 +1,12 @@
 # Project 开发记录
 
+## 2026-10-11：修复三渲二着色器 LOD 交叉淡化的编译错误
+
+- 根因：`NiloToonShared.hlsl` 的 `AlphaClipAndLODTest` 调用 `LODFadeCrossFade()`，而该函数只由 URP 的 `LODCrossFade.hlsl` 声明，本目录 5 个 HLSL 头文件都没有包含它。编译 `LOD_FADE_CROSSFADE` 变体时报 `undeclared identifier 'LODFadeCrossFade'`，位置 `Assets/Core/Shaders/Toon/NiloToonShared.hlsl(497)`，平台 d3d11。`ToonLit.shader` 的 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass 都声明了 `#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE`，该变体在播放器构建期参与编译。
+- 修复：`NiloToonShared.hlsl` 按 URP `LitForwardPass.hlsl`、`ShadowCasterPass.hlsl` 的写法，在 `LOD_FADE_CROSSFADE` 定义时条件包含 `Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl`；`ShadeFinalColor` 在 `InitializeSurfaceData` 之后调用 `LODFadeCrossFade(input.positionCS)`，ForwardLit 与 Outline 两个颜色 Pass 的淡化裁剪因此与三个深度、阴影 Pass 一致。
+- 验证：修复后 Unity 重新导入，`ToonLit.shader` 的 8 个变体（ForwardLit、Outline、ShadowCaster、DepthOnly 的顶点与片元程序）编译 `ok=1`，编译记录里没有指向该文件的报错行。同一工程、同一 URP 14.0.12 与 d3d11 平台下，URP 内置 `Lit` 的 `LOD_FADE_CROSSFADE` 变体（ForwardLit 4 个、ShadowCaster、DepthOnly、DepthNormals）编译 `ok=1`，同款包含方式与两个着色器共用的 `#pragma target 2.0` 组合可用。修复前的 22 条失败记录全部指向第 497 行，修复后没有出现指向新调用点的记录。
+- 文档与计数：`Assets/Core/Shaders/Toon/THIRD_PARTY_NOTICES.md` 的改动清单补上该项。Project 维护计数 `1/5 -> 2/5`。
+
 ## 2026-10-11：新增运行时程序集 Core.FrameWork.StateMachine
 
 - 变更：新增 `Assets/Core/Scripts/StateMachine/Core.FrameWork.StateMachine.asmdef`，收纳 `HierarchicalState.cs` 与 `HierarchicalStateMachine.cs`。该程序集为纯 C#，不引用 `UnityEngine`，`autoReferenced: true`，无 `references`，是工程内唯一的运行时自建程序集。预定义程序集 `Assembly-CSharp` 因此无法引用它，测试程序集需要直接引用业务类型时须走独立程序集。

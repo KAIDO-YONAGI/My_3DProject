@@ -31,6 +31,8 @@
    需要时可从上游补回。
 6. 混合模式由写死的 `Blend One Zero` 改为读取材质属性 `[_SrcBlend] [_DstBlend]`，
    默认值仍是 `One Zero`，行为与上游一致；半透明材质（例如眼睛高光）可单独覆盖。
+7. `LOD_FADE_CROSSFADE` 生效时包含 URP 的 `LODCrossFade.hlsl`，颜色 Pass 同样调用
+   `LODFadeCrossFade()`；上游直接用 `LODFadeCrossFade()` 却没有包含该文件，LOD 变体无法编译。
 
 ### 注意
 

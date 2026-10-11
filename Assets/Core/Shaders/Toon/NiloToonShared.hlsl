@@ -7,6 +7,7 @@
 //    _MainLightIgnoreCelShade、_AdditionalLightIgnoreCelShade，并把它们接进光照方程。
 // 2. 描边 ZOffset 遮罩采样改用 _BaseMap_ST 变换后的 uv，使遮罩贴图随主贴图一起缩放平移。
 // 3. 追加草地顶点风动画（_UseGrassWind / _GrassWind* 系列参数）。
+// 4. 补上 LOD 交叉淡化所需的 URP LODCrossFade.hlsl 包含，并让颜色 Pass 同样执行 crossfade 裁剪。
 
 #pragma once
 
@@ -26,6 +27,12 @@
 // Include this if you are doing a lit shader. This includes lighting shader variables,
 // lighting and shadow functions
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+// LOD 交叉淡化：LODFadeCrossFade() 只由 URP 的 LODCrossFade.hlsl 声明，
+// URP 自带的 LitForwardPass.hlsl、ShadowCasterPass.hlsl 同样按该关键字条件包含。
+#if defined(LOD_FADE_CROSSFADE)
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
+#endif
 
 // Material shader variables are not defined in SRP or URP shader library.
 // This means _BaseColor, _BaseMap, _BaseMap_ST, and all variables in the Properties section of a shader
@@ -468,6 +475,11 @@ half4 ShadeFinalColor(Varyings input) : SV_TARGET
 
     // fillin ToonSurfaceData struct:
     ToonSurfaceData surfaceData = InitializeSurfaceData(input);
+
+    // LOD 交叉淡化：颜色 Pass 与 ShadowCaster、DepthOnly 保持一致，被淡化掉的像素同样不写颜色。
+    #ifdef LOD_FADE_CROSSFADE
+    LODFadeCrossFade(input.positionCS);
+    #endif
 
     // fillin ToonLightingData struct:
     ToonLightingData lightingData = InitializeLightingData(input);
