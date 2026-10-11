@@ -3,13 +3,14 @@
 文档 ID：`BUS-PROJECT`
 状态：`Active`
 维护计数：`4/5`
-最后更新：`2026-10-10`
+最后更新：`2026-10-11`
 
 ## 任务路由
 
 | 任务 | 权威文档 |
 |---|---|
 | Unity 版本、Packages、资产目录布局 | `Project_Guide.md` |
+| 渲染管线、URP 资产、三渲二着色器与调参 | `Project_Guide.md`、`Assets/Core/Shaders/Toon/TOON_MIGRATION.md` |
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
 | Prefab 组件组成与序列化配置值 | `Project_Guide.md` |
@@ -28,7 +29,12 @@
 
 - `ProjectSettings/ProjectVersion.txt`
 - `ProjectSettings/EditorBuildSettings.asset`
+- `ProjectSettings/GraphicsSettings.asset`
 - `Packages/manifest.json`
+- `Packages/packages-lock.json`
+- `csc.rsp`
+- `Assets/Core/Shaders/Toon/`
+- `Assets/Core/Editor/Toon/`
 - `Assets/Plugins/Mirror/version.txt`
 - `Assets/Plugins/AddressableAssetsData/`
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
@@ -41,6 +47,9 @@
 - `workflow:Project`
 - `path:ProjectSettings`
 - `path:Packages/manifest.json`
+- `path:csc.rsp`
+- `path:Assets/Core/Shaders`
+- `path:Assets/Core/Editor`
 - `path:Assets/Plugins/AddressableAssetsData`
 - `path:Assets/Materials`
 - `path:D:/Unity/Releases/3D_MultiplayerGame`

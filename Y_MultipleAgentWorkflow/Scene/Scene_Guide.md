@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-10-10`
+最后核验：`2026-10-11`
 
 ## 场景列表
 
@@ -61,6 +61,13 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 - `ID` 由 `OnValidate` 生成且不落盘，跨会话与打包会变，不作为存档键。
 - 存档使用 `SaveKey`，编辑器下取场景文件 `.unity` 的 GUID，随资产落盘，跨会话与打包一致。`SceneDataForSave.gameScenes` 用它反查回资产。
 - `sceneName` 是运行时实际加载的场景名，编辑器下由 `sceneAsset` 自动同步。
+
+## 光照与渲染
+
+- 四个场景都**没有烘焙光照数据**，也没有反射探针。两个玩法场景各含一组光照探针。环境光模式为 Skybox（`m_AmbientMode: 0`，`InitialScene` 为 `3`），明暗全部由实时方向光与实时阴影决定。
+- 因为不依赖烘焙，工程从内置管线迁到 URP 14.0.12 时**不需要重新烘焙光照**。着色器的间接光取 `SampleSH(0)` 平均环境色，并由 `_IndirectLightMinColor` 兜底，防止没有烘焙探针时角色全黑。
+- 两个玩法场景**各有一个 Terrain，但 TerrainData 里没有任何 TerrainLayer 引用**，地形当前是裸的。草地相关的 9 个材质也没有被任何场景、Prefab 或 TerrainLayer 引用，因此草地不会渲染出来。要让地形和草地出画，需要自行把图层画到地形上（Terrain → Paint Texture / Paint Details）。
+- 植被材质已随迁移换成三渲二着色器，草地材质的风动画模板位于 `Assets/Materials/ForestMaterials/grass/Materials/Toon/`，画好地形后把 TerrainLayer 指向该目录即可。
 
 ## 维护触发
 

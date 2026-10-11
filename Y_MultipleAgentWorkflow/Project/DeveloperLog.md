@@ -1,5 +1,20 @@
 # Project 开发记录
 
+## 2026-10-11：接入 URP 14.0.12 并实装三渲二着色器
+
+- 依据：用户指定迁移路线为「全量迁 URP」，作用范围为「角色 + 场景植被全量三渲二」，草地保留风动画。
+- 管线：`Packages/manifest.json` 加入 `com.unity.render-pipelines.universal: 14.0.12`。Unity 实际解析结果记录在 `Packages/packages-lock.json`：`universal`、`core`、`shadergraph` 均为 `14.0.12`，另有 `universal-config: 14.0.10`、`burst: 1.8.21`、`mathematics: 1.2.6`、`settings-manager: 2.1.0`。`Library/PackageCache` 下已存在对应目录，Unity 另自动生成了 `Assets/UniversalRenderPipelineGlobalSettings.asset`。
+- 编译隔离：新增工程根 `csc.rsp`，用 `DSH_URP_PRESENT` 把引用 `UnityEngine.Rendering.Universal` 的编辑器脚本排除在编译之外，避免 URP 未装好时全工程编译失败。该宏默认注释，需在 URP 编译通过后手动启用。
+- 着色器：`Assets/Core/Shaders/Toon/` 下新增 `ToonLit.shader` 与 5 个 HLSL 头文件，源自 `UnityURPToonLitShaderExample`（MIT，出处与改动清单见同目录 `THIRD_PARTY_NOTICES.md`）。相对上游修正三处：补上 `.shader` 已声明但 `CBUFFER` 缺失的四个光照参数并接进方程；描边 ZOffset 遮罩改用 `_BaseMap_ST` 变换后的 uv 采样；混合模式改为读取 `[_SrcBlend] [_DstBlend]`，默认值保持 `One Zero`。
+- 草地风动画：着色器新增 `_UseGrassWind` 系列参数，按世界坐标做相位、顶点 Y 做高度权重，用双正弦叠加避免机械往复。
+- 编辑器工具：`Assets/Core/Editor/Toon/` 下新增三个脚本，菜单入口 `My_3DProject/三渲二/`。`UrpAssetSetup` 先把 `UniversalRendererData` 建出来落盘再读回其序列化内容，用它自身填好的运行时着色器列表创建管线资产，避免手工猜 URP 内部文件 ID。`ToonMaterialConverter` 只处理 `Standard` 与 `Nature/SpeedTree*`，跳过 `Assets/Plugins/`，原材质备份到 `.toon-migration-backup/`。`GrassWindMaterialSetup` 按映射生成开启风动画的草地材质副本。
+- 迁移依据的工程事实：材质 139 个，插件 101 个，需迁移 38 个（角色 23、草地 9、树与枝 6）；23 个角色材质与 13 个植被材质声明了 `_Cutoff = 0.5` 一类取值，仅 4 个材质为半透明；植被中的 9 个草地材质原用已废弃的 `Nature/SpeedTree`（fileID 51）；四个场景均无烘焙光照数据，迁移不需要重烘焙；`Assets/Core` 下 53 个 C# 文件全量扫描，0 处使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer`、`RenderingPath` 等管线相关 API。
+- 范围外改动：本条目同时提交了此前工作区里未提交的角色运动状态网络同步改动（新组件 `NetworkCharacterMovementSync`），提交号 `b171cf0`，避免与管线迁移混在同一次变更里无法区分。
+- 记录位置：着色器与迁移步骤的完整说明放在 `Assets/Core/Shaders/Toon/TOON_MIGRATION.md`，随资产一起版本控制；本文档只保留结论与依据。
+- 未完成：新写的着色器与三个编辑器脚本**尚未经过 Unity 编译与渲染验证**。Unity 那次成功编译发生在这些文件写入之前，不能算作它们的验证。需要在编辑器中依次执行「启用 `csc.rsp` 宏 → 创建并绑定 URP Asset → 转换材质 → 生成草地风动画材质」，再核对控制台的着色器编译结果、两套娜娜莉在 `PersistentScene` 与 `MultiplayerSampleScene` 的表现、本地与远程 Sync 两条 Prefab 链路，以及专用服务器 Headless 构建能否出包。
+- 已知遗留：两个玩法场景的 TerrainData 无任何 TerrainLayer 引用，9 个草地材质也未被任何资产引用，地形与草地当前都不出画，需要自行绘制。`My_3DProject_clone_0`（ParrelSync 克隆工程）的 `Assets` 是指向主工程的 Junction 软链接，但 `Packages` 与 `ProjectSettings` 独立，需单独加 URP 依赖并重做管线绑定。
+- 维护计数保持 `4/5`：本次管线改造已实质改变工程依赖与渲染实现，但成果尚未在编辑器中验证通过，按「验证高于文档」的口径不计为已验收的成功业务改造。
+
 ## 2026-10-10：清理运动同步残留组件与孤儿事件资产
 
 - `NetworkPlayer.prefab` 删除 fileID `7814609285416083721`、GUID `0b9dca0ce9ed4d9094a8df5c8901df22` 的 Missing Script 记录及其 `m_Component` 引用。根节点现为 6 个组件：`Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync`，顺序未变、末尾仍为 `NetworkCharacterSync`。

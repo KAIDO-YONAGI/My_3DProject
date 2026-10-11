@@ -2,12 +2,26 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-10`
+最后核验：`2026-10-11`
+
+## 渲染管线
+
+工程已从内置渲染管线迁到 **URP 14.0.12**，并实装基于 `UnityURPToonLitShaderExample`（MIT）改造的三渲二着色器。
+
+- 管线依赖：`Packages/manifest.json` 声明 `com.unity.render-pipelines.universal: 14.0.12`。同版本传递依赖为 `com.unity.render-pipelines.core` 与 `com.unity.shadergraph`（均 `14.0.12`），另有 `com.unity.render-pipelines.universal-config: 14.0.10`。
+- 编译隔离：工程根目录的 `csc.rsp` 用 `DSH_URP_PRESENT` 宏把引用 `UnityEngine.Rendering.Universal` 的编辑器脚本隔离出去。URP 装好并编译通过后需手动启用该宏，否则「创建并绑定 URP Asset」菜单只会给出提示而不执行。
+- 管线资产：`Assets/Core/Rendering/URP_Toon_PC.asset` 与 `URP_Toon_Renderer.asset`，绑定到 `GraphicsSettings` 与全部质量档位。
+- 着色器：`Assets/Core/Shaders/Toon/ToonLit.shader`，着色器名 `My_3DProject/Toon/ToonLit (NiloCat URP)`，含 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass。
+- 编辑器工具菜单为 `My_3DProject/三渲二/`，含创建管线资产、批量材质转换、生成草地风动画材质三项。
+- 迁移与调参说明见 `Assets/Core/Shaders/Toon/TOON_MIGRATION.md`；上游来源与 MIT 许可见同目录 `THIRD_PARTY_NOTICES.md`。
+
+迁移依据的工程事实（改动前状态）：材质共 139 个，其中 133 个用内置 `Standard`、6 个属插件；排除 `Assets/Plugins/` 后需迁移的是 **38 个**（角色 23、草地 9、树与枝 6）。草地原本使用已被 Unity 2022 废弃的 `Nature/SpeedTree` 内置着色器。四个场景均无烘焙光照数据，`m_AmbientMode: 0`（Skybox 环境光）配实时阴影，因此迁移不需要重烘焙。`Assets/Core` 下 53 个 C# 文件全量扫描，0 处使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer`、`RenderingPath` 等管线相关 API。
 
 ## 版本与依赖
 
 - Unity 编辑器：`2022.3.62f3c1`。
 - Mirror：`96.11.2`。
+- **URP：`14.0.12`**。
 - Addressables：`1.22.3`。
 - Input System：`1.14.2`。
 - Terrain Tools：`5.0.6`。
@@ -28,6 +42,7 @@
 | `Plugins/` | 第三方插件 |
 
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`。Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
+- 自写代码位于 `Assets/Core/Shaders/Toon/`（三渲二着色器与说明）与 `Assets/Core/Editor/Toon/`（管线与材质迁移工具）。
 - 单机框架代码位于 `Assets/Core/My_FrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画配置位于 `Animation/`。
@@ -118,4 +133,4 @@
 
 ## 维护触发
 
-修改 Unity 或包版本、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
+修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。

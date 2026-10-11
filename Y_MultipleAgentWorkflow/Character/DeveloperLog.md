@@ -1,5 +1,14 @@
 # Character 开发记录
 
+## 2026-10-11：角色材质切换到三渲二着色器
+
+- 背景：工程整体从内置渲染管线迁到 URP 14.0.12（管线与依赖变化记在 `../Project/DeveloperLog.md` 的 `接入 URP 14.0.12 并实装三渲二着色器` 条）。
+- 范围：两套娜娜莉模型共 23 个角色材质，原用内置 `Standard` 着色器，需换成 `My_3DProject/Toon/ToonLit (NiloCat URP)`。转换由编辑器菜单执行，当前尚未跑过。
+- 材质事实：23 个角色材质中 21 个为不透明，`eye_bantou` 与 `eye_touming` 为半透明（`_Mode: 2`、`_SrcBlend: 5`、`_DstBlend: 10`、`_ZWrite: 0`、渲染队列 3000）。全部 23 个都声明了 `_Cutoff = 0.5`，转换时按 alpha 裁切处理。
+- `eye_touming.mat` 的 `_MainTex` 缩放为 `x = 0.5`，双眼高光共用半张贴图。该 Scale 已写入新材质的 `_BaseMap_ST`，手工调整材质时不要重置。
+- 脸部与眼睛类材质（`MI_player_010_nanally_face`、`MI_player_010_nanally_eyes`、`MI_common_face_mask`、`MI_player_010_nanally_nighty_face`、`eye_bantou`、`eye_touming`）需要把 `_IsFace` 设为 `1`。新材质的 `_IsFace` 默认为 `0`，需在转换后按材质逐个确认。
+- 未完成：未执行 Unity 编译、PlayMode 回归、双客户端联机或人工观感验收。角色材质转换后的实际渲染效果尚未验证，维护计数保持 `3/5`。
+
 ## 2026-10-10：修正远程动画注释中的失效组件引用
 
 - `PlayerCharacterController` 的 `LateUpdate` 注释原称动画“只消费 `NetworkCharacterMovementSync` 已按网络时间采样的状态”，但该组件在磁盘上不存在；改为如实描述当前直接使用 Idle 回退。`ApplyRemoteAnimation` 内的“首个快照尚未到达”同步改为“运动状态尚未接入”。
