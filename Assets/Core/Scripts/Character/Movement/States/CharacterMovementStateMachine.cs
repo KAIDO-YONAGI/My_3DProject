@@ -1,10 +1,12 @@
 using System;
-using System.Collections.Generic;
+using Core.My_FrameWork.Scripts.StateMachine;
 
 namespace Core.Scripts.Character.Movement.States
 {
     /// <summary>
     /// 角色运动状态机对外使用的离散状态。
+    /// 这五个值是网络协议的一部分；分层结构新增的根、地面、空中三个父状态只参与转换解析，
+    /// 不进入本枚举，因此网络线格式与分层前保持一致。
     /// </summary>
     public enum CharacterMovementStateId : byte
     {
@@ -73,75 +75,70 @@ namespace Core.Scripts.Character.Movement.States
         public bool WithinAirborneTolerance { get; }
     }
 
-    internal interface ICharacterMovementState
+    /// <summary>
+    /// 角色运动状态节点的公共基类，复用框架的分层状态机。
+    /// </summary>
+    internal abstract class CharacterMovementStateNode : HierarchicalState<CharacterMovementStateContext>
     {
-        CharacterMovementStateId Id { get; }
-        void Enter(CharacterMovementStateContext context);
-        CharacterMovementStateId Update(CharacterMovementStateContext context);
-        void Exit(CharacterMovementStateContext context);
-    }
-
-    internal abstract class CharacterMovementStateBase : ICharacterMovementState
-    {
-        public abstract CharacterMovementStateId Id { get; }
-
-        public virtual void Enter(CharacterMovementStateContext context)
+        protected CharacterMovementStateNode(CharacterMovementStateNode parent) : base(parent)
         {
-        }
-
-        public abstract CharacterMovementStateId Update(CharacterMovementStateContext context);
-
-        public virtual void Exit(CharacterMovementStateContext context)
-        {
-        }
-
-        protected static CharacterMovementStateId ResolveGroundedState(CharacterMovementStateContext context)
-        {
-            // 下坡与台阶会造成短暂悬空；容忍窗口内继续解析地面状态，
-            // 避免动画在 Grounded 与 Jump 之间来回切换。
-            if (!context.GroundedAfterMove && !context.WithinAirborneTolerance)
-            {
-                return context.VerticalVelocity > 0f
-                    ? CharacterMovementStateId.Rising
-                    : CharacterMovementStateId.Falling;
-            }
-
-            if (!context.HasMoveInput)
-            {
-                return CharacterMovementStateId.Idle;
-            }
-
-            return context.SprintHeld
-                ? CharacterMovementStateId.Sprint
-                : CharacterMovementStateId.Run;
         }
     }
 
     /// <summary>
+    /// 叶子状态基类。只有叶子状态才对应一个对外的离散标识，父状态不参与网络同步。
+    /// </summary>
+    internal abstract class CharacterMovementLeafState : CharacterMovementStateNode
+    {
+        protected CharacterMovementLeafState(CharacterMovementStateNode parent) : base(parent)
+        {
+        }
+
+        public abstract CharacterMovementStateId Id { get; }
+    }
+
+    /// <summary>
     /// 角色运动状态机。
-    /// 每帧只接受一次输入和碰撞结果，状态转换完成后由 CharacterMotor 统一执行一次位移。
+    /// 每帧只接受一次输入和碰撞结果，状态转换在当帧同步完成，转换完成后由 CharacterMotor 统一执行一次位移。
+    /// 地面三态与空中两态的共有规则分别上提到地面与空中父状态，叶子状态只保留自身标识。
     /// </summary>
     public class CharacterMovementStateMachine
     {
-        private readonly Dictionary<CharacterMovementStateId, ICharacterMovementState> states =
-            new Dictionary<CharacterMovementStateId, ICharacterMovementState>
-            {
-                { CharacterMovementStateId.Idle, new IdleCharacterMovementState() },
-                { CharacterMovementStateId.Run, new RunCharacterMovementState() },
-                { CharacterMovementStateId.Sprint, new SprintCharacterMovementState() },
-                { CharacterMovementStateId.Rising, new RisingCharacterMovementState() },
-                { CharacterMovementStateId.Falling, new FallingCharacterMovementState() }
-            };
-
-        private ICharacterMovementState currentState;
+        private readonly CharacterMovementRoot root;
+        private readonly HierarchicalStateMachine<CharacterMovementStateContext> machine;
 
         public CharacterMovementStateMachine()
         {
-            currentState = states[CharacterMovementStateId.Idle];
-            currentState.Enter(default);
+            root = new CharacterMovementRoot();
+            machine = new HierarchicalStateMachine<CharacterMovementStateContext>(root);
+
+            // 启动只按默认子树下钻，不解析转换，保证构造后就是 Idle。
+            machine.Start(default);
+            PreviousStateId = CurrentStateId;
         }
 
-        public CharacterMovementStateId CurrentStateId => currentState.Id;
+        /// <summary>当前叶子状态对应的离散标识。</summary>
+        public CharacterMovementStateId CurrentStateId
+        {
+            get
+            {
+                if (machine.Leaf is CharacterMovementLeafState leaf)
+                {
+                    return leaf.Id;
+                }
+
+                throw new InvalidOperationException("角色运动状态机的活动叶子不是可同步的叶子状态。");
+            }
+        }
+
+        /// <summary>
+        /// 上一次转换前的离散标识，供表现层做落地、起跳这类边沿检测；
+        /// 尚未发生转换时与 CurrentStateId 相同。
+        /// </summary>
+        public CharacterMovementStateId PreviousStateId { get; private set; }
+
+        /// <summary>本帧是否发生过状态转换。</summary>
+        public bool ChangedThisFrame { get; private set; }
 
         public bool CanJump(bool groundedBeforeMove)
         {
@@ -150,21 +147,18 @@ namespace Core.Scripts.Character.Movement.States
 
         public CharacterMovementStateId Update(CharacterMovementStateContext context)
         {
-            CharacterMovementStateId nextState = currentState.Update(context);
-            if (nextState == currentState.Id)
+            CharacterMovementStateId previous = CurrentStateId;
+            machine.Update(context);
+            CharacterMovementStateId current = CurrentStateId;
+
+            // 边沿信息在状态的进入和退出钩子执行完毕后才成立，同一帧即可被表现层读取。
+            ChangedThisFrame = current != previous;
+            if (ChangedThisFrame)
             {
-                return currentState.Id;
+                PreviousStateId = previous;
             }
 
-            currentState.Exit(context);
-            if (!states.TryGetValue(nextState, out ICharacterMovementState replacement))
-            {
-                throw new InvalidOperationException($"未注册角色运动状态 {nextState}。");
-            }
-
-            currentState = replacement;
-            currentState.Enter(context);
-            return currentState.Id;
+            return current;
         }
     }
 }

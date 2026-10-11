@@ -1,5 +1,22 @@
 # Project 开发记录
 
+## 2026-10-11：新增运行时程序集 Core.FrameWork.StateMachine
+
+- 起因：Character 域分层状态机改造需要一个可被测试程序集直接引用的通用框架。原先运行时代码全部位于预定义程序集 `Assembly-CSharp`，而 asmdef **不能引用** `Assembly-CSharp`，`Core.EditorTests` 因此只能靠 `Type.GetType("..., Assembly-CSharp")` 反射访问业务类型，既无法继承也无法直接实例化。
+- 变更：新增 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/Core.FrameWork.StateMachine.asmdef`，收纳 `HierarchicalState.cs` 与 `HierarchicalStateMachine.cs`。该程序集为纯 C#（不引用 `UnityEngine`）、`autoReferenced: true`、无 `references`，是工程内唯一的运行时自建程序集。
+- 引用关系：`Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.My_FrameWork.Scripts.StateMachine;`；`Assets/Tests/Editor/Core.EditorTests.asmdef` 的 `references` 由 `[]` 改为 `["Core.FrameWork.StateMachine"]`，测试得以直接继承并实例化框架类型。
+- 验证：Unity 强制刷新后 Console 为 0 错误、0 警告，业务代码与测试程序集两侧均编译通过；`Core.EditorTests` 27 个测试全部通过（改造前 19 个）。未改动 `ProjectSettings`、`Packages/manifest.json` 或其他 asmdef。
+- 文档与计数：`Project_Guide.md` 的「资产目录布局」补充该程序集与上述引用约束。Project 维护计数 `0/5 → 1/5`。
+
+## 2026-10-11：同步两套学园之星裙摆配置与碰撞组件
+
+- 经用户确认，通过 Unity Prefab API 保存 Local、Sync 两套学园之星 Prefab。8 条裙摆的 DynamicBone 起点从 `_001` 下移到 `_002`，阻尼 `0.75`、弹性 `0.8`、刚度 `0.94`、平移跟随 `0.8`、粒子半径 `0.006 m`，前四项分布曲线为常数 `1`。
+- 每套左右大腿各新增一个 Outside 胶囊，X 轴、中心 `(-0.18217, 0, 0)`、半径 `0.065 m`、高度 `0.36 m`，裙摆只引用骨盆和两侧大腿。每套共 28 个 DynamicBone、8 个 Collider；其余 20 个动态骨骼配置不变。
+- 差异核验：每套仅修改 8 个裙摆组件和 2 个大腿 GameObject 的组件引用，新增 2 个 Collider，没有删除块或额外序列化变化。原 FBX、Avatar、GUID、材质、插件和场景文件未动，既有 ShaderGraphSettings 工作区改动保留。
+- 保存后验证：两套各 22 个配置片段，每片段 180 帧，共 7920 帧，实际播放片段不匹配为零。裙腰相对动画姿势偏转为 `0°`，待机裙边最大偏移约 `7 mm`，组合运动测试最大下缘偏移由 `26.0 cm` 降至 `7.3 cm`。常驻场景实例已继承新配置且场景未变脏，Unity Console 为 0 错误、0 警告。
+- 验收限制：抬腿画面仍有局部穿模，骨端胶囊最大残留穿透约 `3.76 cm`，不能作为整片裙面无穿透的结论；未执行用户场景 PlayMode、双客户端联机或构建。本次记录已保存的参数改善，未把穿模问题记为全面验收，维护计数保持 `0/5`。
+- 证据位于 `Logs/SkirtFix_20261011/`，Character、Project 两域 Guide、Router 和置顶开发记录已同步。
+
 ## 2026-10-11：固化华丽飞踢 Avatar 映射并同步嘴部修复事实
 
 - 根因与修复：华丽飞踢 FBX 的自动 Humanoid 映射将脸部控制根 `mouth` 错映射为 `Jaw`。实际待机动画使嘴部旋转 `10.28555°`，同姿势蒙皮对照显示最大向下位移 `0.0118413 m`；仅移除 Jaw 映射后，嘴部旋转与该骨骼引起的顶点差均为零。修复在模型导入层完成，没有增加运行时骨骼覆盖代码。

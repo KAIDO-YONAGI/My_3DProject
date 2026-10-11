@@ -1,5 +1,28 @@
 # Character 开发记录
 
+## 2026-10-11：角色运动状态机分层化并新增通用分层状态机框架
+
+- 需求：用户要求按上一轮调研结论执行 A+B 两档改造（层级化重写 + 启用同步状态钩子），把相关文件放到正确目录，并清理拉取的教程代码。
+- 调研背景：参考 `adammyhre/Unity-Hierarchical-StateMachine`（Unlicense，92 stars）。其 Core 库只依赖 `System` 与 `UnityEngine`，但示例驱动 `PlayerStateDriver` 使用 Unity 6 的 `Rigidbody.linearVelocity`；已用 Unity 活体反射确认本工程 `2022.3.62f3c1` 中该成员**不存在**（只有 `velocity`），原样拷入无法编译。其 `TransitionSequencer` 在过渡期不执行状态机更新，按源码逐行推导即使无活动也要吃掉 2 帧；且父状态发起的转换因 LCA 取到自身而**不会退出其活动子状态**。因此只借鉴层级划分思想，不引入异步活动、反射装配与过渡编排。
+- 新框架：`Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`，程序集 `Core.FrameWork.StateMachine`（纯 C#、不依赖 `UnityEngine`、`autoReferenced`）。`HierarchicalState<TContext>` 提供 `InitialChild`、`ResolveTransition`、`OnEnter`、`OnExit`、`OnUpdate`；`HierarchicalStateMachine<TContext>` 每帧沿活动路径自上而下解析目标，按最近公共祖先切换：退出旧分支自下而上、进入新分支自上而下，全部在当帧完成。
+- 相对教程实现修正两处：转换起点取**当前叶子**而非发起转换的状态，父状态发起的转换因此会正确退出其活动子状态；退出时先与父状态断开再回调，避免父状态沿活动路径重复退出同一子状态。
+- 角色改造：状态树改为「根 → 地面/空中 → 叶子」。`Idle`、`Run`、`Sprint` 归入地面子树，`Rising`、`Falling` 归入空中子树；根承担起跳，地面父状态承担非跳跃离地与三态解析，空中父状态承担接地与速度换向。原先 `Idle`、`Run`、`Sprint` 三个状态类逐字重复的起跳与离地判定、`Rising` 与 `Falling` 镜像的速度换向判定，均上提到父状态。
+- 协议零影响：三个父状态不进入 `CharacterMovementStateId`，五个同步值仍是 `Idle=0`、`Run=1`、`Sprint=2`、`Rising=3`、`Falling=4`；`CharacterMotor`、`CharacterMotion`、`NetworkCharacterMovementSync` 与 `Sync_Protocol.md` 均未改动。
+- B 档钩子：状态机新增 `PreviousStateId` 与 `ChangedThisFrame`，把「本帧是否转换、从哪个状态转来」统一提供给表现层做边沿检测，替代各消费方自行维护上一帧状态。角色状态当前未在钩子上挂业务副作用：运动仍归 `CharacterMotor`、表现仍归 `CharacterAnimator`，落地首帧重置权重仍在 `CharacterAnimator.Apply` 内按 `wasGrounded` 边沿执行，未改动。
+- 验证：Unity Console 0 错误 0 警告；`Core.EditorTests` 由 19 个测试增至 **27 个，全部通过**。`HierarchicalStateMachineTests` 新增 6 个框架测试，覆盖启动下钻顺序、子树内兄弟切换不退出公共祖先、父状态发起转换时退出活动子状态、同帧完成转换（日志末条为 `update:RightB`）、目标等于当前叶子时不重复触发钩子、回到祖先时重建默认分支；`CharacterMovementStateMachineTests` 新增状态边沿信息与同步编号冻结两个测试，原有 2 个状态转换测试未改动且继续通过。
+- 验收边界：教程仓库未被引入工程，`.fetch-cache/Unity-HSM/` 拉取副本已按用户要求删除，上述关于其行为的两点结论来自源码逐行推导，未运行其 Demo 对照。本轮未进入用户场景 PlayMode，未执行双客户端联机或构建验收。
+- 文档与计数：已更新本域 `Character_Guide.md`（角色链路、运动状态与动画、目录约定、验证覆盖、维护触发）、本域 `Router.md` 与 `../Project/Project_Guide.md`（新增程序集，以及 asmdef 不可引用预定义程序集 `Assembly-CSharp` 这一约束）。Character 维护计数 `4/5 → 5/5`，达到阈值后按规则复核本域权威文档并重置为 `0/5`。
+
+## 2026-10-11：收紧学园之星裙摆并补齐大腿碰撞
+
+- 用户确认修改后，调整 Local、Sync 两套学园之星 Prefab。8 条裙链的 DynamicBone 起点从 `_001` 下移到 `_002`，上段保持动画姿势，只模拟下缘；同时消除后裙组件对独立尾部链的重复处理，尾部组件保持原配置。
+- 参数：阻尼 `0.75`、弹性 `0.8`、刚度 `0.94`、平移跟随 `0.8`、粒子半径 `0.006 m`，前四项分布曲线均为 `1`。旧阻尼、弹性、刚度实际为主值 `0.45 × 曲线 0.45 = 0.2025`，是不能只增主值的原因。
+- 碰撞：每套增加两个大腿胶囊，Outside、X 轴、中心 `(-0.18217, 0, 0)`、半径 `0.065 m`、高度 `0.36 m`；裙链引用改为骨盆和两侧大腿。按腿部网格中段半径中位数 `0.0626 m` 校准，未采用试验中偏小的 `0.045 m`。组件总数保持 28 个 DynamicBone，Collider 从 6 增为 8，其余 20 个 DynamicBone 不变。
+- 验证：两套 Prefab 各覆盖 22 个实际动画，每片段 180 帧，叠加平移、急停和 90° 转向。保存后共 7920 帧，实际播放片段不匹配为零，结果与候选配置一致。上段物理偏转 `146.92868° -> 0°`，下缘最大偏移 `0.2597848 -> 0.0733006 m`，待机最大约 `0.0069702 m`。每套胶囊代理穿透采样数 `6358 -> 1479`，阈值为 `1 mm`；最大代理穿透 `0.0707656 -> 0.0375702 m`。
+- 范围核验：每套 Prefab 仅改变 8 个裙摆组件与 2 个大腿 GameObject 的组件列表，新增 2 个 Collider，无删除或其他序列化变化。常驻场景实例已继承新参数，场景未变脏；Unity Console 为 0 错误、0 警告。未修改运行时代码、FBX、材质或插件。
+- 限制：离屏跑步、跳跃画面仍有大幅抬腿时的局部穿模。DynamicBone 的碰撞后骨长约束会重新引入穿透，且骨端检测不覆盖裙面；固定上段与所有姿势避让存在约束冲突，需要另行设计腿部驱动裙骨或布料方案。本次未执行用户场景 PlayMode、双客户端联机或构建验收，不把参数改善记录为穿模问题全面验收，维护计数保持 `4/5`。
+- 证据：`Logs/SkirtFix_20261011/Preview.cs` 可重现已保存配置采样；`preview-results.json` 保存修改前及候选对照，`saved-results.json` 保存落盘后结果，`*-before.png`、`*-after.png` 与 `*-saved.png` 为离屏画面。关键参数和限制已同步 Character、Project 两域 Guide 与 Router。
+
 ## 2026-10-11：修复华丽飞踢运行时嘴部下移
 
 - 根因：FBX 自动 Humanoid 映射将脸部控制根 `mouth` 错映射为 `Jaw`。该骨骼下挂嘴唇、嘴角和牙齿控制骨骼，实际待机片段 `Idle_Wait_A` 使其局部旋转偏离初始姿势 `10.28555°`；局部位置不变也会通过蒙皮造成嘴部下移。

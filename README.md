@@ -40,10 +40,14 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/Core/Scripts/Character/` | 输入、移动、重力与动画数据流（内含 `Config/`、`Runtime/`） |
 | `Assets/Core/Scripts/Camera/` | 第三人称相机轨道、光标、避让与转向数学 |
 | `Assets/Core/Models/` | 角色模型源文件与骨骼配置说明 |
-| `Assets/Core/Terrain/` | 玩法地形数据 |
+| `Assets/Terrain/` | 玩法地形数据 |
 | `Assets/Core/SO/` | 场景与事件 ScriptableObject |
+| `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/` | 通用分层状态机框架（程序集 `Core.FrameWork.StateMachine`） |
+| `Assets/Tests/` | EditMode 与 PlayMode 测试程序集 |
+| `Assets/ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
+| `Assets/Rendering/` | URP 管线与 Renderer 资产 |
 | `Assets/Plugins/AddressableAssetsData/` | Addressables 分组与构建配置 |
-| `Assets/Core/My_FrameWork/` | 场景管理、时间管理、UI 与 ScriptableObject 基础设施 |
+| `Assets/Core/Scripts/GamePlayFrameWork/` | 场景管理、时间管理、UI 与 ScriptableObject 基础设施 |
 | `Assets/Materials/ForestMaterials/` | 地形植被与地表贴图 |
 | `Assets/Plugins/TextMesh Pro/` | TextMeshPro 资源 |
 | `Assets/Plugins/Mirror/MirrorScriptTemplates/` | Mirror 脚本模板 |

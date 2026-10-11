@@ -29,7 +29,7 @@
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Prefabs/NetworkManager.prefab`
 - `Assets/Plugins/Mirror/`
-- `Assets/Core/Tests/PlayMode/Networking/`
+- `Assets/Tests/PlayMode/Networking/`
 
 ## 并发资源
 

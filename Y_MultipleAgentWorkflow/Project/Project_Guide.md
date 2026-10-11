@@ -9,9 +9,9 @@
 工程已从内置渲染管线迁到 **URP 14.0.12**，并实装基于 `UnityURPToonLitShaderExample`（MIT）改造的三渲二着色器。
 
 - 管线依赖：`Packages/manifest.json` 声明 `com.unity.render-pipelines.universal: 14.0.12`。同版本传递依赖为 `com.unity.render-pipelines.core` 与 `com.unity.shadergraph`（均 `14.0.12`），另有 `com.unity.render-pipelines.universal-config: 14.0.10`。
-- 编译隔离：编辑器工具放在 `Assets/Core/ToonEditor/`，带程序集定义 `Core.Toon.Editor.asmdef`，用 `versionDefines` 探测 URP（`expression: [14.0,999.0]` → `define: MYPROJECT_URP_PRESENT`）。URP 14.0 及以上存在时宏自动定义，**无需任何手工步骤**；URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的代码被 `#if` 排除，工程不会因此编译失败。
+- 编译隔离：编辑器工具放在 `Assets/ToonEditor/`，带程序集定义 `Core.Toon.Editor.asmdef`，用 `versionDefines` 探测 URP（`expression: [14.0,999.0]` → `define: MYPROJECT_URP_PRESENT`）。URP 14.0 及以上存在时宏自动定义，**无需任何手工步骤**；URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的代码被 `#if` 排除，工程不会因此编译失败。
   > 早期版本曾用工程根目录的 `csc.rsp` 手工开宏，该方案已废弃：**Unity 不读取工程根目录的 `csc.rsp`**（只读 `Assets/` 下的），实测编译器参数里没有该宏。`csc.rsp` 已删除。
-- 管线资产：`Assets/Core/Rendering/URP_Toon_PC.asset` 与 `URP_Toon_Renderer.asset`，绑定到 `GraphicsSettings` 与全部质量档位。
+- 管线资产：`Assets/Rendering/URP_Toon_PC.asset` 与 `URP_Toon_Renderer.asset`，绑定到 `GraphicsSettings` 与全部质量档位。
 - 着色器：`Assets/Core/Shaders/Toon/ToonLit.shader`，着色器名 `My_3DProject/Toon/ToonLit (NiloCat URP)`，含 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass。注意 Editor 下 `Shader.passCount` 报告为 `1` 属正常现象（URP 的 Lit/Unlit/Simple Lit 同样报 1，内置 `Standard` 报 5），不能据此判断 Pass 丢失。
 - 编辑器工具菜单为 `My_3DProject/三渲二/`，含创建管线资产、批量材质转换、生成草地风动画材质三项。三个工具均幂等，可重复执行。
 - 迁移与调参说明见 `Assets/Core/Shaders/Toon/TOON_MIGRATION.md`；上游来源与 MIT 许可见同目录 `THIRD_PARTY_NOTICES.md`。
@@ -37,20 +37,27 @@
 
 ## 资产目录布局
 
-顶层 `Assets/` 保留三个目录：
+顶层 `Assets/` 目录：
 
 | 目录 | 内容 |
 |---|---|
-| `Core/` | 项目自有代码、场景、Prefab、模型与地形 |
+| `Core/` | 项目自有代码、场景、Prefab 与模型 |
 | `Materials/` | 地形植被与地表贴图等素材 |
 | `Plugins/` | 第三方插件 |
+| `Tests/` | EditMode 与 PlayMode 测试程序集 |
+| `ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
+| `Rendering/` | URP 管线与 Renderer 资产 |
+| `Terrain/` | 玩法地形数据 |
 
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`。Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
-- 自写代码位于 `Assets/Core/Shaders/Toon/`（三渲二着色器与说明）与 `Assets/Core/ToonEditor/`（管线与材质迁移工具）。
-- 单机框架代码位于 `Assets/Core/My_FrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
+- 自写代码位于 `Assets/Core/Shaders/Toon/`（三渲二着色器与说明）与 `Assets/ToonEditor/`（管线与材质迁移工具）。
+- 单机框架代码位于 `Assets/Core/Scripts/GamePlayFrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
+- 分层状态机框架位于 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`（纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`）。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 会自动引用它，业务代码可直接 `using Core.My_FrameWork.Scripts.StateMachine;`；测试程序集必须在自己的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
+  > **asmdef 不能引用预定义程序集 `Assembly-CSharp`**，这就是 `Assets/Tests/Editor/` 下多数测试只能通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码的原因。要让运行时代码被测试直接引用与继承，就必须像本框架这样先把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画配置位于 `Animation/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`。
+- 测试程序集位于 `Assets/Tests/`：`Editor/` 为 `Core.EditorTests`，`PlayMode/Camera/` 为 `Core.Camera.PlayModeTests`，`PlayMode/Networking/` 为 `Core.Networking.PlayModeTests`。移动或重命名测试脚本时必须连同 `.meta` 一起移动。
 
 ## Addressables
 
@@ -130,6 +137,14 @@
 2026-10-11 为修复运行时嘴部下移，已通过 `ModelImporter` 固化原 Avatar 的 `humanDescription`，仅移除脸部控制根 `mouth` 的 `Jaw` 映射。导入类型保持 Humanoid（`animationType: 3`），人形映射由 55 项变为 54 项，其余映射保留；骨架描述显式保存 351 项，`autoGenerateAvatarMappingIfUnspecified: 0`，避免重新自动补入错误下颌映射。导入结果 `Avatar.isValid = true`、`Avatar.isHuman = true`、Jaw 映射数为零，模型 GUID 与两套 Prefab 的引用不变。
 
 该模型的 `mouth` 不是通用人体下颌骨，而是嘴唇、嘴角和牙齿控制骨骼的父节点；映射为 Jaw 会在通用人形动画求值时引起面部蒙皮变形。重新导入或替换模型时，应检查显式映射、自动映射开关与两套 Prefab 的 Avatar 引用。根因对照与骨骼验证方法见 `../Character/Character_Guide.md` 的“人形映射与面部骨骼”，不要用运行时旋转补丁掩盖导入配置错误。
+
+### 学园之星裙摆 Prefab 配置
+
+2026-10-11 已同步调整 `CharactersForLocal/娜娜莉（学园之星）.prefab` 与 `CharactersForSync/娜娜莉（学园之星）_Sync.prefab`：8 个裙摆 DynamicBone 的起点由 `_001` 下移到 `_002`，参数为阻尼 `0.75`、弹性 `0.8`、刚度 `0.94`、平移跟随 `0.8`、粒子半径 `0.006 m`，前四项分布曲线均为常数 `1`。
+
+两套 Prefab 各在左右大腿上新增 1 个 DynamicBoneCollider，Outside、X 轴、中心 `(-0.18217, 0, 0)`、半径 `0.065 m`、高度 `0.36 m`。每条裙链只引用骨盆与两侧大腿的 3 个碰撞器；其他动态骨骼仍保留原碰撞引用。每套 DynamicBone 总数仍为 28，Collider 总数由 6 增为 8，其他 20 个动态骨骼配置不变；FBX、Avatar、材质、插件源码和用户场景文件未修改。
+
+重新加载保存后的 Prefab 并求值 22 个动画片段，结果与保存前候选配置一致；`PersistentScene` 的 8 条裙链已继承 `_002` 起点与新参数，场景保持未修改。裙腰不再发生模拟偏转，待机下缘最大位移约 `7 mm`，急停转身及腿部碰撞组合测试最大约 `7.3 cm`。大幅抬腿仍有局部穿模，骨端胶囊测试不等价于整片裙面无穿透；验证方法和边界见 `../Character/Character_Guide.md` 的“学园之星裙摆”。
 
 ## Inspector 配置提示
 

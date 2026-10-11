@@ -10,7 +10,7 @@
 | 任务 | 权威文档 |
 |---|---|
 | 场景列表与场景职责 | `Scene_Guide.md` |
-| 场景引导、常驻层与玩法层加载链路 | `Scene_Guide.md`，并读取 `Assets/Core/My_FrameWork/Scripts/Scene/` |
+| 场景引导、常驻层与玩法层加载链路 | `Scene_Guide.md`，并读取 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/` |
 | 单机与联机表现切换、角色与相机收拢 | `Scene_Guide.md` |
 | 场景配置资产与初始位置 | `Scene_Guide.md`，并读取 `Assets/Core/SO/` |
 | 角色模型与动画配置 | `../Character/Character_Guide.md` |
@@ -29,8 +29,9 @@
 - `Assets/Core/Scenes/PersistentScene.unity`
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 - `Assets/Core/Scenes/MultiplayerSampleScene 1.unity`
-- `Assets/Core/My_FrameWork/Scripts/Scene/`
+- `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`
 - `Assets/Core/SO/`
+- `Assets/Terrain/`
 - `ProjectSettings/EditorBuildSettings.asset`
 
 ## 并发资源
@@ -38,7 +39,8 @@
 - `workflow:Scene`
 - `path:Assets/Core/Scenes`
 - `path:Assets/Core/SO`
-- `path:Assets/Core/My_FrameWork/Scripts/Scene`
+- `path:Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene`
+- `path:Assets/Terrain`
 
 ## 能力边界
 

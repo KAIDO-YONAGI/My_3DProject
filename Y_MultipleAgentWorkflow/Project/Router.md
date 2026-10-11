@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`1/5`
 最后更新：`2026-10-11`
 
 ## 任务路由
@@ -15,6 +15,7 @@
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
 | Prefab 组件组成与序列化配置值 | `Project_Guide.md` |
 | 角色 FBX 导入、Humanoid Avatar 与骨骼映射 | `Project_Guide.md`、`../Character/Character_Guide.md` |
+| 学园之星裙摆起点、动态骨骼参数与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对 Local、Sync 两套 Prefab |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Mirror_KCP_Config.md` |
 | 场景列表与场景职责 | `../Scene/Scene_Guide.md` |
 | 角色 Prefab 与移动配置 | `../Character/Character_Guide.md` |
@@ -35,8 +36,12 @@
 - `Packages/manifest.json`
 - `Packages/packages-lock.json`
 - `Assets/Core/Shaders/Toon/`
-- `Assets/Core/ToonEditor/`
-- `Assets/Core/Rendering/`
+- `Assets/ToonEditor/`
+- `Assets/Core/Scripts/GamePlayFrameWork/`
+- `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`
+- `Assets/Rendering/`
+- `Assets/Tests/`
+- `Assets/Terrain/`
 - `Assets/Core/Prefabs/Lights/`
 - `Assets/Plugins/Mirror/version.txt`
 - `Assets/Plugins/AddressableAssetsData/`
@@ -54,8 +59,12 @@
 - `path:ProjectSettings`
 - `path:Packages/manifest.json`
 - `path:Assets/Core/Shaders`
-- `path:Assets/Core/ToonEditor`
-- `path:Assets/Core/Rendering`
+- `path:Assets/ToonEditor`
+- `path:Assets/Core/Scripts/GamePlayFrameWork`
+- `path:Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine`
+- `path:Assets/Rendering`
+- `path:Assets/Tests`
+- `path:Assets/Terrain`
 - `path:Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`
 - `path:Assets/Plugins/AddressableAssetsData`
 - `path:Assets/Materials`
