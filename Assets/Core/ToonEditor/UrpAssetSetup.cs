@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if DSH_URP_PRESENT
+#if MYPROJECT_URP_PRESENT
 using UnityEngine.Rendering.Universal;
 #endif
 
@@ -20,11 +20,12 @@ namespace Core.Editor.Toon
     /// 也不适合手工全局搜索文件来找。这里改为先把一个 UniversalRendererData 建出来存盘，
     /// 再把它序列化后的内容读回来，原样取用其中的着色器引用 —— 这样拿到的引用一定正确。
     ///
-    /// 关于 #if DSH_URP_PRESENT：
+    /// 关于 #if MYPROJECT_URP_PRESENT：
     /// URP 包尚未安装时，下面的 URP 类型不存在，本文件必须能跳过编译，
-    /// 否则整个工程会因为"命名空间 UnityEngine.Rendering.Universal 不存在"而编译失败。
-    /// 该宏由工程根目录的 csc.rsp 定义（注意是工程根目录，不是 Assets 目录）；
-    /// URP 装好并导入完成后，请把它启用（见 TOON_MIGRATION.md）。
+    /// 否则整个程序集会因为"命名空间 UnityEngine.Rendering.Universal 不存在"而编译失败。
+    /// 该宏由同目录 Core.Toon.Editor.asmdef 的 versionDefines 自动定义：
+    /// 只要工程里存在 com.unity.render-pipelines.universal 14.0 及以上版本，宏就会自动生效，
+    /// 不需要手工启用。
     /// </summary>
     public static class UrpAssetSetup
     {
@@ -34,14 +35,15 @@ namespace Core.Editor.Toon
         [MenuItem("My_3DProject/三渲二/创建并绑定 URP Asset", priority = 101)]
         public static void CreateAndAssign()
         {
-#if !DSH_URP_PRESENT
+#if !MYPROJECT_URP_PRESENT
             Debug.LogError(
-                "[三渲二] 本工具尚未启用：编译时没有定义 DSH_URP_PRESENT。\n\n" +
-                "启用步骤：\n" +
-                "1. 确认 Packages/manifest.json 里有 com.unity.render-pipelines.universal，\n" +
-                "   并等待 Unity 把包装好、编译完成。\n" +
-                "2. 打开工程根目录（Assets 的上一级）的 csc.rsp，去掉 define 那一行前面的 # 注释。\n" +
-                "3. 回到 Unity 等待重新编译，然后重新执行本菜单。\n\n" +
+                "[三渲二] 本工具尚未启用：编译时没有定义 MYPROJECT_URP_PRESENT。\n\n" +
+                "该宏由 Assets/Core/ToonEditor/Core.Toon.Editor.asmdef 的 versionDefines 自动定义，\n" +
+                "条件是工程里存在 com.unity.render-pipelines.universal 14.0 及以上版本。\n\n" +
+                "出现本提示通常意味着：\n" +
+                "1. Packages/manifest.json 里没有 URP 依赖，或\n" +
+                "2. URP 包尚未下载完成，或\n" +
+                "3. 包版本低于 14.0。\n\n" +
                 "详见 Assets/Core/Shaders/Toon/TOON_MIGRATION.md");
 #else
             EnsureFolder("Assets/Core/Rendering");
@@ -152,7 +154,7 @@ namespace Core.Editor.Toon
 #endif
         }
 
-#if DSH_URP_PRESENT
+#if MYPROJECT_URP_PRESENT
         /// <summary>
         /// 按属性名设置值。URP 各小版本属性名偶有出入，找不到就告警跳过，不中断整个流程。
         /// </summary>

@@ -41,17 +41,19 @@
 
 打开工程后 Unity 会解析并下载 URP 及其依赖（`com.unity.render-pipelines.core`、`com.unity.shadergraph`）。**这一步必须要能联网。**
 
-### 步骤 2：启用 URP 编辑器工具
+### 步骤 2：（无需操作）编辑器工具会自动就绪
 
-URP 包编译通过后，打开工程根目录的 `csc.rsp`，去掉这一行的注释：
+迁移工具放在 `Assets/Core/ToonEditor/`，带一个程序集定义 `Core.Toon.Editor.asmdef`。它用 `versionDefines` 探测 URP：
 
+```json
+"versionDefines": [
+  { "name": "com.unity.render-pipelines.universal", "expression": "[14.0,999.0]", "define": "MYPROJECT_URP_PRESENT" }
+]
 ```
--define:DSH_URP_PRESENT
-```
 
-回到 Unity 等待重新编译。
+只要工程里存在 URP 14.0 及以上版本，`MYPROJECT_URP_PRESENT` 就会**自动定义**，一步都不用手工做。URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的那段代码被 `#if` 排除，整个工程不会因为命名空间不存在而编译失败。
 
-> 为什么要这一步：`UrpAssetSetup.cs` 需要引用 `UnityEngine.Rendering.Universal` 命名空间。URP 装好之前这些类型不存在，不靠这个宏把代码排除掉，整个工程会编译失败。
+> 早先的版本用工程根目录的 `csc.rsp` 手工开宏，那个方案已废弃：**Unity 不读取工程根目录的 `csc.rsp`**（只读 `Assets/` 下的），实测编译器参数里根本没有该宏，工具会一直提示"尚未启用"。改用 asmdef 的 `versionDefines` 后既可靠又免手工。
 
 ### 步骤 3：创建并绑定 URP Asset
 
@@ -69,16 +71,26 @@ URP 包编译通过后，打开工程根目录的 `csc.rsp`，去掉这一行的
 
 它会：
 - 扫描 `Assets` 下**除 `Plugins` 之外**的所有材质
-- 只处理当前是 `Standard` 或 `Nature/SpeedTree*` 的材质
-- 先把原 `.mat` 备份到 `.toon-migration-backup/`，再换着色器
+- 只处理下面这四类内置管线着色器（按 Unity 实际报告的名字，不要按材质文件里的 fileID 反查，内置 shader 的 fileID 与名字对应关系容易记错）：
+  - `Standard` —— 角色 23 个
+  - `Legacy Shaders/Transparent/Cutout/Diffuse` —— 草地 9 个
+  - `Nature/Tree Soft Occlusion Leaves` —— 树枝与松针 4 个
+  - `Nature/Tree Soft Occlusion Bark` —— 树皮 2 个
+- 换 shader 前把原 `.mat` 另存到 `.toon-migration-backup/`（该目录在 `.gitignore` 内，不入库）
 - 按下面的对照表搬运属性
-- 日志写到 `Tools/ToonMigration/material-convert-log.txt`
+- 日志写到 `Logs/ToonMigration/material-convert-log.txt`（`Logs/` 同样已被 `.gitignore` 忽略）
+
+> `.toon-migration-backup/` 只是逐文件回退的便利手段，不是唯一的回退途径：迁移前的原始材质在 git 提交 `04acdf9` 里完整可取回，所以该目录删掉也不影响回退。工具下次运行时会自动重建。
 
 ### 步骤 5：生成草地风动画材质
 
 菜单 **`My_3DProject/三渲二/生成草地风动画材质`**
 
 在 `Assets/Materials/ForestMaterials/grass/Materials/Toon/` 下生成 9 个开启 `_UseGrassWind` 的材质副本。
+
+工具自己扫描草地目录发现源材质，**不依赖任何外部映射文件**。可重复执行：已存在的副本只刷新风参数，不会重复新建。
+
+风参数默认值：强度 `0.08`、速度 `1.5`、频率 `1.0`、方向 `(1, 0, 0)`。改这几个值在 `GrassWindMaterialSetup.cs` 顶部的常量里。
 
 > 这 9 个材质至今未被任何场景引用。要看到草地，需要把草画到地形上（Terrain → Paint Texture / Paint Details），再把地形图层指向 `.../grass/Materials/Toon/` 下的材质。
 
@@ -177,8 +189,9 @@ URP 包编译通过后，打开工程根目录的 `csc.rsp`，去掉这一行的
 
 素材级回退：
 
-- 原材质备份在 `.toon-migration-backup/`（文件名把路径分隔符换成了 `__`）
-- 草地、角色、植被的原始 `.mat` 都在 git 里，也可以直接 `git checkout -- <路径>`
+- 草地、角色、植被的原始 `.mat` 都在 git 里，直接 `git checkout <提交> -- <路径>` 取回
+- 迁移前的完整状态在提交 `04acdf9`；转换后的状态在 `19ae354`（迁移合并）之后
+- 转换工具另存到 `.toon-migration-backup/` 的副本只是逐文件回退的便利手段，该目录已按清理要求删除，工具下次运行时自动重建
 
 ---
 
@@ -192,11 +205,13 @@ URP 包编译通过后，打开工程根目录的 `csc.rsp`，去掉这一行的
 | `Assets/Core/Shaders/Toon/NiloOutlineUtil.hlsl` | 描边宽度屏幕恒定 |
 | `Assets/Core/Shaders/Toon/NiloZOffset.hlsl` | 深度偏移 |
 | `Assets/Core/Shaders/Toon/NiloInvLerpRemap.hlsl` | 重映射工具函数 |
-| `Assets/Core/Editor/Toon/UrpAssetSetup.cs` | 创建并绑定 URP Asset |
-| `Assets/Core/Editor/Toon/ToonMaterialConverter.cs` | 批量材质转换 |
-| `Assets/Core/Editor/Toon/GrassWindMaterialSetup.cs` | 草地风动画材质生成 |
-| `Tools/ToonMigration/Build-MaterialMap.ps1` | 只读：生成材质映射方案 |
-| `Tools/ToonMigration/Build-GrassWindMap.ps1` | 只读：生成草地映射方案 |
-| `Tools/ToonMigration/Convert-MaterialsToToon.ps1` | 参考实现：纯文本材质转换（当前不推荐使用，见下） |
+| `Assets/Core/Shaders/Toon/THIRD_PARTY_NOTICES.md` | 上游出处与 MIT 许可、改动清单 |
+| `Assets/Core/ToonEditor/Core.Toon.Editor.asmdef` | 编辑器工具程序集；用 versionDefines 探测 URP 自动定义宏 |
+| `Assets/Core/ToonEditor/UrpAssetSetup.cs` | 创建并绑定 URP Asset |
+| `Assets/Core/ToonEditor/ToonMaterialConverter.cs` | 批量材质转换 |
+| `Assets/Core/ToonEditor/GrassWindMaterialSetup.cs` | 草地风动画材质生成 |
+| `Assets/Core/Rendering/URP_Toon_PC.asset` | URP 管线资产（运行菜单后生成） |
+| `Assets/Core/Rendering/URP_Toon_Renderer.asset` | Universal Renderer Data（运行菜单后生成） |
+| `Assets/Core/Prefabs/Lights/CharacterRimLight.prefab` | 角色轮廓光，嵌套在 4 个角色 Prefab 下 |
 
-> 关于 `Convert-MaterialsToToon.ps1`：它走纯文本改写 `.mat` 的路线。实际验证时发现两个问题——内置默认贴图要写成 `{fileID: 0}` 而不是贴图名，`_BaseMap_ST` 这类 Vector 属性也不该放进 `m_TexEnvs` 段。手写 Unity 序列化格式坑太多，已改用 `ToonMaterialConverter.cs` 让 Unity 自己的序列化器干活。该脚本保留作参考与小批量预览用途。
+> 早期曾用 PowerShell 脚本走纯文本改写 `.mat` 的路线，已废弃并删除。原因：内置默认贴图要写成 `{fileID: 0}` 而不是贴图名，`_BaseMap_ST` 这类 Vector 属性也不该放进 `m_TexEnvs` 段，手写 Unity 序列化格式坑太多。现在全部交给 `ToonMaterialConverter.cs`，由 Unity 自己的序列化器落盘。历史实现可在 git 提交 `19ae354` 的 `Tools/ToonMigration/` 下查到。

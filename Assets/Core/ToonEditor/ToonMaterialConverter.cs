@@ -23,7 +23,12 @@ namespace Core.Editor.Toon
     {
         const string ToonShaderName = "My_3DProject/Toon/ToonLit (NiloCat URP)";
         const string BackupFolder = "Assets/../.toon-migration-backup";
-        const string LogPath = "Tools/ToonMigration/material-convert-log.txt";
+        /// <summary>
+        /// 转换日志路径，相对工程根目录。
+        /// 放在 Logs/ 下是因为该目录已被 .gitignore 忽略，且本来就是 Unity 日志的落点，
+        /// 放在 Assets 下会被 Unity 当成文本资产导入，放在工程根又会变成无人认领的散落文件。
+        /// </summary>
+        const string LogPath = "Logs/ToonMigration/material-convert-log.txt";
 
         /// <summary>旧属性名 -> ToonLit 属性名。只列出名字真的变了的那些。</summary>
         static readonly Dictionary<string, string> RenamedProperties = new Dictionary<string, string>
@@ -50,6 +55,9 @@ namespace Core.Editor.Toon
             "_Color", "_BaseColor", "_EmissionColor",
         };
 
+        /// <summary>转换进行中标志。域重载或重复触发时用来避免并发改写同一批材质。</summary>
+        static bool isConverting;
+
         [MenuItem("My_3DProject/三渲二/转换材质为 ToonLit", priority = 100)]
         public static void ConvertMaterials()
         {
@@ -72,6 +80,30 @@ namespace Core.Editor.Toon
             {
                 return;
             }
+
+            ConvertMaterialsWithoutPrompt();
+        }
+
+        /// <summary>
+        /// 不弹确认框的转换入口，供菜单之外的自动化调用使用。
+        /// 菜单项本身保留确认框；这条路径跳过确认，转换范围与结果完全一致。
+        /// </summary>
+        public static void ConvertMaterialsWithoutPrompt()
+        {
+            Shader toonShader = Shader.Find(ToonShaderName);
+            if (toonShader == null)
+            {
+                Debug.LogError($"[三渲二] 找不到着色器 \"{ToonShaderName}\"，转换中止。");
+                return;
+            }
+
+            if (isConverting)
+            {
+                Debug.LogWarning("[三渲二] 已有一次转换在进行中，忽略本次调用。");
+                return;
+            }
+
+            isConverting = true;
 
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string backupRoot = Path.Combine(projectRoot, ".toon-migration-backup");
@@ -120,6 +152,7 @@ namespace Core.Editor.Toon
                 AssetDatabase.StopAssetEditing();
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
+                isConverting = false;
             }
 
             WriteLog(projectRoot, log, converted, skipped);
@@ -130,16 +163,40 @@ namespace Core.Editor.Toon
                 $"详细清单见 {LogPath}");
         }
 
-        /// <summary>判断材质当前用的是不是本项目要替换的内置管线着色器。</summary>
+        /// <summary>
+        /// 判断材质当前用的是不是本项目要替换的内置管线着色器。
+        ///
+        /// 覆盖清单按 Unity 实际报告的名字写成。不要按材质文件里的 fileID 反查 shader 名，
+        /// 内置 shader 的 fileID 与名字的对应关系很容易记错，本次就因此漏判了 15 个材质。
+        /// 实际清单：
+        ///   Standard                                  角色 23 个
+        ///   Legacy Shaders/Transparent/Cutout/Diffuse  草地 9 个
+        ///   Nature/Tree Soft Occlusion Leaves          树枝与松针 4 个
+        ///   Nature/Tree Soft Occlusion Bark            树皮 2 个
+        /// </summary>
         static bool ShouldConvert(Shader shader)
         {
-            if (shader.name == "Standard")
+            string n = shader.name;
+
+            if (n == "Standard")
             {
                 return true;
             }
 
-            // 旧版与新版 SpeedTree 内置着色器，以及带 SpeedTree 功能的 Standard 变体
-            if (shader.name.StartsWith("Nature/SpeedTree"))
+            // 草地用的是 Legacy 系列的裁切漫反射，不是 SpeedTree
+            if (n.StartsWith("Legacy Shaders/"))
+            {
+                return true;
+            }
+
+            // 树与树枝的两个内置着色器
+            if (n.StartsWith("Nature/Tree Soft Occlusion"))
+            {
+                return true;
+            }
+
+            // 旧版与新版 SpeedTree 内置着色器
+            if (n.StartsWith("Nature/SpeedTree"))
             {
                 return true;
             }

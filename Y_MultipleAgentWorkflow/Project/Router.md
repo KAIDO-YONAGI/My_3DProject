@@ -30,11 +30,13 @@
 - `ProjectSettings/ProjectVersion.txt`
 - `ProjectSettings/EditorBuildSettings.asset`
 - `ProjectSettings/GraphicsSettings.asset`
+- `ProjectSettings/QualitySettings.asset`
 - `Packages/manifest.json`
 - `Packages/packages-lock.json`
-- `csc.rsp`
 - `Assets/Core/Shaders/Toon/`
-- `Assets/Core/Editor/Toon/`
+- `Assets/Core/ToonEditor/`
+- `Assets/Core/Rendering/`
+- `Assets/Core/Prefabs/Lights/`
 - `Assets/Plugins/Mirror/version.txt`
 - `Assets/Plugins/AddressableAssetsData/`
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
@@ -47,9 +49,9 @@
 - `workflow:Project`
 - `path:ProjectSettings`
 - `path:Packages/manifest.json`
-- `path:csc.rsp`
 - `path:Assets/Core/Shaders`
-- `path:Assets/Core/Editor`
+- `path:Assets/Core/ToonEditor`
+- `path:Assets/Core/Rendering`
 - `path:Assets/Plugins/AddressableAssetsData`
 - `path:Assets/Materials`
 - `path:D:/Unity/Releases/3D_MultiplayerGame`

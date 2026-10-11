@@ -9,13 +9,17 @@
 工程已从内置渲染管线迁到 **URP 14.0.12**，并实装基于 `UnityURPToonLitShaderExample`（MIT）改造的三渲二着色器。
 
 - 管线依赖：`Packages/manifest.json` 声明 `com.unity.render-pipelines.universal: 14.0.12`。同版本传递依赖为 `com.unity.render-pipelines.core` 与 `com.unity.shadergraph`（均 `14.0.12`），另有 `com.unity.render-pipelines.universal-config: 14.0.10`。
-- 编译隔离：工程根目录的 `csc.rsp` 用 `DSH_URP_PRESENT` 宏把引用 `UnityEngine.Rendering.Universal` 的编辑器脚本隔离出去。URP 装好并编译通过后需手动启用该宏，否则「创建并绑定 URP Asset」菜单只会给出提示而不执行。
+- 编译隔离：编辑器工具放在 `Assets/Core/ToonEditor/`，带程序集定义 `Core.Toon.Editor.asmdef`，用 `versionDefines` 探测 URP（`expression: [14.0,999.0]` → `define: MYPROJECT_URP_PRESENT`）。URP 14.0 及以上存在时宏自动定义，**无需任何手工步骤**；URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的代码被 `#if` 排除，工程不会因此编译失败。
+  > 早期版本曾用工程根目录的 `csc.rsp` 手工开宏，该方案已废弃：**Unity 不读取工程根目录的 `csc.rsp`**（只读 `Assets/` 下的），实测编译器参数里没有该宏。`csc.rsp` 已删除。
 - 管线资产：`Assets/Core/Rendering/URP_Toon_PC.asset` 与 `URP_Toon_Renderer.asset`，绑定到 `GraphicsSettings` 与全部质量档位。
-- 着色器：`Assets/Core/Shaders/Toon/ToonLit.shader`，着色器名 `My_3DProject/Toon/ToonLit (NiloCat URP)`，含 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass。
-- 编辑器工具菜单为 `My_3DProject/三渲二/`，含创建管线资产、批量材质转换、生成草地风动画材质三项。
+- 着色器：`Assets/Core/Shaders/Toon/ToonLit.shader`，着色器名 `My_3DProject/Toon/ToonLit (NiloCat URP)`，含 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass。注意 Editor 下 `Shader.passCount` 报告为 `1` 属正常现象（URP 的 Lit/Unlit/Simple Lit 同样报 1，内置 `Standard` 报 5），不能据此判断 Pass 丢失。
+- 编辑器工具菜单为 `My_3DProject/三渲二/`，含创建管线资产、批量材质转换、生成草地风动画材质三项。三个工具均幂等，可重复执行。
 - 迁移与调参说明见 `Assets/Core/Shaders/Toon/TOON_MIGRATION.md`；上游来源与 MIT 许可见同目录 `THIRD_PARTY_NOTICES.md`。
 
-迁移依据的工程事实（改动前状态）：材质共 139 个，其中 133 个用内置 `Standard`、6 个属插件；排除 `Assets/Plugins/` 后需迁移的是 **38 个**（角色 23、草地 9、树与枝 6）。草地原本使用已被 Unity 2022 废弃的 `Nature/SpeedTree` 内置着色器。四个场景均无烘焙光照数据，`m_AmbientMode: 0`（Skybox 环境光）配实时阴影，因此迁移不需要重烘焙。`Assets/Core` 下 53 个 C# 文件全量扫描，0 处使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer`、`RenderingPath` 等管线相关 API。
+迁移依据的工程事实：材质共 **154** 个（含迁移后新增），其中插件 116 个、项目自有 **38 个**（角色 23、草地 9、树与枝 6）。这 38 个材质的原着色器按 Unity 实际报告的名字分四类：`Standard` 23 个、`Legacy Shaders/Transparent/Cutout/Diffuse` 9 个（草地）、`Nature/Tree Soft Occlusion Leaves` 4 个、`Nature/Tree Soft Occlusion Bark` 2 个。
+> 判定这些着色器名时必须用 Unity 报告的 `shader.name`，**不要按材质文件里的 `fileID` 反查**。第一版转换器按 fileID 反查，把草地误判成 `Nature/SpeedTree`、把树误判成 `Nature/SpeedTree8`/`Standard`，导致 15 个材质漏转。fileID 与内置 shader 名的对应关系容易记错。
+
+四个场景均无烘焙光照数据，`m_AmbientMode: 0`（Skybox 环境光）配实时阴影，因此迁移不需要重烘焙。`Assets/Core` 下 53 个 C# 文件全量扫描，0 处使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer`、`RenderingPath` 等管线相关 API。
 
 ## 版本与依赖
 

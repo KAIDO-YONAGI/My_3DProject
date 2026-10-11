@@ -1,5 +1,17 @@
 # Character 开发记录
 
+## 2026-10-11：新增角色轮廓光并挂到 4 个角色 Prefab
+
+- 需求：用户要求为角色加光源，先做成 Prefab，再加进其余角色 Prefab。经询问确认：4 个角色 Prefab 都加、用 Point Light、颜色强度先取默认值由用户后续微调。
+- 新资产：`Assets/Core/Prefabs/Lights/CharacterRimLight.prefab`。Point Light，颜色 `(1, 0.96, 0.90)`，强度 `2.2`，范围 `4.5`，`shadows = None`，`renderMode = ForcePixel`，`lightmapBakeType = Realtime`，本地位置 `(0, 1.35, -0.75)`。
+- 强度取 2.2 而非 1 的理由：ToonLit 的额外光通道在 `NiloToonLightingEquation.hlsl` 里按 `0.25` 缩放（`isAdditionalLight ? 0.25 : _DirectLightMultiplier`），与主方向光不是同一条通路，基线需要抬高才能看出效果。
+- 应用方式：作为**嵌套 Prefab 实例**加到 4 个角色 Prefab 根节点下（`CharactersForLocal` 两个、`CharactersForSync` 两个）。实例上的位置/旋转/缩放覆盖已用 `PrefabUtility.RevertPropertyOverride` 清理（各 10 项），统一继承源 Prefab，改光源 Prefab 即可对 4 个角色同时生效。
+- 光位的定法：角色中心约 `(0, 0.8, 0)`，`Main Camera` 在角色本地 `(0, 2, -2.5)`，即相机位于角色的 **-Z 侧**，因此「远离相机的角色背后」是更负的 Z。第一次误把光源放在 `+Z`（相机侧）并写下了相反的方向结论，随后用实测坐标纠正。
+- 光位证据：用相机离屏渲染逐像素对照两种光位（320×320，角色约占 88×122 像素）。相机侧 `z=+0.55`：受影响 5019 像素、最大 Δ 0.344、平均 Δ 0.00584；角色背后 `z=-0.75`：受影响 5141 像素、最大 Δ 0.291、平均 Δ **0.00752**。背后光位平均变化强 29%、峰值更温和，符合轮廓光「照亮边缘而非正面大平光」的特征，故取 `z=-0.75`。实测光相对角色中心偏移约 `(0, 0.57, -0.63)`，落在 4.5 范围内。
+- 顺带核实并纠正前一条记录的状态：`角色材质切换到三渲二着色器` 条写的「转换由编辑器菜单执行，当前尚未跑过」已经过时。本轮已在编辑器内实际执行，38 个项目自有材质全部转换成功（角色 23、草地 9、树与枝 6），插件 116 个未动；`LocalCharacter` 的 12 个 `SkinnedMeshRenderer` 全部使用 ToonLit，0 个残留。属性核对通过，含两处易错项：`eye_touming` 的 `_BaseMap_ST` 保持 `scale(0.5, 1)`、`_Src/_DstBlend` 为 `5/10`、队列 3000；`pine` 与 `bark` 的 `_BaseMap` 偏移保持 `(0, -1)`。
+- 新发现的待办：8 个脸部/眼睛类材质的 `_IsFace` 当前全部为 `0`，按设计应为 `1`（`MI_player_010_nanally_face`、`MI_player_010_nanally_eyes`、`MI_common_face_mask`、`MI_player_010_nanally_nighty_face`、`eye_bantou`、`eye_touming`，逐个模型实例计为 8 个）。`_IsFace=0` 时脸部会走 NdotL 硬交界线，动漫脸上通常偏脏。已向用户提出，待确认后处理。
+- 未完成：轮廓光的颜色、强度、范围均未做人工观感确认；未执行 PlayMode、双客户端联机或构建验收。维护计数保持 `3/5`。
+
 ## 2026-10-11：角色材质切换到三渲二着色器
 
 - 背景：工程整体从内置渲染管线迁到 URP 14.0.12（管线与依赖变化记在 `../Project/DeveloperLog.md` 的 `接入 URP 14.0.12 并实装三渲二着色器` 条）。

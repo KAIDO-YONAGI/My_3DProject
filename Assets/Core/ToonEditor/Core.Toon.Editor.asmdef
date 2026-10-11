@@ -1,0 +1,25 @@
+{
+    "name": "Core.Toon.Editor",
+    "rootNamespace": "Core.Editor.Toon",
+    "references": [
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "[14.0,999.0]",
+            "define": "MYPROJECT_URP_PRESENT"
+        }
+    ],
+    "noEngineReferences": false
+}
