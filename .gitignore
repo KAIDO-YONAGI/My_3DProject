@@ -44,3 +44,6 @@ scripts/push.sh
 
 # Temp converted log
 /MirrorExamplesPipelineConverted.txt
+
+# 三渲二材质迁移的本地备份，不入库
+.toon-migration-backup/
