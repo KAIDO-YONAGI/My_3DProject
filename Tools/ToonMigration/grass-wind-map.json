@@ -1,0 +1,191 @@
+{
+  "generatedAt": "2026-10-11T14:35:28",
+  "toonShaderName": "My_3DProject/Toon/ToonLit (NiloCat URP)",
+  "toonShaderGuid": "e93f315455ac5126ce0daf0bfd4f25d2",
+  "grassWindStrength": 0.08,
+  "grassWindSpeed": 1.5,
+  "grassWindFrequency": 1.0,
+  "grassCount": 9,
+  "grasses": [
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_01.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_01_Toon.mat",
+      "name": "grass_01_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_02.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_02_Toon.mat",
+      "name": "grass_02_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_03.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_03_Toon.mat",
+      "name": "grass_03_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_04.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_04_Toon.mat",
+      "name": "grass_04_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_07.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_07_Toon.mat",
+      "name": "grass_07_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_08.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_08_Toon.mat",
+      "name": "grass_08_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_10.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_10_Toon.mat",
+      "name": "grass_10_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_11.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_11_Toon.mat",
+      "name": "grass_11_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    },
+    {
+      "oldPath": "Assets\\Materials\\ForestMaterials\\grass\\Materials\\grass_12.mat",
+      "newPath": "Assets/Materials/ForestMaterials/grass/Materials/Toon/grass_12_Toon.mat",
+      "name": "grass_12_Toon",
+      "oldShader": "Nature/SpeedTree(legacy)",
+      "baseColor": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "baseMapST": [
+        1.0,
+        1.0,
+        0.0,
+        -1.0
+      ],
+      "cutoff": 0.5,
+      "alphaClipping": true
+    }
+  ]
+}
