@@ -43,7 +43,7 @@
 
 ### 步骤 2：（无需操作）编辑器工具会自动就绪
 
-迁移工具放在 `Assets/Core/ToonEditor/`，带一个程序集定义 `Core.Toon.Editor.asmdef`。它用 `versionDefines` 探测 URP：
+迁移工具放在 `Assets/ToonEditor/`，带一个程序集定义 `Core.Toon.Editor.asmdef`。它用 `versionDefines` 探测 URP：
 
 ```json
 "versionDefines": [
@@ -60,7 +60,7 @@
 菜单 **`My_3DProject/三渲二/创建并绑定 URP Asset`**
 
 它会：
-1. 创建 `Assets/Core/Rendering/URP_Toon_Renderer.asset` 与 `URP_Toon_PC.asset`
+1. 创建 `Assets/Rendering/URP_Toon_Renderer.asset` 与 `URP_Toon_PC.asset`
 2. 把管线资产绑定到 `GraphicsSettings` 与全部质量档位
 
 > 关于时机：这一步做完，画面会变成**统一的粉色**——因为此时 38 个材质还是内置 `Standard` 着色器，URP 下无法渲染。这是预期行为，用来确认管线已被接管。紧接着做步骤 4 即可。
@@ -206,12 +206,12 @@
 | `Assets/Core/Shaders/Toon/NiloZOffset.hlsl` | 深度偏移 |
 | `Assets/Core/Shaders/Toon/NiloInvLerpRemap.hlsl` | 重映射工具函数 |
 | `Assets/Core/Shaders/Toon/THIRD_PARTY_NOTICES.md` | 上游出处与 MIT 许可、改动清单 |
-| `Assets/Core/ToonEditor/Core.Toon.Editor.asmdef` | 编辑器工具程序集；用 versionDefines 探测 URP 自动定义宏 |
-| `Assets/Core/ToonEditor/UrpAssetSetup.cs` | 创建并绑定 URP Asset |
-| `Assets/Core/ToonEditor/ToonMaterialConverter.cs` | 批量材质转换 |
-| `Assets/Core/ToonEditor/GrassWindMaterialSetup.cs` | 草地风动画材质生成 |
-| `Assets/Core/Rendering/URP_Toon_PC.asset` | URP 管线资产（运行菜单后生成） |
-| `Assets/Core/Rendering/URP_Toon_Renderer.asset` | Universal Renderer Data（运行菜单后生成） |
+| `Assets/ToonEditor/Core.Toon.Editor.asmdef` | 编辑器工具程序集；用 versionDefines 探测 URP 自动定义宏 |
+| `Assets/ToonEditor/UrpAssetSetup.cs` | 创建并绑定 URP Asset |
+| `Assets/ToonEditor/ToonMaterialConverter.cs` | 批量材质转换 |
+| `Assets/ToonEditor/GrassWindMaterialSetup.cs` | 草地风动画材质生成 |
+| `Assets/Rendering/URP_Toon_PC.asset` | URP 管线资产（运行菜单后生成） |
+| `Assets/Rendering/URP_Toon_Renderer.asset` | Universal Renderer Data（运行菜单后生成） |
 | `Assets/Core/Prefabs/Lights/CharacterRimLight.prefab` | 角色轮廓光，嵌套在 4 个角色 Prefab 下 |
 
 > 早期曾用 PowerShell 脚本走纯文本改写 `.mat` 的路线，已废弃并删除。原因：内置默认贴图要写成 `{fileID: 0}` 而不是贴图名，`_BaseMap_ST` 这类 Vector 属性也不该放进 `m_TexEnvs` 段，手写 Unity 序列化格式坑太多。现在全部交给 `ToonMaterialConverter.cs`，由 Unity 自己的序列化器落盘。历史实现可在 git 提交 `19ae354` 的 `Tools/ToonMigration/` 下查到。

@@ -1,7 +1,9 @@
 {
   "name": "Core.EditorTests",
   "rootNamespace": "",
-  "references": [],
+  "references": [
+    "Core.FrameWork.StateMachine"
+  ],
   "includePlatforms": [
     "Editor"
   ],
