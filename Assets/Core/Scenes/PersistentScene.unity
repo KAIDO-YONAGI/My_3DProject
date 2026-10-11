@@ -619,7 +619,7 @@ MonoBehaviour:
   characterPrefabs:
   - {fileID: 8175709641735187815, guid: 20bdb0dec3d3e2d48829e11166ae0388, type: 3}
   - {fileID: 6558802990599994996, guid: 67df291ec0c4f33439fdf03b06ad4330, type: 3}
-  defaultCharacterId: 0
+  defaultCharacterId: 1
   standalonePlayer: {fileID: 2132654451}
   standaloneCameras:
   - {fileID: 2132654452}

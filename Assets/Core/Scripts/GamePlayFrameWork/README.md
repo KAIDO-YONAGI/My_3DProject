@@ -5,13 +5,12 @@
 ## 包含内容
 
 ```text
-My_FrameWork/
+GamePlayFrameWork/
   Scripts/Core/       单例基类与通用枚举
   Scripts/SO/         场景数据（GameSceneSO）与事件通道（SceneLoad/SceneLoaded/Void/ToggleCanvas）
-  Scripts/Scene/      SceneChanger（多场景组切换）、InitialLoad、PersistentSceneRegistry、TimeManager
+  Scripts/Scene/      SceneChanger（多场景组切换）、InitialLoad、PersistentSceneRegistry、TimeManager、Teleport
   Scripts/UI/         UIManager、CanvasFocusStack、ICanvasManager、按钮（切场/重试/ESC 关闭）
   Scripts/UI/SystemCanvasManagers/  ESCMenuManager、GameOverCanvasManager、ExitManager
-  Teleport/           关卡传送触发器
   Samples/Scenes/     InitialScene（启动）、PersistentScene（常驻模板）、LevelScene（关卡示例）
   Samples/SOAssets/   事件通道与场景数据模板资产
   Samples/Input/      SampleInput.inputactions + ESC 的 InputActionReference
@@ -56,7 +55,7 @@ My_FrameWork/
 
 ## 架构
 
-- **SceneChanger**：常驻单例，切换的唯一入口是 `RequestSceneLoad(List<GameSceneSO>, Vector3, bool)`——先广播 `loadEventSO` 让订阅方同步收尾，再执行「淡入 → 整组卸载旧内容场景 → 按顺序 Additive 加载 → 玩家落位 → 淡出 → 广播 `sceneLoadedEvent`」。加载前校验 `Application.CanStreamedLevelBeLoaded`，场景未入 Build Settings 时报错跳过。
+- **SceneChanger**：常驻单例，切换的唯一入口是 `RequestSceneLoad(List<GameSceneSO>, Vector3, bool)`——先广播 `loadEventSO` 让订阅方同步收尾，再执行「淡入 → 整组卸载旧内容场景 → 按顺序 Additive 加载 → 玩家落位 → 淡出 → 广播 `sceneLoadedEvent`」。组内每项同时记录 `GameSceneSO` 与其加载得到的场景实例：加载前校验 `Application.CanStreamedLevelBeLoaded`，场景未入 Build Settings 时报错跳过；加载经 `SceneManager.sceneLoaded` 捕获本次通知的实例，加载未完成时报错跳过。卸载按实例执行并在卸载后复核，场景仍处于加载状态时报错并中断整组切换，恢复输入与时间状态。
 - **多场景组**：每次请求针对一个完整 Additive 场景组（`List<GameSceneSO>`）；组内首个场景作为组标识（`GetCurrentGameScene()` 返回它），`GetCurrentScenes()` 返回整组副本供 Retry 整组重载。
 - **常驻保护**：`InitialLoad` 启动时 Additive 加载并注册 `PersistentSceneRegistry` 中的常驻场景；`SceneChanger` 卸载时跳过注册场景。
 - **GameSceneSO**：每个可加载场景一个资产，拖入 `.unity` 自动同步 `sceneName`，配置 `SceneType`（Location/Menu）和默认出生点 `initialPosition`；`SaveKey` 取场景文件 GUID，可作存档稳定标识。

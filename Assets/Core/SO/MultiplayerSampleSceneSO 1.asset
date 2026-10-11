@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d9fc1c3a8b15cb4bcce6b4043d95c72, type: 3}
   m_Name: MultiplayerSampleSceneSO 1
   m_EditorClassIdentifier: 
-  ID: 613fd2d7-a98f-4897-91ba-c6a1d883429c
+  ID: 540bebe0-6d17-4aeb-9dcf-0ab6ec44b66d
   sceneAsset: {fileID: 102900000, guid: dd5051b5ff7cf9e43a73cdbdc43988b7, type: 3}
   sceneName: MultiplayerSampleScene 1
   sceneType: 0
-  initialPosition: {x: -2.63, y: 3.38, z: -31.27}
+  initialPosition: {x: 0, y: 0, z: 0}

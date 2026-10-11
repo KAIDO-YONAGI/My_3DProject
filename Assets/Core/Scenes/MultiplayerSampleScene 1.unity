@@ -424,8 +424,9 @@ GameObject:
   - component: {fileID: 1541225085}
   - component: {fileID: 1541225084}
   - component: {fileID: 1541225083}
+  - component: {fileID: 1541225086}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Teleport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -440,7 +441,7 @@ Transform:
   m_GameObject: {fileID: 1541225081}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.24, y: -8.63, z: -24.52}
+  m_LocalPosition: {x: -7.08, y: -9.79, z: -24.52}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -461,7 +462,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -517,6 +518,22 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1541225081}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1541225086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1541225081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68b65d2a14555e2389ac5d46144c20ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  newPosition: {x: 0, y: 0, z: 0}
+  sceneToLoad:
+  - {fileID: 11400000, guid: d4823d6adcfd796439ed6a7ac273dbd1, type: 2}
+  isToFade: 1
 --- !u!850595691 &2050887064
 LightingSettings:
   m_ObjectHideFlags: 0

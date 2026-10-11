@@ -39,7 +39,19 @@ namespace Core.My_FrameWork.Scripts.Scene
         [SerializeField] private Object[] objectsToUnableWhileMenuOrReset;
 
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
-        private readonly List<GameSceneSO> currentScenes = new List<GameSceneSO>();
+        private readonly List<LoadedScene> currentScenes = new List<LoadedScene>();
+
+        private sealed class LoadedScene
+        {
+            public readonly GameSceneSO Asset;
+            public readonly UnityEngine.SceneManagement.Scene Instance;
+
+            public LoadedScene(GameSceneSO asset, UnityEngine.SceneManagement.Scene instance)
+            {
+                Asset = asset;
+                Instance = instance;
+            }
+        }
 
         /// <summary>最近一次整组加载完成后的首个内容场景，供 GetCurrentScene/GetCurrentGameScene 回读</summary>
         private GameSceneSO currentScene;
@@ -58,13 +70,15 @@ namespace Core.My_FrameWork.Scripts.Scene
         /// <returns>当前场景对象</returns>
         public UnityEngine.SceneManagement.Scene GetCurrentScene()
         {
-            return loadedScene != null ? loadedScene : SceneManager.GetActiveScene();
+            return loadedScene.IsValid() && loadedScene.isLoaded
+                ? loadedScene
+                : SceneManager.GetActiveScene();
         }
 
         // 供存档系统在切场前读取当前场景 SO。
         public GameSceneSO GetCurrentGameScene()
         {
-            return currentScenes.Count > 0 ? currentScenes[0] : null;
+            return currentScenes.Count > 0 ? currentScenes[0].Asset : null;
         }
 
         /// <summary>
@@ -73,7 +87,10 @@ namespace Core.My_FrameWork.Scripts.Scene
         /// </summary>
         public List<GameSceneSO> GetCurrentScenes()
         {
-            return new List<GameSceneSO>(currentScenes);
+            var scenes = new List<GameSceneSO>(currentScenes.Count);
+            foreach (LoadedScene scene in currentScenes)
+                scenes.Add(scene.Asset);
+            return scenes;
         }
 
         /// <summary>
@@ -226,23 +243,34 @@ namespace Core.My_FrameWork.Scripts.Scene
 
             for (int i = currentScenes.Count - 1; i >= 0; i--)
             {
-                GameSceneSO scene = currentScenes[i];
-                if (scene == null || string.IsNullOrEmpty(scene.sceneName))
-                    continue;
+                LoadedScene scene = currentScenes[i];
+                UnityEngine.SceneManagement.Scene loaded = scene.Instance;
 
-                if (PersistentSceneRegistry.IsPersistent(scene))
+                if (PersistentSceneRegistry.IsPersistent(scene.Asset) ||
+                    PersistentSceneRegistry.IsPersistent(loaded.name))
                 {
                     Debug.LogWarning(
-                        $"[SceneChanger] Skipped unload of registered persistent scene '{scene.sceneName}'.");
+                        $"[SceneChanger] Skipped unload of registered persistent scene '{loaded.name}'.");
+                    currentScenes.RemoveAt(i);
                     continue;
                 }
 
-                UnityEngine.SceneManagement.Scene loaded = SceneManager.GetSceneByName(scene.sceneName);
                 if (loaded.IsValid() && loaded.isLoaded)
                     yield return SceneManager.UnloadSceneAsync(loaded);
+
+                if (loaded.IsValid() && loaded.isLoaded)
+                {
+                    Debug.LogError($"[SceneChanger] Scene '{loaded.name}' is still loaded. Scene switch aborted.");
+                    if (targetFade && !isInitialScene)
+                        PlayLoadingAnimation("FadeOut");
+                    AllowInput();
+                    TimeManager.Instance.ForceResumeGame();
+                    isLoading = false;
+                    yield break;
+                }
+                currentScenes.RemoveAt(i);
             }
 
-            currentScenes.Clear();
             yield return LoadScenesRoutine(targetScenes, targetPosition, targetFade);
         }
 
@@ -275,18 +303,40 @@ namespace Core.My_FrameWork.Scripts.Scene
                 else if (scene.sceneType == SceneType.Location)
                     SetObjects(true);
 
-                AsyncOperation loadOperation = SceneManager.LoadSceneAsync(scene.sceneName, LoadSceneMode.Additive);
-                while (loadOperation != null && !loadOperation.isDone)
-                    yield return null;
+                UnityEngine.SceneManagement.Scene loaded = default;
+                UnityEngine.Events.UnityAction<UnityEngine.SceneManagement.Scene, LoadSceneMode> onSceneLoaded =
+                    (instance, mode) =>
+                    {
+                        if (mode == LoadSceneMode.Additive && instance.name == scene.sceneName)
+                            loaded = instance;
+                    };
+
+                // 保存本次加载通知中的实际实例，避免同名的未加载条目干扰查找。
+                SceneManager.sceneLoaded += onSceneLoaded;
+                try
+                {
+                    AsyncOperation loadOperation =
+                        SceneManager.LoadSceneAsync(scene.sceneName, LoadSceneMode.Additive);
+                    while (loadOperation != null && !loadOperation.isDone)
+                        yield return null;
+                }
+                finally
+                {
+                    SceneManager.sceneLoaded -= onSceneLoaded;
+                }
+
+                if (!loaded.IsValid() || !loaded.isLoaded)
+                {
+                    Debug.LogError($"[SceneChanger] Scene '{scene.sceneName}' did not finish loading.");
+                    continue;
+                }
 
                 if (firstLoaded == null)
+                {
                     firstLoaded = scene;
-                currentScenes.Add(scene);
-            }
-
-            if (firstLoaded != null)
-            {
-                loadedScene = SceneManager.GetSceneByName(firstLoaded.sceneName);
+                    loadedScene = loaded;
+                }
+                currentScenes.Add(new LoadedScene(scene, loaded));
             }
             SetPlayerPostion(targetPosition);
             OnLoadCompleted(firstLoaded, targetFade);
