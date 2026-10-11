@@ -116,7 +116,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 
 本地运动代码采用 `Idle`、`Run`、`Sprint`、`Rising`、`Falling` 状态机，脚本位于 `Character/Movement/States/`，Animator 保留状态内方向混合。网络脚本位于 `Assets/Core/Scripts/Networking/`。
 
-远程控制器不读取输入，位置由变换快照驱动，动画使用 Idle。运动表现状态的传输设计见 `../Multiplayer/Sync_Protocol.md` 的 Proposal 一节。
+远程控制器不读取输入，位置由变换快照驱动，首个运动快照到达前使用 Idle。运动表现状态的传输格式见 `../Multiplayer/Sync_Protocol.md` 的「运动表现」一节。
 
 ## 构建
 
@@ -147,8 +147,6 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 本地前进方向随相机水平朝向变化。
 - 玩家从出生点依据重力和地形碰撞落地。
 - 角色切换后各端使用同一 `characterId` 对应的本地或同步 Prefab。
-
-联机验收覆盖以上各项。运动状态协议、Host 与双客户端、专用服务器和延迟时序验证在运动表现同步接入后进行。
 
 ## 维护触发
 

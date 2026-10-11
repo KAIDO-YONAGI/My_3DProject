@@ -90,7 +90,7 @@ Assets/Core/Scripts/
 
 本地采用“代码状态机 + 状态内动画混合”：代码维护 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`，Animator 保留原 Grounded 内 Idle/Run/Sprint 与方向混合，上升和下降继续共用既有 Jump 素材。`CharacterMotor` 每帧只执行一次位移，保留既有加减速、空中控制、相机参考方向与重力积分顺序。
 
-远程动画入口使用 Idle。运动状态、局部方向和动画权重的上行同步设计见 `Multiplayer/Sync_Protocol.md` 的 Proposal 一节。
+远程动画入口使用 Idle。运动状态、局部方向和动画权重的上行同步字段与约束见 `Multiplayer/Sync_Protocol.md` 的「运动表现」一节。
 
 ## 当前网络事实
 

@@ -6,14 +6,9 @@
 方法适用范围：跨项目
 租约参考实现：`Windows + PowerShell 7`
 
-本文是一份可带入真实项目执行的通用配置方法，不是 My_SpinePet 的项目操作
-指南。它帮助 Agent 从目标项目的事实出发，设计路由、业务分类、权威文档、
-并发资源和维护机制。文末的 My_SpinePet 仅是验证案例，不能作为其他项目的
-默认目录、命令或业务规则。
+本文是一份可带入真实项目执行的通用配置方法。它帮助 Agent 从目标项目的事实出发，设计路由、业务分类、权威文档、并发资源和维护机制。
 
-全局 Skill `multiple-agent-workflow-config` 是本方法的执行载体：负责发现、
-提案、确认、初始化和校验。Skill 不替代本方法，也不拥有目标项目的业务
-结论；每个项目的 Router 和 Guide/Design 才拥有项目事实。
+全局 Skill `multiple-agent-workflow-config` 是本方法的执行载体：负责发现、提案、确认、初始化和校验。Skill 不替代本方法，也不拥有目标项目的业务结论；每个项目的 Router 和 Guide/Design 才拥有项目事实。
 
 ## 1. 配置产物与目标
 
@@ -291,28 +286,18 @@ Proposal 应为 `projectOwned`，不能由升级器自动覆盖。
 - `DeveloperLog.md` 不自动裁剪历史记录；仅当用户明确确认某条记录冗余或
   过时后才删除该条，否则全部保留。
 
-## 10. 已验证案例：My_SpinePet
+## 10. 分类落地示例
 
-以下结构证明分类方法可落地，但不是其他项目的预设：
+以下结构证明分类方法可落地，不是其他项目的预设：
 
 - `Workflow`：路由、租约、模板、维护和分发边界。
 - `GUI`：WPF 界面与交互共用一份设计权威，因此没有按窗口继续拆分。
 - `Resources.Load`：资源识别、入库、ID、图标和部署。
 - `Resources.MatchClean`：附件匹配、背景清理和动画排查。
-- `Resources.StateSupport`：aim/cover 尚未实施，独立标记为 Proposal。
+- `Resources.StateSupport`：aim/cover 独立标记为 Proposal。
 
 这里的拆分依据分别是稳定知识域、重复处理目标、独立权威文档和不同资源
 范围，不是因为源码中恰好存在同名目录。
-
-验证证据截至 `2026-08-22`：
-
-- WorkingAgent 回归 `12/12`。
-- 工作流配置校验 `58 pass / 0 warning / 0 error`。
-- GUI、资源导入、清理、Aim/Cover、跨业务、未知业务、维护周期和五层限制
-  路由演练符合预期。
-- 项目迁移到新根后，相对路径解析、Build、Publish 和 Run 均重新验证成功。
-
-上述构建流程和环境处理只属于 My_SpinePet。它们不进入通用初始化默认项。
 
 ## 11. 验收清单
 
