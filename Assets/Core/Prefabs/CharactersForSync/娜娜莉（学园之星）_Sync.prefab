@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1653062415386728066}
+  - component: {fileID: 7219434376669109608}
   m_Layer: 0
   m_Name: Bip001-L-Thigh
   m_TagString: Untagged
@@ -33,6 +34,23 @@ Transform:
   - {fileID: 9161618401672945929}
   m_Father: {fileID: 4899935786712508950}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7219434376669109608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46827173127106184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baedd976e12657241bf7ff2d1c685342, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Direction: 0
+  m_Center: {x: -0.18217, y: 0, z: 0}
+  m_Bound: 0
+  m_Radius: 0.065
+  m_Height: 0.36
 --- !u!1 &137496381904150941
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,16 +256,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 2169458338966177975}
+  m_Root: {fileID: 4704824239653543873}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -256,7 +274,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -266,13 +284,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -281,7 +299,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -291,13 +309,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -306,7 +324,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -316,13 +334,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -331,7 +349,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -341,7 +359,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -353,12 +371,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -789,16 +804,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 4175493705917617811}
+  m_Root: {fileID: 8559787138760359608}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -807,7 +822,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -817,13 +832,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -832,7 +847,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -842,13 +857,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -857,7 +872,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -867,13 +882,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -882,7 +897,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -892,7 +907,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -904,12 +919,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -2601,16 +2613,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 270969760359690846}
+  m_Root: {fileID: 808621183058208275}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2619,7 +2631,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2629,13 +2641,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2644,7 +2656,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2654,13 +2666,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2669,7 +2681,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2679,13 +2691,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2694,7 +2706,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -2704,7 +2716,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -2716,12 +2728,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -5639,16 +5648,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 7032341722842906576}
+  m_Root: {fileID: 6356415228017123819}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5657,7 +5666,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5667,13 +5676,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5682,7 +5691,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5692,13 +5701,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5707,7 +5716,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5717,13 +5726,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5732,7 +5741,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -5742,7 +5751,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -5754,12 +5763,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -9878,16 +9884,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 9789416517491030}
+  m_Root: {fileID: 3360296103647141546}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9896,7 +9902,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9906,13 +9912,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9921,7 +9927,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9931,13 +9937,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9946,7 +9952,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9956,13 +9962,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9971,7 +9977,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -9981,7 +9987,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -9993,12 +9999,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -11594,16 +11597,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 7719107983711828852}
+  m_Root: {fileID: 4549485424270463101}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11612,7 +11615,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11622,13 +11625,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11637,7 +11640,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11647,13 +11650,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11662,7 +11665,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11672,13 +11675,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11687,7 +11690,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -11697,7 +11700,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -11709,12 +11712,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -12440,16 +12440,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 7509091631187058035}
+  m_Root: {fileID: 7077823480550081141}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12458,7 +12458,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12468,13 +12468,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12483,7 +12483,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12493,13 +12493,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12508,7 +12508,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12518,13 +12518,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12533,7 +12533,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12543,7 +12543,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -12555,12 +12555,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -16901,16 +16898,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9ac8d30c6a0d9642a11e5be4c440740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Root: {fileID: 3170425958370455809}
+  m_Root: {fileID: 8749204592130819822}
   m_UpdateRate: 60
   m_UpdateMode: 0
-  m_Damping: 0.45
+  m_Damping: 0.75
   m_DampingDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16919,7 +16916,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16929,13 +16926,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Elasticity: 0.45
+  m_Elasticity: 0.8
   m_ElasticityDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16944,7 +16941,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16954,13 +16951,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Stiffness: 0.45
+  m_Stiffness: 0.94
   m_StiffnessDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16969,7 +16966,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.45
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16979,13 +16976,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Inert: 0.5
+  m_Inert: 0.8
   m_InertDistrib:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.2
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -16994,7 +16991,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0.8
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -17004,7 +17001,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_Radius: 0
+  m_Radius: 0.006
   m_RadiusDistrib:
     serializedVersion: 2
     m_Curve: []
@@ -17016,12 +17013,9 @@ MonoBehaviour:
   m_Gravity: {x: 0, y: 0, z: 0}
   m_Force: {x: 0, y: 0, z: 0}
   m_Colliders:
-  - {fileID: 9112310491109439177}
-  - {fileID: 2658504162234049907}
-  - {fileID: 5523481723776503379}
   - {fileID: 6292583453694083367}
-  - {fileID: 3257467603956319367}
-  - {fileID: 3994825444429819104}
+  - {fileID: 7219434376669109608}
+  - {fileID: 3276652186832590378}
   m_Exclusions: []
   m_FreezeAxis: 0
   m_DistantDisable: 0
@@ -18288,6 +18282,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 143205658600476969}
+  - component: {fileID: 3276652186832590378}
   m_Layer: 0
   m_Name: Bip001-R-Thigh
   m_TagString: Untagged
@@ -18312,6 +18307,23 @@ Transform:
   - {fileID: 7974862633571280902}
   m_Father: {fileID: 4899935786712508950}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3276652186832590378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8695594786970901944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baedd976e12657241bf7ff2d1c685342, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Direction: 0
+  m_Center: {x: -0.18217, y: 0, z: 0}
+  m_Bound: 0
+  m_Radius: 0.065
+  m_Height: 0.36
 --- !u!1 &8759797439332283087
 GameObject:
   m_ObjectHideFlags: 0
