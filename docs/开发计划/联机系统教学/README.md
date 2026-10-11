@@ -6,9 +6,11 @@
 
 各章以客户端 A、客户端 B 和服务器 S 说明链路。A 操作玩家甲，B 操作玩家乙。“本地玩家”指当前客户端自己的玩家。上行指客户端向服务器发送，下行指服务器向客户端发送。
 
-源码摘录对应项目实际实现。“扩展练习”用于说明新增功能的接入写法，组件位置、接口职责和配置与代码一起说明。投掷与爆炸章节采用扩展练习的方式给出设计和落地步骤。
+源码摘录对应项目实际实现。“扩展练习”说明功能的接入写法，组件位置、接口职责和配置与代码一起说明。投掷与爆炸章节使用 Mirror 变换与刚体组件，作为学习链路和测量对照。
 
-框架规则结合 Mirror 官方文档说明，具体接口与组件行为结合工程内的 Mirror 源码核对。各章附有官方阅读入口。工程运行配置以 [Mirror 与 KCP 工程配置](/D:/Unity/Projects/My_3DProject/Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md) 为准。
+正式交付使用独立的结构破坏核心与快照同步核心，Unity 承接物理，Mirror 承接通信与网络对象生命周期。实施顺序见 [开发路线](../00-改造计划总览.md)，参数与选型见 [网络同步速查手册](../网络同步速查手册.md)。算法、协议和动态支撑统一查阅 [结构破坏与动态碎片](专项设计/结构破坏与动态碎片.md) 与 [独立快照同步内核](专项设计/独立快照同步内核.md)。
+
+框架规则结合 Mirror 官方文档说明，具体接口与组件行为结合工程内的 Mirror 源码核对。各章附有官方阅读入口。工程运行配置以 [Mirror 与 KCP 工程配置](../../../Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md) 为准。
 
 ## 按问题查阅
 
@@ -33,6 +35,8 @@
 理解项目运行链路：01 → 03 → 04 → 11。
 
 接入投掷玩法：01 → 05 → 06 → 08 → 09 → 10 → 11。
+
+实现破坏与碎片同步：先读两份专项设计，再用 05、06、07、11 章接入 Mirror；08 至 10 章用于组件对照和投掷表现练习。
 
 排查操作没有产生结果：02 → 03 → 07 → 11。沿本地回调、发送入口、服务器校验、状态下行和表现更新逐段观察。
 
@@ -62,12 +66,13 @@
 
 | 要查的事实 | 入口 |
 | --- | --- |
-| 玩家网络根与同步方向 | [NetworkPlayer.prefab](/D:/Unity/Projects/My_3DProject/Assets/Core/Prefabs/NetworkPlayer.prefab) |
-| 角色请求与编号状态 | [NetworkCharacterSync.cs](/D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/Networking/NetworkCharacterSync.cs) |
-| 模型、动画和相机装配 | [NetworkCharacterManager.cs](/D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/Networking/NetworkCharacterManager.cs) |
-| 本地运动与远程动画 | [PlayerCharacterController.cs](/D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/Character/Runtime/PlayerCharacterController.cs) |
-| 变换快照同步 | [NetworkTransformReliable.cs](/D:/Unity/Projects/My_3DProject/Assets/Plugins/Mirror/Components/NetworkTransform/NetworkTransformReliable.cs) |
-| 刚体的模拟侧控制 | [NetworkRigidbodyReliable.cs](/D:/Unity/Projects/My_3DProject/Assets/Plugins/Mirror/Components/NetworkRigidbody/NetworkRigidbodyReliable.cs) |
-| 网络时间与显示时间线 | [NetworkTime.cs](/D:/Unity/Projects/My_3DProject/Assets/Plugins/Mirror/Core/NetworkTime.cs) |
+| 玩家网络根与同步方向 | [NetworkPlayer.prefab](../../../Assets/Core/Prefabs/NetworkPlayer.prefab) |
+| 角色请求与编号状态 | [NetworkCharacterSync.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterSync.cs) |
+| 模型、动画和相机装配 | [NetworkCharacterManager.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterManager.cs) |
+| 本地运动与远程动画 | [PlayerCharacterController.cs](../../../Assets/Core/Scripts/Character/Control/PlayerCharacterController.cs) |
+| 运动表现状态上行与转发 | [NetworkCharacterMovementSync.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterMovementSync.cs) |
+| 变换快照同步 | [NetworkTransformReliable.cs](../../../Assets/Plugins/Mirror/Components/NetworkTransform/NetworkTransformReliable.cs) |
+| 刚体的模拟侧控制 | [NetworkRigidbodyReliable.cs](../../../Assets/Plugins/Mirror/Components/NetworkRigidbody/NetworkRigidbodyReliable.cs) |
+| 网络时间与显示时间线 | [NetworkTime.cs](../../../Assets/Plugins/Mirror/Core/NetworkTime.cs) |
 
 Mirror 官方手册入口：[User Manual](https://mirror-networking.gitbook.io/docs/manual)。
