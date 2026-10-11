@@ -1,5 +1,16 @@
 # Character 开发记录
 
+## 2026-10-11：脸部与眼睛类材质开启 _IsFace
+
+- 需求：用户确认把脸部/眼睛类材质的 `_IsFace` 由 `0` 改为 `1`。
+- 更正前一条记录的数量：`新增角色轮廓光并挂到 4 个角色 Prefab` 条写的「8 个」是手工清点错误。按「材质名含 face/eye/eyelash/bantou/touming/gaoguang/nighty 关键词」且「位于角色自身 `Materials/` 目录（排除 `Dependencies/`）」两条同时命中，实际为 **13 个**：华丽飞踢 7 个（`eye_bantou`、`eye_touming`、`MI_common_face_mask`、`MI_player_010_eyelash`、`MI_player_010_gaoguang`、`MI_player_010_nanally_eyes`、`MI_player_010_nanally_face`）、学园之星 6 个（`eye_bantou`、`eye_touming`、`MI_common_face_mask`、`MI_player_010_eyelash`、`MI_player_010_nanally_eyes`、`MI_player_010_nanally_nighty_face`）。
+- 改动：13 个材质的 `_IsFace` 全部由 `0` 置为 `1`。已核对磁盘与 AssetDatabase 两侧均为 `1`，无遗漏。
+- 判定依据（`NiloToonLightingEquation.hlsl` 的 `ShadeSingleLight`）：`_IsFace = 0` 时 `litOrShadowArea` 取 `smoothstep(_CelShadeMidPoint - _CelShadeSoftness, _CelShadeMidPoint + _CelShadeSoftness, NoL)`，即标准 NdotL 硬交界线；`_IsFace = 1` 时改为 `lerp(0.5, 1, litOrShadowArea)`，把明暗压缩到 0.5~1 区间，脸部不再出现贴脸的明暗交界。直接用 NdotL 做脸部明暗在动漫脸上偏脏，这是上游作者写明的脸部专用处理。
+- 归属判定：`MI_player_010_gaoguang` 是脸部高光/光泽叠加层（`_Mode: 2`、`_SrcBlend: 5`、`_DstBlend: 10`、队列 3000），透明度与脸部一致才对齐，因此一并纳入；`MI_player_010_eyelash` 属面部几何，同样按脸部处理。身体与头发材质（`MI_player_010_nanally_fashion3_1/2`、`MI_player_010_nanally_fashion2_*`、各 `*_hair_*`）保持 `0`，它们该走正常 NdotL 交界线。
+- 效果实测：在同一场景、同一相机位、同一次执行内先测 `_IsFace = 0` 再测 `_IsFace = 1`（320×320 脸部特写，排除跨调用干扰）。受影响 3558 像素，其中 **3546 变亮、仅 12 变暗，最大提亮 0.357**，呈单向提亮。全图平均亮度 0.3540 → 0.3553（脸部只占画面约 3.5%，故全图均值变化小）。对照图存在 `Logs/ToonMigration/face_isfaces0.png` 与 `face_isfaces1.png`。
+- 过程曲折，记录以免误判：首次测量得到「63% 像素变暗、均值降 0.14」的反常结果。排查后确认是编辑器状态陈旧所致——`editor_state` 报 `is_stale: true`（69 秒无更新）且 `external_changes_dirty: true`，AssetDatabase 尚未重读材质。刷新资产库并改为单次执行内先测 0 再测 1 后，结果转为干净的单向提亮。**结论：材质改动后用跨调用的独立测量对比不可靠，必须在同一次执行内完成对照，或先确认 `is_stale` 为 false。**
+- 未完成：未做人工观感确认；脸部描边深度偏移 `_OutlineZOffset` 仍是默认 `0.0001`，着色器里 `0.03 * _IsFace` 那条脸部固化补偿尚未配合调整，若脸部边缘出现多余描边需再调；未执行 PlayMode 与双客户端联机验收。维护计数保持 `3/5`。
+
 ## 2026-10-11：新增角色轮廓光并挂到 4 个角色 Prefab
 
 - 需求：用户要求为角色加光源，先做成 Prefab，再加进其余角色 Prefab。经询问确认：4 个角色 Prefab 都加、用 Point Light、颜色强度先取默认值由用户后续微调。

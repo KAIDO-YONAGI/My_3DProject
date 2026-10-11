@@ -8,7 +8,12 @@
 
 两套娜娜莉模型的全部 23 个角色材质已从内置 `Standard` 着色器换成三渲二着色器 `My_3DProject/Toon/ToonLit (NiloCat URP)`，随工程整体迁到 URP 14.0.12 一起完成。
 
-- 脸部、眼睛、嘴巴类材质需要把 `_IsFace` 设为 `1`，让脸部跳过 NdotL 硬交界线（直接用 NdotL 做脸部明暗在动漫脸上很难看）。对应材质为 `MI_player_010_nanally_face`、`MI_player_010_nanally_eyes`、`MI_common_face_mask`、`MI_player_010_nanally_nighty_face`、`eye_bantou`、`eye_touming`。
+- **脸部/眼睛类材质的 `_IsFace` 已全部设为 `1`**，共 13 个材质（华丽飞踢 7 个、学园之星 6 个）。`_IsFace = 1` 时脸部跳过 NdotL 硬交界线，改用 `lerp(0.5, 1, litOrShadowArea)` 的专用明暗——直接用 NdotL 做脸部明暗在动漫脸上偏脏。
+  对应材质（按目录各自存在，两侧不完全一致）：`eye_bantou`、`eye_touming`、`MI_common_face_mask`、`MI_player_010_eyelash`、`MI_player_010_nanally_eyes`、`MI_player_010_nanally_nighty_face`（仅学园之星）、`MI_player_010_nanally_face`、`MI_player_010_gaoguang`（仅华丽飞踢）。
+  > `MI_player_010_gaoguang` 是脸部高光/光泽叠加层，透明度与脸部一致才对齐；`MI_player_010_eyelash` 属面部几何，同样按脸部处理。
+  身体与头发材质保持 `_IsFace = 0`（`MI_player_010_nanally_fashion3_1/2`、`MI_player_010_nanally_fashion2_*`、各 `*_hair_*`），它们该走正常 NdotL 交界线。
+
+- **脸部描边深度偏移尚未调**。着色器里对脸部有一条固化的深度偏移：`_OutlineZOffset * mask + 0.03 * _IsFace`，其中 `0.03` 是硬编码的"脸部多推一点"补偿，用来把脸部描边藏进脸内侧、避免在脸颊边缘露出一圈深色描边。当前所有材质的 `_OutlineZOffset` 都还是默认值 `0.0001`，等于没调。若发现脸部/下巴/额头边缘有多余描边，把脸部材质的 `_OutlineZOffset` 加大（建议从 `0.01` 起试，配合 `_OutlineZOffsetMaskTex` 控制生效区域）。
 - `eye_touming.mat` 是半透明材质（`_Color.a = 0.22`、渲染队列 3000、`ZWrite On`）。眼睛高光一般不希望带描边，若发现眼睛边缘有多余描边，把该材质的 `_OutlineWidth` 调为 `0`。
 - 材质清单里 `eye_touming.mat` 的 `_MainTex` 缩放是 `x = 0.5`，因为双眼高光共用半张贴图。迁移时该 Scale 已写入 `_BaseMap_ST`，不要手工重置。
 - 着色器默认 `Cull Off` 双面渲染，便于睫毛、发片这类单面模型。角色是封闭网格，会多出一倍背面像素开销；压性能时可把渲染 Pass 改为 `Cull Back`。
