@@ -2,14 +2,15 @@
 
 文档 ID：`MULTIPLAYER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-10`
+最后核验：`2026-10-11`
 
 ## 当前组件
 
 - `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，Prefab 地址为 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
 - `NetworkCharacterManager`：按角色编号维护本地角色 Prefab 与同步角色 Prefab，装配网络玩家表现，管理相机归属，并切换单机与联机表现。
-- `NetworkCharacterSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地拥有者的角色选择。
-- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 和 `NetworkCharacterSync`。
+- `NetworkCharacterSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
+- `NetworkCharacterMovementSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
+- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync` 和 `NetworkCharacterMovementSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
 
@@ -27,6 +28,7 @@ AutoStartClient.StartClient
   → NetworkManager.OnServerAddPlayer
   → NetworkServer.AddPlayerForConnection
   → 各客户端收到 NetworkPlayer 的 Spawn 数据
+  → 本地玩家启动，上报本机默认角色编号
 ```
 
 `NetworkManager.onlineScene` 为空。Mirror 完成认证后直接发送 Ready 和 AddPlayer。服务器以 `Random` 模式从两个 `NetworkStartPosition` 中选取位置，实例化 `NetworkPlayer` 并绑定到连接。
@@ -35,19 +37,20 @@ AutoStartClient.StartClient
 
 `NetworkPlayer` 是统一的网络根，具体角色模型在每个客户端本地装配。
 
-1. 服务器在 `NetworkCharacterSync.OnStartServer` 设置默认 `characterId`。
-2. 客户端在 `OnStartClient` 和 `OnStartLocalPlayer` 应用角色编号。
-3. `NetworkCharacterManager` 根据 `NetworkIdentity.isLocalPlayer` 选择 Prefab 数组。
-4. 本地拥有者使用 `localCharacterPrefabs`，获得完整角色、Camera、`ThirdPersonCamera` 和 `AudioListener`。
-5. 远程玩家使用 `characterPrefabs`，获得同步模型和 Animator。
-6. 视觉实例成为网络根子对象，局部位置和旋转归零。
-7. 视觉实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
-8. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
-9. 本地 Camera 绑定为 `inputSpace`，远程相机、远程音频监听器和远程本地控制组件保持关闭。
+1. 服务器在 `NetworkCharacterSync.OnStartServer` 写入服务器配置的默认 `characterId`，作为客户端未上报时的兜底编号随初始 Spawn 下发。
+2. 客户端在 `OnStartLocalPlayer` 把本机 `NetworkCharacterManager.defaultCharacterId` 通过 `CommandSetCharacter` 上报一次，服务器校验通过后覆盖 `characterId`。
+3. 客户端在 `OnStartClient` 和 `OnStartLocalPlayer` 应用角色编号。
+4. `NetworkCharacterManager` 根据 `NetworkIdentity.isLocalPlayer` 选择 Prefab 数组。
+5. 本地拥有者使用 `localCharacterPrefabs`，获得完整角色、Camera、`ThirdPersonCamera` 和 `AudioListener`。
+6. 远程玩家使用 `characterPrefabs`，获得同步模型和 Animator。
+7. 视觉实例成为网络根子对象，局部位置和旋转归零。
+8. 视觉实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
+9. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
+10. 本地 Camera 绑定为 `inputSpace`，远程相机、远程音频监听器和远程本地控制组件保持关闭。
 
 装配边界为：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机，网络同步组件只放在根节点。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
 
-两个 Prefab 数组使用相同下标表达同一角色编号。默认角色编号为 `1`。角色资源对照见 `../Project/Project_Guide.md`。
+两个 Prefab 数组使用相同下标表达同一角色编号。默认编号取客户端本机 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报；服务器自身的配置值是客户端未上报或上报编号无效时的兜底。角色资源对照见 `../Project/Project_Guide.md`。
 
 每个网络玩家在 `presentations` 字典中对应一条 `CharacterPresentation`，保存视觉实例、角色编号、来源 Prefab、已配置的本地身份以及相机组件数组。实例有效、编号和来源 Prefab 相同时复用该状态；身份相同时直接返回，身份变化时使用缓存组件重新配置相机和输入参考空间。编号或来源 Prefab 变化时替换实例，已销毁的实例重新装配。
 
@@ -82,15 +85,16 @@ AutoStartClient.StartClient
 
 客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。消息分层、字段约束和兼容规则见 `Sync_Protocol.md`。
 
-代码状态机在本地生成 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`。远程控制器不读取输入，不运行 `CharacterMotor.Tick`，当前位置由变换快照驱动，动画使用 Idle。运动状态的网络传输设计见 `Sync_Protocol.md`。
+代码状态机在本地生成 `Idle`、`Run`、`Sprint`、`Rising`、`Falling`。远程控制器不读取输入，不运行 `CharacterMotor.Tick`，当前位置由变换快照驱动，动画由收到的运动快照驱动，首个快照到达前使用 Idle。运动状态的传输格式见 `Sync_Protocol.md` 的「运动表现」一节。
 
 ## 源码字段说明
 
 `Assets/Core/Scripts/Networking/` 中的可配置字段通过中文 `Tooltip` 提供用途、单位和配置约束。运行时缓存与关键装配入口使用源码注释说明数据归属和调用关系。
 
 - `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；服务端地址统一配置在 `NetworkManager.networkAddress`；`reconnectInterval` 使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
-- `NetworkCharacterManager`：`localCharacterPrefabs` 与 `characterPrefabs` 按下标配对；`defaultCharacterId` 指定服务器生成玩家时的初始编号。`presentations` 统一维护每个玩家的装配状态，清理时解除动画和输入引用、销毁实例并移除该状态。
-- `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。角色选择经拥有者 `Command` 提交到服务器。
+- `NetworkCharacterManager`：`localCharacterPrefabs` 与 `characterPrefabs` 按下标配对；`defaultCharacterId` 是本机默认编号，客户端在本地玩家启动时上报它，服务器进程内的该字段是兜底编号。`presentations` 统一维护每个玩家的装配状态，清理时解除动画和输入引用、销毁实例并移除该状态。
+- `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。本机默认编号在本地玩家启动时上报一次，运行中的角色选择由拥有者经同一个 `Command` 提交到服务器，服务器拒收未通过校验的编号并记录警告。
+- `NetworkCharacterMovementSync`：`syncInterval` 为 `0.1` 秒，可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并按 1 秒间隔限流记录警告。上行读取根控制器缓存的当前快照。
 
 ## 维护触发
 

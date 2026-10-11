@@ -6,7 +6,7 @@ namespace Core.Scripts.Networking
 {
     /// <summary>
     /// 同步网络玩家的角色编号，客户端与专用服务器之间分为上行请求和下行状态两条链路。
-    /// 上行：本地拥有者调用 SetLocalCharacter，通过 CommandSetCharacter 将请求编号发送到服务器。
+    /// 上行：本地玩家启动时把本机配置的默认编号上报一次；本地拥有者调用 SetLocalCharacter，通过 CommandSetCharacter 将请求编号发送到服务器。
     /// 服务器按自身角色配置校验请求，将有效编号写入 characterId。
     /// 下行：Mirror 将 characterId 的初始值放入 Spawn，后续变化通过 SyncVar 状态同步发送。
     /// 接收该玩家的客户端包含拥有者，客户端将确认编号交给 NetworkCharacterManager 装配表现。
@@ -22,12 +22,6 @@ namespace Core.Scripts.Networking
         // 下行状态由服务器写入：Spawn 携带初始编号，后续编号变化同步给拥有者和其他观察客户端。
         [SyncVar(hook = nameof(OnCharacterIdChanged))]
         private int characterId;
-
-        // [SyncVar(hook = nameof(OnCharacterMovementStateChanged))]
-        // private 
-        // void OnCharacterMovementStateChanged(int movementState)
-        // {
-        // }
 
         // 缓存网络根的运动控制器，供表现管理器绑定模型动画和本地输入参考空间。
         private PlayerCharacterController playerController;
@@ -48,8 +42,8 @@ namespace Core.Scripts.Networking
         {
             base.OnStartServer();
 
-            // 服务器生成玩家时读取默认编号，取非负值写入 characterId，供初始 Spawn 下发。
-            // 管理器为空时初始编号为 0，视觉资源在客户端装配时解析。
+            // 服务器生成玩家时读取自身配置的默认编号，取非负值写入 characterId，供初始 Spawn 下发。
+            // 该值是客户端未上报或上报编号未通过校验时的兜底值，管理器为空时初始编号为 0，视觉资源在客户端装配时解析。
             characterId = NetworkCharacterManager.Instance != null
                 ? Mathf.Max(0, NetworkCharacterManager.Instance.DefaultCharacterId)
                 : 0;
@@ -68,9 +62,27 @@ namespace Core.Scripts.Networking
         {
             base.OnStartLocalPlayer();
 
+            // 本地玩家启动时把本机配置的默认编号上报一次，服务器校验后写入 SyncVar 再下发确认值。
+            ReportLocalDefaultCharacter();
+
             // 本地玩家启动或身份变为本地玩家时，按已接收的编号配置本地表现与相机。
             // 管理器按来源 Prefab 和已配置的身份判断复用、相机刷新或重新装配。
             ApplyCharacter();
+        }
+
+        /// <summary>
+        /// 上行入口：把本机 NetworkCharacterManager 配置的默认编号作为初始请求上报一次。
+        /// 仅在本机已连接服务器且该对象为本机玩家时发送，组件测试和纯服务器不产生网络调用。
+        /// </summary>
+        private void ReportLocalDefaultCharacter()
+        {
+            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
+            if (manager == null || !NetworkClient.active || !isLocalPlayer)
+            {
+                return;
+            }
+
+            CommandSetCharacter(manager.DefaultCharacterId);
         }
 
         // 客户端玩家停止时，回收其视觉实例、动画引用和输入参考。
@@ -103,9 +115,13 @@ namespace Core.Scripts.Networking
         [Command]
         private void CommandSetCharacter(int requestedCharacterId)
         {
-            if (NetworkCharacterManager.Instance == null
-                || !NetworkCharacterManager.Instance.IsValidCharacterId(requestedCharacterId))
+            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
+            if (manager == null || !manager.IsValidCharacterId(requestedCharacterId))
             {
+                // 拒收时保留服务器当前编号并留下可定位的日志，避免角色编号被静默丢弃。
+                Debug.LogWarning(
+                    $"[{nameof(NetworkCharacterSync)}] 角色编号 {requestedCharacterId} 未通过服务端校验，保留编号 {characterId}。",
+                    this);
                 return;
             }
 

@@ -7,7 +7,7 @@ namespace Core.Scripts.Character.Movement.States
     /// 起跳当帧会清零离地计时，因此仍落在容忍窗口内，
     /// 必须先于地面子树判定，否则向上的速度会被当成贴地而误判为 Run 或 Idle。
     /// </summary>
-    internal sealed class CharacterMovementRoot : CharacterMovementStateNode
+    internal class CharacterMovementRoot : CharacterMovementStateNode
     {
         public CharacterMovementRoot() : base(null)
         {
@@ -40,7 +40,7 @@ namespace Core.Scripts.Character.Movement.States
     /// 地面子树：承担离地判定与 Idle、Run、Sprint 三态解析。
     /// 三个地面状态原先各自重复一遍起跳与离地判定，现在统一由本状态承担。
     /// </summary>
-    internal sealed class GroundedStateNode : CharacterMovementStateNode
+    internal class GroundedStateNode : CharacterMovementStateNode
     {
         private readonly CharacterMovementRoot root;
 
@@ -92,7 +92,7 @@ namespace Core.Scripts.Character.Movement.States
     /// 空中子树：承担接地判定与 Rising、Falling 两态解析。
     /// 两个空中状态原先各自镜像一遍速度换向判定，现在统一由本状态承担。
     /// </summary>
-    internal sealed class AirborneStateNode : CharacterMovementStateNode
+    internal class AirborneStateNode : CharacterMovementStateNode
     {
         private readonly CharacterMovementRoot root;
 
@@ -112,8 +112,10 @@ namespace Core.Scripts.Character.Movement.States
         protected override HierarchicalState<CharacterMovementStateContext> ResolveTransition(
             CharacterMovementStateContext context)
         {
-            // 移动后接地即回到地面子树；落地当帧直接给出目标地面状态，不额外多停一帧。
-            if (context.GroundedAfterMove || context.WithinAirborneTolerance)
+            // 只有真实接地才回到地面子树。离地容忍窗口只在地面子树里抑制下坡与台阶的悬空帧：
+            // 主动跳跃当帧会清零离地计时，空中若读取该窗口，角色会在窗口内被判回地面、
+            // 窗口结束后重新进入空中，表现为空中重播一次跳跃动画。
+            if (context.GroundedAfterMove)
             {
                 return root.Grounded.ResolveGroundedTarget(context);
             }
@@ -124,7 +126,7 @@ namespace Core.Scripts.Character.Movement.States
     }
 
     /// <summary>没有移动输入时的地面状态。</summary>
-    internal sealed class IdleCharacterMovementState : CharacterMovementLeafState
+    internal class IdleCharacterMovementState : CharacterMovementLeafState
     {
         public IdleCharacterMovementState(GroundedStateNode parent) : base(parent)
         {
@@ -134,7 +136,7 @@ namespace Core.Scripts.Character.Movement.States
     }
 
     /// <summary>有移动输入且未按冲刺键时的地面状态。</summary>
-    internal sealed class RunCharacterMovementState : CharacterMovementLeafState
+    internal class RunCharacterMovementState : CharacterMovementLeafState
     {
         public RunCharacterMovementState(GroundedStateNode parent) : base(parent)
         {
@@ -144,7 +146,7 @@ namespace Core.Scripts.Character.Movement.States
     }
 
     /// <summary>有移动输入且按住冲刺键时的地面状态。</summary>
-    internal sealed class SprintCharacterMovementState : CharacterMovementLeafState
+    internal class SprintCharacterMovementState : CharacterMovementLeafState
     {
         public SprintCharacterMovementState(GroundedStateNode parent) : base(parent)
         {
@@ -154,7 +156,7 @@ namespace Core.Scripts.Character.Movement.States
     }
 
     /// <summary>竖直速度向上的空中状态。</summary>
-    internal sealed class RisingCharacterMovementState : CharacterMovementLeafState
+    internal class RisingCharacterMovementState : CharacterMovementLeafState
     {
         public RisingCharacterMovementState(AirborneStateNode parent) : base(parent)
         {
@@ -164,7 +166,7 @@ namespace Core.Scripts.Character.Movement.States
     }
 
     /// <summary>竖直速度向下或静止的空中状态。</summary>
-    internal sealed class FallingCharacterMovementState : CharacterMovementLeafState
+    internal class FallingCharacterMovementState : CharacterMovementLeafState
     {
         public FallingCharacterMovementState(AirborneStateNode parent) : base(parent)
         {

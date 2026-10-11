@@ -2,7 +2,7 @@
 
 文档 ID：`DEDICATED-SERVER`
 状态：`Active`
-最后核验：`2026-10-10`
+最后核验：`2026-10-11`
 
 ## 当前实现
 
@@ -36,9 +36,9 @@ Windows Server 构建启动
 
 连接认证完成后，客户端发送 Ready 和 AddPlayer。`NetworkManager.OnServerAddPlayer` 选择出生点并创建 `NetworkPlayer`。`NetworkServer.AddPlayerForConnection` 将对象归属给当前连接并向观察者发送 Spawn 数据。
 
-`NetworkCharacterSync.OnStartServer` 设置默认角色编号。客户端提交角色切换时，服务器执行 `CommandSetCharacter` 校验并更新 `SyncVar`。Host 的本地玩家使用同一 Command 入口。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
+`NetworkCharacterSync.OnStartServer` 写入服务器配置的默认角色编号，作为客户端未上报时的兜底值。本地玩家启动时上报本机默认编号，运行中提交角色切换，两者共用 `CommandSetCharacter` 入口，服务器校验编号后更新 `SyncVar`。Host 的本地玩家同样走该入口。位置与旋转由 `NetworkTransformReliable` 接收客户端拥有者数据，再广播到其他客户端。
 
-纯专用服务器上的 `PlayerCharacterController.Update` 不读取输入，不积分重力，不运行本地位移。客户端的五态代码状态机不参与服务器模拟。服务端对运动表现状态的校验与转发设计见 `Sync_Protocol.md` 的 Proposal 一节。
+纯专用服务器上的 `PlayerCharacterController.Update` 不读取输入，不积分重力，不运行本地位移。客户端的五态代码状态机不参与服务器模拟。服务端对运动表现状态的校验与转发见 `Sync_Protocol.md` 的「运动表现」一节。
 
 ## 构建与运行
 

@@ -57,42 +57,6 @@ public sealed class CharacterMovementStateMachineTests
     }
 
     [Test]
-    public void StateMachineReportsTransitionEdgeForPresentation()
-    {
-        Type stateMachineType = RuntimeType("CharacterMovementStateMachine");
-        Type contextType = RuntimeType("CharacterMovementStateContext");
-        Type stateIdType = RuntimeType("CharacterMovementStateId");
-        object machine = Activator.CreateInstance(stateMachineType);
-
-        // 构造后尚未发生转换，边沿信息与当前状态一致。
-        Assert.That(Property<bool>(machine, "ChangedThisFrame"), Is.False);
-        Assert.That(StateName(machine, stateIdType, "PreviousStateId"), Is.EqualTo("Idle"));
-
-        // 没有移动输入时保持 Idle，不产生转换。
-        Update(machine, contextType, true, true, false, false, false, -2f);
-        Assert.That(Property<bool>(machine, "ChangedThisFrame"), Is.False);
-        Assert.That(StateName(machine, stateIdType, "PreviousStateId"), Is.EqualTo("Idle"));
-
-        // 发生转换的当帧给出上一个状态，供表现层做落地、起跳这类边沿检测。
-        Update(machine, contextType, true, true, true, false, false, -2f);
-        Assert.That(Property<bool>(machine, "ChangedThisFrame"), Is.True);
-        Assert.That(StateName(machine, stateIdType, "PreviousStateId"), Is.EqualTo("Idle"));
-        Assert.That(StateName(machine, stateIdType, "CurrentStateId"), Is.EqualTo("Run"));
-
-        // 再次转换时边沿信息更新为紧邻的上一个状态。
-        Update(machine, contextType, true, true, false, false, true, 6f);
-        Assert.That(Property<bool>(machine, "ChangedThisFrame"), Is.True);
-        Assert.That(StateName(machine, stateIdType, "PreviousStateId"), Is.EqualTo("Run"));
-        Assert.That(StateName(machine, stateIdType, "CurrentStateId"), Is.EqualTo("Rising"));
-
-        // 未发生转换的帧只清掉边沿标志，最近一次转换前的状态继续保留。
-        Update(machine, contextType, false, false, false, false, false, 8f);
-        Assert.That(Property<bool>(machine, "ChangedThisFrame"), Is.False);
-        Assert.That(StateName(machine, stateIdType, "PreviousStateId"), Is.EqualTo("Run"));
-        Assert.That(StateName(machine, stateIdType, "CurrentStateId"), Is.EqualTo("Rising"));
-    }
-
-    [Test]
     public void SyncedStateNumbersStayFrozen()
     {
         Type stateIdType = RuntimeType("CharacterMovementStateId");
@@ -105,6 +69,108 @@ public sealed class CharacterMovementStateMachineTests
         Assert.That(Convert.ToByte(Enum.Parse(stateIdType, "Sprint")), Is.EqualTo(2));
         Assert.That(Convert.ToByte(Enum.Parse(stateIdType, "Rising")), Is.EqualTo(3));
         Assert.That(Convert.ToByte(Enum.Parse(stateIdType, "Falling")), Is.EqualTo(4));
+    }
+
+    [Test]
+    public void StateMachineAccumulatesTimeInState()
+    {
+        Type stateMachineType = RuntimeType("CharacterMovementStateMachine");
+        Type contextType = RuntimeType("CharacterMovementStateContext");
+        object machine = Activator.CreateInstance(stateMachineType);
+
+        // 构造后停在 Idle，尚未累计任何时长。
+        Assert.That(TimeInState(machine), Is.EqualTo(0f));
+
+        // 保持同一状态时逐帧累加。
+        UpdateWithDeltaTime(machine, contextType, false, 0.4f);
+        Assert.That(TimeInState(machine), Is.EqualTo(0.4f).Within(0.0001f));
+        UpdateWithDeltaTime(machine, contextType, false, 0.4f);
+        Assert.That(TimeInState(machine), Is.EqualTo(0.8f).Within(0.0001f));
+
+        // 发生转换的那一帧归零。
+        UpdateWithDeltaTime(machine, contextType, true, 0.4f);
+        Assert.That(TimeInState(machine), Is.EqualTo(0f));
+
+        // 之后从零重新累计。
+        UpdateWithDeltaTime(machine, contextType, true, 0.4f);
+        Assert.That(TimeInState(machine), Is.EqualTo(0.4f).Within(0.0001f));
+    }
+
+    // 构造带帧长的完整上下文：贴地，hasMoveInput 决定进入 Run 还是保持 Idle。
+    private static void UpdateWithDeltaTime(
+        object machine,
+        Type contextType,
+        bool hasMoveInput,
+        float deltaTime)
+    {
+        object context = Activator.CreateInstance(
+            contextType,
+            true,
+            true,
+            hasMoveInput,
+            false,
+            false,
+            -2f,
+            false,
+            deltaTime,
+            0f);
+
+        machine.GetType().GetMethod("Update", PublicInstance).Invoke(machine, new[] { context });
+    }
+
+    [Test]
+    public void AirborneStatesIgnoreAirborneToleranceWindow()
+    {
+        Type stateMachineType = RuntimeType("CharacterMovementStateMachine");
+        Type contextType = RuntimeType("CharacterMovementStateContext");
+        Type stateIdType = RuntimeType("CharacterMovementStateId");
+        object machine = Activator.CreateInstance(stateMachineType);
+
+        // 起跳当帧离地计时被清零，此后整个容忍窗口内 withinAirborneTolerance 都为 true。
+        Update(machine, contextType, true, true, false, false, true, 6f);
+        AssertState(machine, stateIdType, "Rising");
+
+        // 角色确实在空中：容忍窗口只在地面子树内抑制悬空帧，不能把空中状态拉回地面。
+        UpdateWithTolerance(machine, contextType, false, false, false, false, false, 6f, true);
+        AssertState(machine, stateIdType, "Rising");
+
+        // 窗口内竖直速度转负只切换空中状态。
+        UpdateWithTolerance(machine, contextType, false, false, false, false, false, -1f, true);
+        AssertState(machine, stateIdType, "Falling");
+
+        // 真实接地仍然立刻回到地面子树。
+        UpdateWithTolerance(machine, contextType, false, true, false, false, false, -2f, true);
+        AssertState(machine, stateIdType, "Idle");
+    }
+
+    // 使用带离地容忍判定的七参数上下文，覆盖空中子树对该窗口的处理。
+    private static void UpdateWithTolerance(
+        object machine,
+        Type contextType,
+        bool groundedBeforeMove,
+        bool groundedAfterMove,
+        bool hasMoveInput,
+        bool sprintHeld,
+        bool jumpStarted,
+        float verticalVelocity,
+        bool withinAirborneTolerance)
+    {
+        object context = Activator.CreateInstance(
+            contextType,
+            groundedBeforeMove,
+            groundedAfterMove,
+            hasMoveInput,
+            sprintHeld,
+            jumpStarted,
+            verticalVelocity,
+            withinAirborneTolerance);
+
+        machine.GetType().GetMethod("Update", PublicInstance).Invoke(machine, new[] { context });
+    }
+
+    private static float TimeInState(object machine)
+    {
+        return (float)machine.GetType().GetProperty("TimeInState", PublicInstance).GetValue(machine);
     }
 
     private static void Update(
@@ -138,11 +204,6 @@ public sealed class CharacterMovementStateMachineTests
     {
         object value = machine.GetType().GetProperty(propertyName, PublicInstance).GetValue(machine);
         return Enum.GetName(stateIdType, value);
-    }
-
-    private static T Property<T>(object target, string name)
-    {
-        return (T)target.GetType().GetProperty(name, PublicInstance).GetValue(target);
     }
 
     private static Type RuntimeType(string typeName)

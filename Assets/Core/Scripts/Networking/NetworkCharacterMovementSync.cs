@@ -15,6 +15,10 @@ namespace Core.Scripts.Networking
         // 缓存同一根节点上的控制器，发送时读取 CurrentMotion，接收时写入远程快照。
         private PlayerCharacterController controller;
 
+        // 异常快照日志限流：服务端会持续收到非法包，最多每秒记录一次，避免日志被刷爆。
+        private const float RejectLogIntervalSeconds = 1f;
+        private float lastRejectLogTime = float.NegativeInfinity;
+
         private void Awake()
         {
             controller = GetComponent<PlayerCharacterController>();
@@ -88,14 +92,50 @@ namespace Core.Scripts.Networking
             if (state > (byte)CharacterMovementStateId.Falling
                 || !(direction.sqrMagnitude <= 1.001f)
                 || !(weight >= 0f && weight <= 1f))
+            {
+                LogRejectedSnapshot(state, direction, weight);
                 return;
-
-
+            }
 
             // 服务器保存该快照供后续发送，Mirror 收到拥有者数据后会自动标记组件待转发。
             // 远程客户端保存该快照供动画读取；主机上的远程玩家使用同一个控制器接收入口。
-            controller.ReceiveRemoteMotion(new CharacterMotion(
+            controller.ReceiveRemoteMotion(new CharacterMotionSnapshot(
                 (CharacterMovementStateId)state, direction, weight));
+        }
+
+        /// <summary>
+        /// 记录被丢弃的异常快照。
+        /// 丢弃本身是静默的（控制器保留上一份有效快照），没有日志时表现为「自己看得到、别人看不到」，
+        /// 因此必须留下痕迹；同时按间隔限流，避免损坏或恶意对端把服务端日志刷爆。
+        /// </summary>
+        private void LogRejectedSnapshot(byte state, Vector2 direction, float weight)
+        {
+            if (Time.time - lastRejectLogTime < RejectLogIntervalSeconds)
+            {
+                return;
+            }
+
+            lastRejectLogTime = Time.time;
+
+            // 分别指出是哪一项越界，便于区分「状态编号超限」（多为双端版本不一致）
+            // 与「数值损坏」（传输或构造异常）。
+            string reason;
+            if (state > (byte)CharacterMovementStateId.Falling)
+            {
+                reason = $"状态编号 {state} 超出上限 {(byte)CharacterMovementStateId.Falling}，可能是客户端与服务器版本不一致";
+            }
+            else if (!(direction.sqrMagnitude <= 1.001f))
+            {
+                reason = $"方向长度超出单位圆：{direction}";
+            }
+            else
+            {
+                reason = $"移动权重越界：{weight}";
+            }
+
+            Debug.LogWarning(
+                $"[NetworkCharacterMovementSync] 丢弃异常运动快照：{reason}。控制器保留上一份有效快照。",
+                this);
         }
     }
 }

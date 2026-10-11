@@ -23,7 +23,33 @@ namespace Core.Scripts.Character.Movement.States
     public readonly struct CharacterMovementStateContext
     {
         /// <summary>
-        /// 使用离地容忍判定创建上下文；withinAirborneTolerance 由 CharacterMotor 按配置的容忍时长计算。
+        /// 创建完整上下文。
+        /// deltaTime 是本帧帧长；timeInState 是进入当前状态后截至上一帧结束累计的时长，本帧不计入。
+        /// </summary>
+        public CharacterMovementStateContext(
+            bool groundedBeforeMove,
+            bool groundedAfterMove,
+            bool hasMoveInput,
+            bool sprintHeld,
+            bool jumpStarted,
+            float verticalVelocity,
+            bool withinAirborneTolerance,
+            float deltaTime,
+            float timeInState)
+        {
+            GroundedBeforeMove = groundedBeforeMove;
+            GroundedAfterMove = groundedAfterMove;
+            HasMoveInput = hasMoveInput;
+            SprintHeld = sprintHeld;
+            JumpStarted = jumpStarted;
+            VerticalVelocity = verticalVelocity;
+            WithinAirborneTolerance = withinAirborneTolerance;
+            DeltaTime = deltaTime;
+            TimeInState = timeInState;
+        }
+
+        /// <summary>
+        /// 兼容未提供时间信息的调用方：等同于“刚进入当前状态”，基于时长的规则不会立即成立。
         /// </summary>
         public CharacterMovementStateContext(
             bool groundedBeforeMove,
@@ -33,14 +59,17 @@ namespace Core.Scripts.Character.Movement.States
             bool jumpStarted,
             float verticalVelocity,
             bool withinAirborneTolerance)
+            : this(
+                groundedBeforeMove,
+                groundedAfterMove,
+                hasMoveInput,
+                sprintHeld,
+                jumpStarted,
+                verticalVelocity,
+                withinAirborneTolerance,
+                0f,
+                0f)
         {
-            GroundedBeforeMove = groundedBeforeMove;
-            GroundedAfterMove = groundedAfterMove;
-            HasMoveInput = hasMoveInput;
-            SprintHeld = sprintHeld;
-            JumpStarted = jumpStarted;
-            VerticalVelocity = verticalVelocity;
-            WithinAirborneTolerance = withinAirborneTolerance;
         }
 
         /// <summary>
@@ -60,7 +89,9 @@ namespace Core.Scripts.Character.Movement.States
                 sprintHeld,
                 jumpStarted,
                 verticalVelocity,
-                false)
+                false,
+                0f,
+                0f)
         {
         }
 
@@ -73,6 +104,13 @@ namespace Core.Scripts.Character.Movement.States
 
         // 非跳跃离地仍在容忍窗口内时按贴地处理，避免下坡与台阶造成的悬空帧误播跳跃动画。
         public bool WithinAirborneTolerance { get; }
+
+        // 本帧帧长。状态自身不做时间积分，需要计时的规则统一读取 TimeInState。
+        public float DeltaTime { get; }
+
+        // 进入当前状态后累计的时长（秒），不含本帧。
+        // 因此「持续 N 秒后转换」按帧推进，触发时刻比理论上晚一帧，属预期行为。
+        public float TimeInState { get; }
     }
 
     /// <summary>
@@ -107,6 +145,9 @@ namespace Core.Scripts.Character.Movement.States
         private readonly CharacterMovementRoot root;
         private readonly HierarchicalStateMachine<CharacterMovementStateContext> machine;
 
+        // 上一帧结束时的状态，用于判断本帧是否发生了转换。
+        private CharacterMovementStateId lastStateId;
+
         public CharacterMovementStateMachine()
         {
             root = new CharacterMovementRoot();
@@ -114,7 +155,7 @@ namespace Core.Scripts.Character.Movement.States
 
             // 启动只按默认子树下钻，不解析转换，保证构造后就是 Idle。
             machine.Start(default);
-            PreviousStateId = CurrentStateId;
+            lastStateId = CurrentStateId;
         }
 
         /// <summary>当前叶子状态对应的离散标识。</summary>
@@ -132,13 +173,11 @@ namespace Core.Scripts.Character.Movement.States
         }
 
         /// <summary>
-        /// 上一次转换前的离散标识，供表现层做落地、起跳这类边沿检测；
-        /// 尚未发生转换时与 CurrentStateId 相同。
+        /// 进入当前状态后累计的时长（秒），不含本帧。
+        /// CharacterMotor 每帧把它填进上下文，状态据此实现「持续 N 秒后转换」这类规则；
+        /// 时长由状态机维护，因为只有它知道状态何时发生变化。
         /// </summary>
-        public CharacterMovementStateId PreviousStateId { get; private set; }
-
-        /// <summary>本帧是否发生过状态转换。</summary>
-        public bool ChangedThisFrame { get; private set; }
+        public float TimeInState { get; private set; }
 
         public bool CanJump(bool groundedBeforeMove)
         {
@@ -147,16 +186,17 @@ namespace Core.Scripts.Character.Movement.States
 
         public CharacterMovementStateId Update(CharacterMovementStateContext context)
         {
-            CharacterMovementStateId previous = CurrentStateId;
+            // 对外不暴露状态转换边沿：远程角色不跑状态机，边沿信息无法跨客户端复现，
+            // 需要落地这类边沿的表现层应自行比较相邻两帧快照，本地与远程才有一致语义。
             machine.Update(context);
+
             CharacterMovementStateId current = CurrentStateId;
 
-            // 边沿信息在状态的进入和退出钩子执行完毕后才成立，同一帧即可被表现层读取。
-            ChangedThisFrame = current != previous;
-            if (ChangedThisFrame)
-            {
-                PreviousStateId = previous;
-            }
+            // 同一状态继续累加，发生转换则从零开始计时。
+            TimeInState = current == lastStateId
+                ? TimeInState + context.DeltaTime
+                : 0f;
+            lastStateId = current;
 
             return current;
         }

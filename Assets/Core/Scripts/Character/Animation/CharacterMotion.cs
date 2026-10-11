@@ -23,6 +23,16 @@ namespace Core.Scripts.Character.Animation
         }
 
         /// <summary>
+        /// 从网络快照构造表现快照。
+        /// 只填充网络能够提供的字段，本地专有字段保持默认值；
+        /// 远程角色走这条路径，因此表现层不得依赖快照之外的字段。
+        /// </summary>
+        public CharacterMotion(CharacterMotionSnapshot snapshot)
+            : this(snapshot.State, snapshot.LocalDirection, snapshot.LocomotionWeight01)
+        {
+        }
+
+        /// <summary>
         /// 组合地面状态、冲刺意图、局部方向和移动权重，形成一次完整的动画更新输入。
         /// </summary>
         public CharacterMotion(

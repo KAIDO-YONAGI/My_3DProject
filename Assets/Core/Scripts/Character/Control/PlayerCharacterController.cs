@@ -51,9 +51,13 @@ namespace Core.Scripts.Character.Control
         //控制器保存快照，为网络包的接入留入口
         public CharacterMotion CurrentMotion { get; private set; }
 
-        public void ReceiveRemoteMotion(CharacterMotion motion)
+        /// <summary>
+        /// 应用网络同步的远程运动快照。
+        /// 参数只收网络能够提供的字段，本地专有信息不参与，避免远程角色误用默认值。
+        /// </summary>
+        public void ReceiveRemoteMotion(CharacterMotionSnapshot snapshot)
         {
-            CurrentMotion = motion;
+            CurrentMotion = new CharacterMotion(snapshot);
         }
         // 添加组件或在 Inspector 重置时自动补齐最常见引用和默认配置。
         private void Reset()
@@ -97,7 +101,7 @@ namespace Core.Scripts.Character.Control
 
         private void LateUpdate()
         {
-            // 远程玩家不读取本地输入；运动状态网络同步尚未接入，当前直接使用 Idle 回退。
+            // 远程玩家不读取本地输入，动画由收到的运动快照驱动；首个快照到达前快照为默认的 Idle。
             if (IsRemoteNetworkPlayer())
             {
                 ApplyRemoteAnimation();

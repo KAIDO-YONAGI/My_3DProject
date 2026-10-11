@@ -110,6 +110,7 @@ namespace Core.Scripts.Character.Movement
 
             // 物理速度允许平滑加减速；动画权重直接读取输入，保证按下和松开都立即响应。
             float locomotionWeight01 = Mathf.Clamp01(input.MoveInput.magnitude);
+            // 传入上一帧结束时的状态驻留时长；本帧时长由状态机在 Update 内累加。
             CharacterMovementStateId state = stateMachine.Update(
                 new CharacterMovementStateContext(
                     groundedBeforeMove,
@@ -118,7 +119,9 @@ namespace Core.Scripts.Character.Movement
                     input.SprintHeld,
                     jumpStarted,
                     verticalVelocity,
-                    airborneDuration < settings.AirborneTolerance));
+                    airborneDuration < settings.AirborneTolerance,
+                    deltaTime,
+                    stateMachine.TimeInState));
 
             return new CharacterMotion(
                 state,
