@@ -98,7 +98,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - 状态树为「根 → 地面/空中 → 叶子」三层：`Idle`、`Run`、`Sprint` 是地面子树的叶子，`Rising`、`Falling` 是空中子树的叶子。三个父状态只参与转换解析，不进入 `CharacterMovementStateId`，因此五个同步数值仍是 `Idle=0`、`Run=1`、`Sprint=2`、`Rising=3`、`Falling=4`，网络线格式与分层前一致。
 - 转换规则按子树的共有部分上提：根状态承担起跳（起跳当帧会清零离地计时，必须先于地面子树判定，否则向上速度会被当成贴地而误判为 `Run` 或 `Idle`）；地面父状态承担非跳跃离地与 `Idle`、`Run`、`Sprint` 三态解析；空中父状态承担接地与按竖直速度方向解析 `Rising`、`Falling`。非跳跃的短暂离地（下坡、台阶造成的悬空帧）在 `CharacterMovementSettings.airborneTolerance`（默认 `0.3` 秒）窗口内仍按地面状态解析，超出窗口后才进入空中子树，避免误播跳跃动画。
 - 转换以当前叶子为起点、按最近公共祖先执行：退出旧分支自下而上、进入新分支自上而下，全部在当帧同步完成，不占用额外帧；同一子树内的兄弟切换不会退出公共祖先。
-- 分层状态机框架位于 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`（程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`），提供同步的 `OnEnter`、`OnExit`、`OnUpdate` 钩子，不使用异步任务。角色状态当前未在钩子上挂业务副作用：运动仍由 `CharacterMotor` 承担，表现仍由 `CharacterAnimator` 承担。
+- 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`（程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`），提供同步的 `OnEnter`、`OnExit`、`OnUpdate` 钩子，不使用异步任务。角色状态当前未在钩子上挂业务副作用：运动仍由 `CharacterMotor` 承担，表现仍由 `CharacterAnimator` 承担。
 - 状态机对外暴露 `CurrentStateId`、`PreviousStateId` 与 `ChangedThisFrame`，把「本帧是否发生转换、从哪个状态转来」统一提供给表现层做边沿检测，替代各消费方自行维护上一帧状态。
 - `CharacterMotor` 在移动前读取 `CharacterController.isGrounded` 决定跳跃许可，依次处理跳跃、目标水平速度、加减速与空中控制和重力，每帧只调用一次 `CharacterController.Move`，再清除顶碰上升速度、处理接地拉力、维护非跳跃离地计时并更新代码状态。
 - 运动链路按帧长积分，起跳在按下当帧生效，动画权重直接取输入幅度。松开输入后物理速度按配置的减速度衰减。
@@ -164,7 +164,7 @@ CharacterInputReader（PlayerControls.inputactions）
 ## 目录约定
 
 - 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。移动参数随运动代码，动画配置随动画代码。
-- 通用分层状态机框架归入 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`（`autoReferenced`，运行时与测试均可引用）；角色专用的状态节点仍留在 `Movement/States/`，不放进框架目录。
+- 通用分层状态机框架归入 `Assets/Core/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`（`autoReferenced`，运行时与测试均可引用）；角色专用的状态节点仍留在 `Movement/States/`，不放进框架目录。
 - 相机位于 `Assets/Core/Scripts/Camera/Runtime/`。
 - `AutoStartClient`、`NetworkCharacterManager`、`NetworkCharacterSync` 位于 `Assets/Core/Scripts/Networking/`。
 - 第三方插件统一放 `Assets/Plugins/`：`Mirror/` 带 asmdef，`DynamicBone/` 无 asmdef，编译进 `Assembly-CSharp-firstpass`，被角色 Prefab 以 GUID 引用。

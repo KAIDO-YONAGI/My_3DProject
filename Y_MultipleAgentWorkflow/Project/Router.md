@@ -38,7 +38,7 @@
 - `Assets/Core/Shaders/Toon/`
 - `Assets/ToonEditor/`
 - `Assets/Core/Scripts/GamePlayFrameWork/`
-- `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`
+- `Assets/Core/Scripts/StateMachine/`
 - `Assets/Rendering/`
 - `Assets/Tests/`
 - `Assets/Terrain/`
@@ -61,7 +61,7 @@
 - `path:Assets/Core/Shaders`
 - `path:Assets/ToonEditor`
 - `path:Assets/Core/Scripts/GamePlayFrameWork`
-- `path:Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine`
+- `path:Assets/Core/Scripts/StateMachine`
 - `path:Assets/Rendering`
 - `path:Assets/Tests`
 - `path:Assets/Terrain`

@@ -4,7 +4,7 @@
 
 - 需求：用户要求按上一轮调研结论执行 A+B 两档改造（层级化重写 + 启用同步状态钩子），把相关文件放到正确目录，并清理拉取的教程代码。
 - 调研背景：参考 `adammyhre/Unity-Hierarchical-StateMachine`（Unlicense，92 stars）。其 Core 库只依赖 `System` 与 `UnityEngine`，但示例驱动 `PlayerStateDriver` 使用 Unity 6 的 `Rigidbody.linearVelocity`；已用 Unity 活体反射确认本工程 `2022.3.62f3c1` 中该成员**不存在**（只有 `velocity`），原样拷入无法编译。其 `TransitionSequencer` 在过渡期不执行状态机更新，按源码逐行推导即使无活动也要吃掉 2 帧；且父状态发起的转换因 LCA 取到自身而**不会退出其活动子状态**。因此只借鉴层级划分思想，不引入异步活动、反射装配与过渡编排。
-- 新框架：`Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`，程序集 `Core.FrameWork.StateMachine`（纯 C#、不依赖 `UnityEngine`、`autoReferenced`）。`HierarchicalState<TContext>` 提供 `InitialChild`、`ResolveTransition`、`OnEnter`、`OnExit`、`OnUpdate`；`HierarchicalStateMachine<TContext>` 每帧沿活动路径自上而下解析目标，按最近公共祖先切换：退出旧分支自下而上、进入新分支自上而下，全部在当帧完成。
+- 新框架：`Assets/Core/Scripts/StateMachine/`，程序集 `Core.FrameWork.StateMachine`（纯 C#、不依赖 `UnityEngine`、`autoReferenced`）。`HierarchicalState<TContext>` 提供 `InitialChild`、`ResolveTransition`、`OnEnter`、`OnExit`、`OnUpdate`；`HierarchicalStateMachine<TContext>` 每帧沿活动路径自上而下解析目标，按最近公共祖先切换：退出旧分支自下而上、进入新分支自上而下，全部在当帧完成。
 - 相对教程实现修正两处：转换起点取**当前叶子**而非发起转换的状态，父状态发起的转换因此会正确退出其活动子状态；退出时先与父状态断开再回调，避免父状态沿活动路径重复退出同一子状态。
 - 角色改造：状态树改为「根 → 地面/空中 → 叶子」。`Idle`、`Run`、`Sprint` 归入地面子树，`Rising`、`Falling` 归入空中子树；根承担起跳，地面父状态承担非跳跃离地与三态解析，空中父状态承担接地与速度换向。原先 `Idle`、`Run`、`Sprint` 三个状态类逐字重复的起跳与离地判定、`Rising` 与 `Falling` 镜像的速度换向判定，均上提到父状态。
 - 协议零影响：三个父状态不进入 `CharacterMovementStateId`，五个同步值仍是 `Idle=0`、`Run=1`、`Sprint=2`、`Rising=3`、`Falling=4`；`CharacterMotor`、`CharacterMotion`、`NetworkCharacterMovementSync` 与 `Sync_Protocol.md` 均未改动。

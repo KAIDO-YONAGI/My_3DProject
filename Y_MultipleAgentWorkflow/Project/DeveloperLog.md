@@ -3,7 +3,7 @@
 ## 2026-10-11：新增运行时程序集 Core.FrameWork.StateMachine
 
 - 起因：Character 域分层状态机改造需要一个可被测试程序集直接引用的通用框架。原先运行时代码全部位于预定义程序集 `Assembly-CSharp`，而 asmdef **不能引用** `Assembly-CSharp`，`Core.EditorTests` 因此只能靠 `Type.GetType("..., Assembly-CSharp")` 反射访问业务类型，既无法继承也无法直接实例化。
-- 变更：新增 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/Core.FrameWork.StateMachine.asmdef`，收纳 `HierarchicalState.cs` 与 `HierarchicalStateMachine.cs`。该程序集为纯 C#（不引用 `UnityEngine`）、`autoReferenced: true`、无 `references`，是工程内唯一的运行时自建程序集。
+- 变更：新增 `Assets/Core/Scripts/StateMachine/Core.FrameWork.StateMachine.asmdef`，收纳 `HierarchicalState.cs` 与 `HierarchicalStateMachine.cs`。该程序集为纯 C#（不引用 `UnityEngine`）、`autoReferenced: true`、无 `references`，是工程内唯一的运行时自建程序集。
 - 引用关系：`Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.My_FrameWork.Scripts.StateMachine;`；`Assets/Tests/Editor/Core.EditorTests.asmdef` 的 `references` 由 `[]` 改为 `["Core.FrameWork.StateMachine"]`，测试得以直接继承并实例化框架类型。
 - 验证：Unity 强制刷新后 Console 为 0 错误、0 警告，业务代码与测试程序集两侧均编译通过；`Core.EditorTests` 27 个测试全部通过（改造前 19 个）。未改动 `ProjectSettings`、`Packages/manifest.json` 或其他 asmdef。
 - 文档与计数：`Project_Guide.md` 的「资产目录布局」补充该程序集与上述引用约束。Project 维护计数 `0/5 → 1/5`。

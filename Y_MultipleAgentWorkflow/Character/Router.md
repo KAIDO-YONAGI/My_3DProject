@@ -12,7 +12,7 @@
 | 客户端启动、输入、移动、动画、本地相机 | `Character_Guide.md` |
 | 角色运动算法和输入数据流 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/` |
 | Idle、Run、Sprint、Rising、Falling、状态机与状态内混合 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Movement/States/` |
-| 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
+| 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Character_Guide.md`，并读取 `Assets/Core/Input/` |
 | 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Camera/Runtime/` 与相机回归测试 |
 | 角色模型、动画素材与本地相机 Prefab | `Character_Guide.md`，并读取 `Assets/Core/Prefabs/CharactersForLocal/` |
@@ -33,7 +33,7 @@
 - `Assets/Core/Scripts/Character/`
 - `Assets/Core/Scripts/Character/Control/`
 - `Assets/Core/Scripts/Character/Movement/States/`
-- `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/`
+- `Assets/Core/Scripts/StateMachine/`
 - `Assets/Tests/Editor/CharacterMovementStateMachineTests.cs`
 - `Assets/Tests/Editor/HierarchicalStateMachineTests.cs`
 - `Assets/Core/Scripts/Camera/`
@@ -47,7 +47,7 @@
 
 - `workflow:Character`
 - `path:Assets/Core/Scripts/Character`
-- `path:Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine`
+- `path:Assets/Core/Scripts/StateMachine`
 - `path:Assets/Core/Scripts/Camera`
 - `path:Assets/Core/Input`
 - `path:Assets/Plugins/DynamicBone`
