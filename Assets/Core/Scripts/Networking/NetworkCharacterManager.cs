@@ -39,6 +39,9 @@ namespace Core.Scripts.Networking
         [Tooltip("需要随单机模式启停的场景 AudioListener。")]
         [SerializeField] private AudioListener[] standaloneListeners = new AudioListener[0];
 
+        // 当前离线模式使用的角色编号，-1 表示场景实例对应的编号尚未记录。
+        private int standaloneCharacterId = -1;
+
         // 单个玩家的装配结果，组件缓存与视觉实例共用生命周期。
         private class CharacterPresentation
         {
@@ -260,6 +263,101 @@ namespace Core.Scripts.Networking
             }
 
             presentations.Remove(player);
+        }
+
+        /// <summary>
+        /// 角色切换的统一入口：联机时把编号提交给本地网络玩家，由服务器校验后经 SyncVar 下发；
+        /// 离线时用目标编号的本地 Prefab 替换场景单机角色实例。
+        /// 连接已建立但本地玩家尚未生成时输出警告，请求被忽略。
+        /// </summary>
+        public void RequestCharacter(int requestedCharacterId)
+        {
+            // 联机时角色表现由网络玩家承担，编号校验和同步交给服务器链路。
+            if (TryGetLocalPlayerCharacter(out NetworkCharacterSync localCharacter))
+            {
+                localCharacter.SetLocalCharacter(requestedCharacterId);
+                return;
+            }
+
+            // 离线时角色表现由场景单机角色承担，切换即替换该实例。
+            if (IsStandalonePresentationActive)
+            {
+                ReplaceStandaloneCharacter(requestedCharacterId);
+                return;
+            }
+
+            Debug.LogWarning(
+                $"本地玩家尚未生成，角色 {requestedCharacterId} 的切换请求已忽略。",
+                this);
+        }
+
+        // 当前是否由场景单机角色承担角色表现，连接重试阶段仍为 true。
+        private static bool IsStandalonePresentationActive => !IsNetworkPresentationActive();
+
+        // 取本机玩家的角色同步组件；未连接、玩家尚未生成或运行在专用服务器时返回 false。
+        private static bool TryGetLocalPlayerCharacter(out NetworkCharacterSync localCharacter)
+        {
+            Mirror.NetworkIdentity localPlayer = Mirror.NetworkClient.localPlayer;
+            if (localPlayer != null
+                && localPlayer.TryGetComponent(out NetworkCharacterSync characterSync))
+            {
+                localCharacter = characterSync;
+                return true;
+            }
+
+            localCharacter = null;
+            return false;
+        }
+
+        // 离线切换：用目标编号的本地 Prefab 替换场景单机角色实例。
+        // 新实例沿用旧实例的世界位置和朝向，并重新收集单机相机、控制器与监听器引用。
+        private void ReplaceStandaloneCharacter(int requestedCharacterId)
+        {
+            if (!TryGetLocalCharacterPrefab(requestedCharacterId, out GameObject prefab))
+            {
+                Debug.LogWarning(
+                    $"无法切换单机角色：编号 {requestedCharacterId} 缺少对应的 CharactersForLocal 配置。",
+                    this);
+                return;
+            }
+
+            // 编号与当前一致时沿用现有实例，避免重复装配重置相机轨道。
+            if (standalonePlayer != null && standaloneCharacterId == requestedCharacterId)
+            {
+                return;
+            }
+
+            // 旧实例先停用，新旧实例不会同时持有活动的 AudioListener。
+            GameObject previous = standalonePlayer;
+            Vector3 position = previous != null ? previous.transform.position : Vector3.zero;
+            Quaternion rotation = previous != null ? previous.transform.rotation : Quaternion.identity;
+            if (previous != null)
+            {
+                previous.SetActive(false);
+            }
+
+            GameObject characterInstance = Instantiate(prefab, position, rotation);
+            // 实例名沿用场景单机角色的命名，层级中可直接辨认当前角色。
+            characterInstance.name = "LocalCharacter";
+            standalonePlayer = characterInstance;
+            standaloneCharacterId = requestedCharacterId;
+            // 离线选定的编号成为本机角色，本地网络玩家启动时上报同一个值。
+            defaultCharacterId = requestedCharacterId;
+
+            // 相机组件随实例替换重新收集，后续启停沿用同一份引用。
+            standaloneCameras = characterInstance.GetComponentsInChildren<UnityEngine.Camera>(true);
+            standaloneCameraControllers = characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true);
+            standaloneListeners = characterInstance.GetComponentsInChildren<AudioListener>(true);
+
+            // 旧实例已无引用，销毁时一并释放它的输入与光标占用。
+            if (previous != null)
+            {
+                Destroy(previous);
+            }
+
+            // 单机表现下新实例保持启用，相机、控制器和监听器与实例同步生效。
+            SetStandalonePlayerEnabled(true);
+            SetStandaloneCameraEnabled(true);
         }
 
         // 按当前本地身份配置缓存中的相机组件，同时绑定移动输入使用的视角。
