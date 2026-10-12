@@ -8,16 +8,14 @@
 
 工程使用 **URP 14.0.12**，并实装基于 `UnityURPToonLitShaderExample` 改造的三渲二着色器，上游许可为 MIT。
 
-- 管线依赖：`Packages/manifest.json` 声明 `com.unity.render-pipelines.universal: 14.0.12`。同版本传递依赖为 `com.unity.render-pipelines.core` 与 `com.unity.shadergraph`（均 `14.0.12`），另有 `com.unity.render-pipelines.universal-config: 14.0.10`。
-- 编译隔离：编辑器工具放在 `Assets/ToonEditor/`，带程序集定义 `Core.Toon.Editor.asmdef`，用 `versionDefines` 探测 URP，`expression: [14.0,999.0]` 映射 `define: MYPROJECT_URP_PRESENT`。URP 14.0 及以上存在时宏自动定义，不需要手工步骤；URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的代码被 `#if` 排除。
+- 管线依赖：`Packages/manifest.json` 声明 `com.unity.render-pipelines.universal`，并带入同版本的 `com.unity.render-pipelines.core`、`com.unity.shadergraph` 与 `com.unity.render-pipelines.universal-config`。
+- 编译隔离：编辑器工具放在 `Assets/ToonEditor/`，带程序集定义 `Core.Toon.Editor.asmdef`，用 `versionDefines` 探测 URP 版本并映射条件宏。URP 版本达标时宏自动定义，不需要手工步骤；URP 缺失或版本不够时宏不定义，`UrpAssetSetup.cs` 里引用 `UnityEngine.Rendering.Universal` 的代码被 `#if` 排除。
 - 管线资产：`Assets/Rendering/URP_Toon_PC.asset` 与 `URP_Toon_Renderer.asset`，绑定到 `GraphicsSettings` 与全部质量档位。
 - 着色器：`Assets/Core/Shaders/Toon/ToonLit.shader`，着色器名 `My_3DProject/Toon/ToonLit (NiloCat URP)`，含 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass。Editor 下 `Shader.passCount` 报告为 `1`，判定 Pass 数量以源码为准。
 - 编辑器工具菜单为 `My_3DProject/三渲二/`，含创建管线资产、批量材质转换、生成草地风动画材质三项。三个工具均幂等，可重复执行。
 - 调参说明见 `Assets/Core/Shaders/Toon/TOON_MIGRATION.md`；上游来源与 MIT 许可见同目录 `THIRD_PARTY_NOTICES.md`。
 
-工程材质事实：材质共 **154** 个，其中插件 116 个、项目自有 **38 个**（角色 23、草地 9、树与枝 6）。这 38 个材质的着色器按 Unity 报告的 `shader.name` 分四类：`Standard` 23 个、`Legacy Shaders/Transparent/Cutout/Diffuse` 9 个（草地）、`Nature/Tree Soft Occlusion Leaves` 4 个、`Nature/Tree Soft Occlusion Bark` 2 个。判定材质着色器名一律读 Unity 报告的 `shader.name`，不按材质文件里的 `fileID` 反查，两者对应关系容易记错。
-
-四个场景均无烘焙光照数据，`m_AmbientMode: 0` 为 Skybox 环境光，配实时阴影。`Assets/Core` 下 53 个 C# 文件全量扫描，0 处使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer`、`RenderingPath` 等管线相关 API。
+判定材质使用哪个着色器时，一律读 Unity 报告的 `shader.name`，不按材质文件里的 `fileID` 反查，两者对应关系容易记错。项目代码不使用 `OnRenderImage`、`Graphics.Blit`、`CommandBuffer` 这类管线相关 API。
 
 ## 版本与依赖
 
@@ -49,7 +47,7 @@
 
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`。Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
 - 自写代码包括 `Assets/Core/Shaders/Toon/` 的三渲二着色器与说明，以及 `Assets/ToonEditor/` 的管线与材质迁移工具。
-- 单机框架代码位于 `Assets/Core/Scripts/GamePlayFrameWork/`，包含 `Scripts/`、`Teleport/` 与 `Samples/`。
+- 单机框架代码位于 `Assets/Core/Scripts/GamePlayFrameWork/`，包含 `Scripts/` 与 `Samples/`。
 - 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.My_FrameWork.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
@@ -60,7 +58,7 @@
 ## Addressables
 
 - 配置目录为 `Assets/Plugins/AddressableAssetsData/`。
-- 插件通过 GUID 链路解析配置。`ProjectSettings/EditorBuildSettings.asset` 的 `com.unity.addressableassets` 记录 `DefaultObject.asset` 的 GUID `00520c7ebfe0ced4ea09c7be32769208`，`DefaultObject.asset` 记录 `AddressableAssetSettings.asset` 的 GUID `3c0067e525af651409829bf27364034c`。
+- 插件通过 GUID 链路解析配置：`ProjectSettings/EditorBuildSettings.asset` 记录 `DefaultObject.asset`，后者记录 `AddressableAssetSettings.asset`。
 - 分组为内建的 `Built In Data` 和默认组 `Scenes`。
 - 激活的构建脚本为 `BuildScriptPackedMode`。`Local.BuildPath` 与 `Local.LoadPath` 引用 `Addressables.BuildPath` 和 `Addressables.RuntimePath`，构建产物位于 `Library/com.unity.addressables/`。
 - 内容状态文件位于 `Assets/Plugins/AddressableAssetsData/Windows/addressables_content_state.bin`，路径由 `GetContentStateBuildPath()` 按配置目录与平台子目录求值。
@@ -72,31 +70,13 @@
 - 输入资产是 `Assets/Core/Input/PlayerControls.inputactions`，其导入器设置 `generateWrapperCode` 生成包装类 `Assets/Core/Input/PlayerControls.cs`，JSON 内嵌在代码里，不需要 Inspector 引用。
 - `ProjectSettings/InputManager.asset` 保留旧轴定义，项目脚本不读取。
 - `PersistentScene` 的 `EventSystem` 使用 `InputSystemUIInputModule`，动作资产为包的 `DefaultInputActions`，`CursorLockBehavior` 为默认的 `OutsideScreen`。
-- `Assets/Plugins/Mirror/` 中有 27 个脚本使用旧 `Input` API，包括 `Components/GUIConsole.cs`、`Components/Profiling/ToggleHotkey.cs`、`Components/Profiling/RemoteStatistics.cs`。这些类型不在 `Assets/Core` 的场景、Prefab 或脚本引用内，也不在构建场景内。
+- `Assets/Plugins/Mirror/` 中有若干脚本使用旧 `Input` API，这些类型不在 `Assets/Core` 的场景、Prefab 或脚本引用内，也不在构建场景内。
 
 ## NetworkManager Prefab
 
 路径：`Assets/Core/Prefabs/NetworkManager.prefab`
 
-关键组件：
-
-- `Mirror.NetworkManager`
-- `Mirror.NetworkManagerHUD`
-- `kcp2k.KcpTransport`
-- `AutoStartClient`
-
-关键配置：
-
-- `networkAddress=127.0.0.1`
-- `maxConnections=100`
-- `sendRate=60`
-- `runInBackground=true`
-- `headlessStartMode=AutoStartServer`
-- `onlineScene` 为空
-- `offlineScene` 为空
-- `playerPrefab=Assets/Core/Prefabs/NetworkPlayer.prefab`
-- `autoCreatePlayer=true`
-- `playerSpawnMethod=Random`
+承载 `Mirror.NetworkManager`、`Mirror.NetworkManagerHUD`、`kcp2k.KcpTransport` 与 `AutoStartClient`，是传输参数、连接地址、玩家 Prefab、出生点模式和自动连接的配置入口。参数值见 `Mirror_KCP_Config.md`。
 
 ## NetworkPlayer Prefab
 
@@ -112,9 +92,7 @@
 6. `NetworkCharacterSync`
 7. `NetworkCharacterMovementSync`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。`CharacterController` 的高度为 `2`，半径为 `0.5`，中心为 `(0, 1, 0)`。
-
-`PlayerCharacterController` 的移动配置为运行速度 `6.8`、疾跑速度 `10.8`、加速度 `32`、减速度 `38`、空中控制 `0.45`、旋转速度 `360`、重力 `-28`、跳跃高度 `1.2`、接地吸附速度 `-2`。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数。
 
 ## 角色表现资源
 
@@ -131,19 +109,17 @@
 
 ### 华丽飞踢模型与 Avatar 导入
 
-模型配置文件为 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，模型 GUID 为 `f75e3b29cf8cbb4458c41c2184aeb2da`，Local、Sync 两套华丽飞踢 Prefab 的 `m_Avatar` 均引用该 GUID、`fileID: 9000000`，共用同一模型 Avatar。
+模型配置文件为 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，Local、Sync 两套华丽飞踢 Prefab 引用同一模型 Avatar。
 
-该文件的 Avatar 固化原 `humanDescription`，脸部控制根 `mouth` 不映射为 `Jaw`。导入类型为 Humanoid，`animationType: 3`，人形映射 54 项；骨架描述显式保存 351 项，`autoGenerateAvatarMappingIfUnspecified: 0`。导入结果 `Avatar.isValid = true`、`Avatar.isHuman = true`、Jaw 映射数为零。
+该文件的 Avatar 固化原 `humanDescription`，脸部控制根 `mouth` 不映射为 `Jaw`。导入类型为 Humanoid，人形映射保留，`autoGenerateAvatarMappingIfUnspecified` 关闭，导入后 Avatar 有效、为 Humanoid，Jaw 映射数为零。
 
 `mouth` 是嘴唇、嘴角和牙齿控制骨骼的父节点。映射为 Jaw 会在通用人形动画求值时引起面部蒙皮变形。重新导入或替换模型时核对显式映射、自动映射开关与两套 Prefab 的 Avatar 引用。骨骼验证方法见 `../Character/Character_Guide.md` 的“人形映射与面部骨骼”。
 
 ### 学园之星裙摆 Prefab 配置
 
-`CharactersForLocal/娜娜莉（学园之星）.prefab` 与 `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` 的 8 个裙摆 DynamicBone 起点为 `_002`，参数为阻尼 `0.75`、弹性 `0.8`、刚度 `0.94`、平移跟随 `0.8`、粒子半径 `0.006 m`，前四项分布曲线均为常数 `1`。
+`CharactersForLocal/娜娜莉（学园之星）.prefab` 与 `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` 共用同一套裙摆 DynamicBone 与碰撞器配置，模拟起点取裙骨链下段，每条裙链引用骨盆与两侧大腿的碰撞器。
 
-两套 Prefab 各在左右大腿上有 1 个 DynamicBoneCollider，Outside、X 轴、中心 `(-0.18217, 0, 0)`、半径 `0.065 m`、高度 `0.36 m`。每条裙链引用骨盆与两侧大腿的 3 个碰撞器。每套 DynamicBone 总数 28，Collider 总数 8。
-
-裙腰不产生模拟偏转，待机下缘最大位移约 `7 mm`，急停转身及腿部碰撞组合测试最大约 `7.3 cm`，大幅抬腿存在局部穿模。骨端胶囊测试不覆盖整片裙面。参数与边界见 `../Character/Character_Guide.md` 的“学园之星裙摆”。
+裙腰不产生模拟偏转，大幅抬腿存在局部穿模，骨端胶囊测试不覆盖整片裙面。参数与边界见 `../Character/Character_Guide.md` 的“学园之星裙摆”。
 
 ## Inspector 配置提示
 
@@ -151,7 +127,7 @@
 
 `PersistentScene` 中 `NetworkCharacterManager` 的两个角色数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，两套数组的同一下标表示同一角色；默认编号对应的两个位置均配置有效 Prefab。
 
-`standalonePlayer` 引用常驻场景内的单机角色实例，指向场景内“娜娜莉（学园之星）”根对象 fileID `2132654451`，通过该引用直接启停单机角色。`standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 引用场景组件，当前均绑定该角色内的 `Main Camera`。新加入的单机角色与相机需要手动配置引用。
+`standalonePlayer` 引用常驻场景内的单机角色实例，通过该引用直接启停单机角色。单机相机、控制器和监听器的引用当前均绑定该角色内的 `Main Camera`。新加入的单机角色与相机需要手动配置引用。
 
 ## 验证覆盖
 

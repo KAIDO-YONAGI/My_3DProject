@@ -20,42 +20,15 @@
 | 同步方向 | `ClientToServer` | NetworkTransformReliable |
 | 自动重连间隔 | `3` 秒 | AutoStartClient |
 
-## KcpTransport 参数
-
-| 参数 | 当前值 | 作用 |
-|---|---|---|
-| `Port` | `7777` | 服务器 UDP 监听端口 |
-| `DualMode` | `true` | IPv6 socket 接收 IPv4 映射地址 |
-| `NoDelay` | `true` | 使用低延迟 KCP 配置 |
-| `Interval` | `10` 毫秒 | KCP 更新间隔 |
-| `Timeout` | `10000` 毫秒 | 无数据连接超时 |
-| `RecvBufferSize` | `7361536` | UDP 接收缓冲 |
-| `SendBufferSize` | `7361536` | UDP 发送缓冲 |
-| `FastResend` | `2` | 快速重传阈值 |
-| `ReceiveWindowSize` | `4096` | KCP 接收窗口 |
-| `SendWindowSize` | `4096` | KCP 发送窗口 |
-| `MaxRetransmit` | `40` | 最大重传控制 |
-| `MaximizeSocketBuffers` | `true` | 请求扩大系统 socket 缓冲 |
-| `ReliableMaxMessageSize` | `297433` | 可靠通道单条消息上限 |
-| `UnreliableMaxMessageSize` | `1194` | 非可靠通道单条消息上限 |
-| `debugLog` | `true` | 输出 KCP 调试日志 |
+其余 KCP 参数在 `NetworkManager` Prefab 的 `KcpTransport` 上配置，含端口、双栈、低延迟开关、更新间隔、超时、收发缓冲与窗口大小。
 
 ## 场景启动关系
 
 ```text
 InitialScene
   → InitialLoad
-  → PersistentScene
-     ├─ NetworkManager
-     ├─ NetworkCharacterManager
-     ├─ SceneChanger
-     ├─ LocalPlayer
-     ├─ NetworkPlayerSpawn_A
-     └─ NetworkPlayerSpawn_B
-  → MultiplayerSampleScene
-     ├─ Terrain
-     ├─ TerrainCollider
-     └─ Directional Light
+  → PersistentScene（常驻层：网络管理、角色表现装配、场景切换、单机角色、网络出生点）
+  → MultiplayerSampleScene（玩法层：地形、碰撞与光照）
 ```
 
 Mirror 的 `onlineScene` 保持为空。`SceneChanger` 负责玩法场景加载，NetworkManager 负责连接、身份、玩家创建和网络同步。
@@ -65,10 +38,10 @@ Mirror 的 `onlineScene` 保持为空。`SceneChanger` 负责玩法场景加载�
 `AutoStartClient` 在编辑器和普通客户端构建中运行：
 
 1. 检查当前进程类型和 Mirror 活动状态。
-2. 使用 `NetworkManager.networkAddress` 指定连接目标，当前 Prefab 配置为 `127.0.0.1`。
+2. 使用 `NetworkManager.networkAddress` 指定连接目标。
 3. 调用 `NetworkManager.StartClient`。
 4. 连接结束后继续监视状态。
-5. 断开时等待 3 秒再次连接。
+5. 断开时等待重试间隔后再次连接。
 
 ## 服务器启动
 
@@ -103,7 +76,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 本地 Camera 成为 `inputSpace` 和 `MainCamera`。
 - 远程 Camera、`ThirdPersonCamera` 和 `AudioListener` 保持关闭。
 - 连接完成后场景单机角色关闭。
-- 单机角色通过 `NetworkCharacterManager.standalonePlayer` 场景引用启停，当前绑定常驻场景中的“娜娜莉（学园之星）”实例。单机相机、控制器和监听器分别由 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 引用该角色的 `Main Camera` 组件；不再全局查找或查询父级网络身份。
+- 单机角色通过 `NetworkCharacterManager.standalonePlayer` 场景引用启停，单机相机、控制器和监听器由对应的场景引用指向该角色的 `Main Camera`，不全局查找或查询父级网络身份。
 - Additive 场景加载完成后再次收拢相机和单机角色。
 
 `presentations` 按玩家保存实例、编号、来源 Prefab、相机身份和组件缓存。重复回调命中有效实例、相同编号与 Prefab 时复用状态；身份变化时更新相机配置，Prefab 变化时替换表现实例。Host 和远端客户端均通过 `CommandSetCharacter` 提交角色选择，服务器校验后更新 SyncVar。

@@ -13,9 +13,9 @@
 | 渲染管线、URP 资产、三渲二着色器与调参 | `Project_Guide.md`、`Assets/Core/Shaders/Toon/TOON_MIGRATION.md` |
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
-| Prefab 组件组成与序列化配置值 | `Project_Guide.md` |
+| Prefab 组件组成 | `Project_Guide.md` |
 | 角色 FBX 导入、Humanoid Avatar 与骨骼映射 | `Project_Guide.md`、`../Character/Character_Guide.md` |
-| 学园之星裙摆起点、动态骨骼参数与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对 Local、Sync 两套 Prefab |
+| 学园之星裙摆起点、动态骨骼与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对 Local、Sync 两套 Prefab |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Mirror_KCP_Config.md` |
 | 场景列表与场景职责 | `../Scene/Scene_Guide.md` |
 | 角色 Prefab 与移动配置 | `../Character/Character_Guide.md` |

@@ -6,13 +6,13 @@
 
 ## 当前组件
 
-- `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，Prefab 地址为 `127.0.0.1`，断线后每 3 秒重试。批处理进程、活动 Server 和活动 Client 跳过自动连接。
+- `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，断线后按重试间隔重连。批处理进程、活动 Server 和活动 Client 跳过自动连接。
 - `NetworkCharacterManager`：按角色编号维护本地角色 Prefab 与同步角色 Prefab，装配网络玩家表现，管理相机归属，并切换单机与联机表现。
 - `NetworkCharacterSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
 - `NetworkCharacterMovementSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
 - `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync` 和 `NetworkCharacterMovementSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
-- `NetworkStartPosition`：`PersistentScene` 中的 `NetworkPlayerSpawn_A` 与 `NetworkPlayerSpawn_B`。
+- `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
 项目网络脚本位于 `Assets/Core/Scripts/Networking/`。
 
@@ -62,7 +62,7 @@ AutoStartClient.StartClient
 
 ## 表现模式与相机收拢
 
-单机角色通过管理器的 `standalonePlayer` 场景序列化引用切换激活状态。单机相机、控制器和监听器分别通过 `standaloneCameras`、`standaloneCameraControllers`、`standaloneListeners` 场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件。
+单机角色通过管理器的场景序列化引用切换激活状态，单机相机、控制器和监听器由对应的场景引用数组启停。`ApplyPresentationMode`、`SetStandalonePlayerEnabled`、`SetStandaloneCameraEnabled` 均为实例方法，新增场景组件必须显式配置。动态生成的网络表现仍在装配时缓存自身子层级组件。
 
 `NetworkCharacterManager` 在 `NetworkClient.isConnected=true` 后进入联机表现模式：
 
@@ -91,10 +91,10 @@ AutoStartClient.StartClient
 
 `Assets/Core/Scripts/Networking/` 中的可配置字段通过中文 `Tooltip` 提供用途、单位和配置约束。运行时缓存与关键装配入口使用源码注释说明数据归属和调用关系。
 
-- `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；服务端地址统一配置在 `NetworkManager.networkAddress`；`reconnectInterval` 使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
+- `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；服务端地址统一配置在 `NetworkManager.networkAddress`；重连间隔使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
 - `NetworkCharacterManager`：`localCharacterPrefabs` 与 `characterPrefabs` 按下标配对；`defaultCharacterId` 是本机默认编号，客户端在本地玩家启动时上报它，服务器进程内的该字段是兜底编号。`presentations` 统一维护每个玩家的装配状态，清理时解除动画和输入引用、销毁实例并移除该状态。
 - `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。本机默认编号在本地玩家启动时上报一次，运行中的角色选择由拥有者经同一个 `Command` 提交到服务器，服务器拒收未通过校验的编号并记录警告。
-- `NetworkCharacterMovementSync`：`syncInterval` 为 `0.1` 秒，可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并按 1 秒间隔限流记录警告。上行读取根控制器缓存的当前快照。
+- `NetworkCharacterMovementSync`：按 `syncInterval` 以可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并限流记录警告。上行读取根控制器缓存的当前快照。
 
 ## 维护触发
 

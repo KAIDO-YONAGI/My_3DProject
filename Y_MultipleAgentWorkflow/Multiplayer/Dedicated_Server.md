@@ -6,17 +6,7 @@
 
 ## 当前实现
 
-服务端能力由 `PersistentScene` 中的 NetworkManager 实例、`Assets/Core/Prefabs/NetworkManager.prefab`、`KcpTransport`、玩家 Prefab 和 Windows Server 构建共同承载。
-
-- `HeadlessStartMode=AutoStartServer`。
-- KCP 使用 UDP `7777`。
-- `runInBackground=true`。
-- `maxConnections=100`。
-- `sendRate=60`。
-- `onlineScene` 为空。
-- `autoCreatePlayer=true`。
-- 出生点选择模式为 `Random`。
-- 玩家 Prefab 为 `Assets/Core/Prefabs/NetworkPlayer.prefab`。
+服务端能力由 `PersistentScene` 中的 NetworkManager 实例、`Assets/Core/Prefabs/NetworkManager.prefab`、`KcpTransport`、玩家 Prefab 和 Windows Server 构建共同承载。服务器以 `HeadlessStartMode=AutoStartServer` 启动，在 UDP 上监听，出生点选择模式为 `Random`。完整参数值见 `../Project/Mirror_KCP_Config.md`。
 
 ## 启动流程
 
@@ -26,7 +16,7 @@ Windows Server 构建启动
   → StartServer
   → NetworkServer.Listen
   → KcpTransport.ServerStart
-  → KcpServer 在 UDP 7777 绑定 socket
+  → KcpServer 绑定 UDP socket
   → 接收客户端握手和 Mirror 消息
 ```
 
@@ -46,7 +36,7 @@ Windows Server 构建启动
 - 输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/Server/`。
 - 可执行文件名为 `My_3DProject.exe`。
 - 服务端启动日志显示监听 UDP `7777`。
-- 构建包含 `InitialScene`、`PersistentScene`、`MultiplayerSampleScene` 和 `MultiplayerSampleScene 1`。
+- 构建场景清单与客户端一致。
 
 ## 维护触发
 
