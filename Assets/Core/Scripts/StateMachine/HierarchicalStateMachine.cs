@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Core.My_FrameWork.Scripts.StateMachine
+namespace Core.Scripts.StateMachine
 {
     /// <summary>
     /// 同步分层状态机。

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.StateMachine;
+using Core.Scripts.StateMachine;
 using NUnit.Framework;
 
 public sealed class HierarchicalStateMachineTests

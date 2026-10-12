@@ -1,4 +1,4 @@
-namespace Core.My_FrameWork.Scripts.StateMachine
+namespace Core.Scripts.StateMachine
 {
     /// <summary>
     /// 分层状态机的状态节点。

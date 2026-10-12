@@ -1,5 +1,5 @@
 using System;
-using Core.My_FrameWork.Scripts.StateMachine;
+using Core.Scripts.StateMachine;
 
 namespace Core.Scripts.Character.Movement.States
 {

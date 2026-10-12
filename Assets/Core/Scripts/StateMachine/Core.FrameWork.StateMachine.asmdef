@@ -1,6 +1,6 @@
 {
   "name": "Core.FrameWork.StateMachine",
-  "rootNamespace": "Core.My_FrameWork.Scripts.StateMachine",
+  "rootNamespace": "Core.Scripts.StateMachine",
   "references": [],
   "includePlatforms": [],
   "excludePlatforms": [],
