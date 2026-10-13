@@ -58,6 +58,9 @@ namespace Core.Scripts.Networking
         public override void OnSerialize(
             NetworkWriter writer, bool initialState)
         {
+            //这是syncVar通道 如果不写 则特性不可用
+            //不过代价是占用每次8字节的带宽 
+            base.OnSerialize(writer, initialState);
             // 拥有者读取本地移动结果；服务器读取 OnDeserialize 保存的有效快照。
             CharacterMotion motion = controller.CurrentMotion;
 
@@ -78,6 +81,7 @@ namespace Core.Scripts.Networking
         public override void OnDeserialize(
             NetworkReader reader, bool initialState)
         {
+            base.OnDeserialize(reader, initialState);
             // 本地拥有者使用自己计算的状态。
             if (isOwned) 
                 return;

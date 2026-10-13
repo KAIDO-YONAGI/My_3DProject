@@ -28,11 +28,11 @@ namespace Core.Scripts.Networking
         [SerializeField, Min(0)] private int defaultCharacterId;
 
         [Header("场景单机角色")]
-        [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用；请引用场景对象，不要引用角色 Prefab。")]
+        [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用。")]
         [SerializeField] private GameObject standalonePlayer;
 
         [Header("场景单机相机")]
-        [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件，不要引用 Prefab。")]
+        [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件。")]
         [SerializeField] private UnityEngine.Camera[] standaloneCameras = new UnityEngine.Camera[0];
         [Tooltip("需要随单机模式启停的场景 ThirdPersonCamera。")]
         [SerializeField] private ThirdPersonCamera[] standaloneCameraControllers = new ThirdPersonCamera[0];
@@ -112,7 +112,7 @@ namespace Core.Scripts.Networking
             bool networkMode = IsNetworkPresentationActive();
             if (networkPresentationMode == networkMode)
             {
-                return;
+                return;//状态没变就不往下走
             }
 
             networkPresentationMode = networkMode;
