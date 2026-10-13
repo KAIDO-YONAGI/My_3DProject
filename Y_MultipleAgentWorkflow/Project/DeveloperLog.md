@@ -1,5 +1,13 @@
 # Project 开发记录
 
+## 2026-10-13：配置角色共享动画逻辑与覆盖资产
+
+- `Assets/Core/Animations/Characters/娜娜莉（华丽飞踢）.overrideController` 与 `娜娜莉（学园之星）.overrideController` 共用 `Assets/Core/Models/Resources/CharacterLocomotion.controller`，各绑定 22 个有效动画片段。
+- 两个 Local、两个 Sync 和两个模型目录 Prefab 的 Animator 引用对应覆盖资产，Root Motion 关闭。角色动画片段通过覆盖资产 Inspector 配置，混合树和跳跃转换通过共用 Controller 的 Animator 窗口配置。
+- `NetworkPlayer` 保存运动参数，模型挂载与切换绑定已配置的 Animator，保留根运动驱动。共用覆盖资产由资源系统管理，多个 Animator 独立保存参数。
+- 验证：`Core.EditorTests` 34/34，`Core.Networking.PlayModeTests` 12/12，132 个槽位引用匹配迁移基线，六个 Prefab 的 30 项实际动画播放检查通过。证据见 `Logs/AnimatorEditorConfig/Verification.json`。
+- Character、Project 两域 Guide 与 Router 同步，Project 维护计数为 `3/5`。
+
 ## 2026-10-11：修复三渲二着色器 LOD 交叉淡化的编译错误
 
 - 根因：`NiloToonShared.hlsl` 的 `AlphaClipAndLODTest` 调用 `LODFadeCrossFade()`，而该函数只由 URP 的 `LODCrossFade.hlsl` 声明，本目录 5 个 HLSL 头文件都没有包含它。编译 `LOD_FADE_CROSSFADE` 变体时报 `undeclared identifier 'LODFadeCrossFade'`，位置 `Assets/Core/Shaders/Toon/NiloToonShared.hlsl(497)`，平台 d3d11。`ToonLit.shader` 的 ForwardLit、Outline、ShadowCaster、DepthOnly、DepthNormalsOnly 五个 Pass 都声明了 `#pragma multi_compile_fragment _ LOD_FADE_CROSSFADE`，该变体在播放器构建期参与编译。

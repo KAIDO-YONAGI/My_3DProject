@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-CHARACTER`
 状态：`Active`
-维护计数：`2/5`
-最后更新：`2026-10-11`
+维护计数：`3/5`
+最后更新：`2026-10-13`
 
 ## 任务路由
 
@@ -11,6 +11,7 @@
 |---|---|
 | 客户端启动、输入、移动、动画、本地相机 | `Character_Guide.md` |
 | 角色运动算法和输入数据流 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/` |
+| Animator 混合树、跳跃转换与角色 Override Controller | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取共用 Controller 与 `Assets/Core/Animations/Characters/` |
 | Idle、Run、Sprint、Rising、Falling、状态机与状态内混合 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Movement/States/` |
 | 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Character_Guide.md`，并读取 `Assets/Core/Input/` |
@@ -36,6 +37,9 @@
 - `Assets/Core/Scripts/StateMachine/`
 - `Assets/Tests/Editor/CharacterMovementStateMachineTests.cs`
 - `Assets/Tests/Editor/HierarchicalStateMachineTests.cs`
+- `Assets/Tests/Editor/CharacterUpdateLoopTests.cs`
+- `Assets/Core/Models/Resources/CharacterLocomotion.controller`
+- `Assets/Core/Animations/Characters/`
 - `Assets/Core/Scripts/Camera/`
 - `Assets/Core/Input/`
 - `Assets/Tests/PlayMode/Camera/`
@@ -47,6 +51,8 @@
 
 - `workflow:Character`
 - `path:Assets/Core/Scripts/Character`
+- `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
+- `path:Assets/Core/Animations/Characters`
 - `path:Assets/Core/Scripts/StateMachine`
 - `path:Assets/Core/Scripts/Camera`
 - `path:Assets/Core/Input`

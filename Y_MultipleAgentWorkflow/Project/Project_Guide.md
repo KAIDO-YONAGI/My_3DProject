@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-11`
+最后核验：`2026-10-13`
 
 ## 渲染管线
 
@@ -51,7 +51,7 @@
 - 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
-- 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画配置位于 `Animation/`。
+- 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`。
 - 测试程序集位于 `Assets/Tests/`：`Editor/` 为 `Core.EditorTests`，`PlayMode/Camera/` 为 `Core.Camera.PlayModeTests`，`PlayMode/Networking/` 为 `Core.Networking.PlayModeTests`。移动或重命名测试脚本时必须连同 `.meta` 一起移动。
 
@@ -103,9 +103,22 @@
 | `0` | `CharactersForLocal/娜娜莉（华丽飞踢）.prefab` | `CharactersForSync/娜娜莉（华丽飞踢）_Sync.prefab` |
 | `1` | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
 
-默认编号取客户端本机的 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报，服务器进程内的该字段是兜底编号。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型、Animator 和动画配置。
+默认编号取客户端本机的 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报，服务器进程内的该字段是兜底编号。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型和已绑定角色覆盖资产的 Animator。
 
-模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用，根节点承担网络 Transform、运动和碰撞。重绑只复制动画配置和本地相机参考，保留根 `CharacterMotor` 的速度与代码状态。
+模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用，根节点承担网络 Transform、运动和碰撞。重绑绑定模型已配置的 Animator，复制骨骼跟随配置和本地相机参考，保留根 `CharacterMotor` 的速度与代码状态。
+
+### 角色动画 Controller
+
+`Assets/Core/Models/Resources/CharacterLocomotion.controller` 是共用逻辑资产，Animator 窗口维护 Grounded 内的 Direct 混合树、Run 与 Sprint 的方向混合树，以及 Grounded 与 Jump 之间的转换。参数、过渡时长和落地行为见 `../Character/Character_Guide.md` 的“编辑器动画配置”。
+
+| 角色 | Animator Controller 引用 |
+|---|---|
+| 华丽飞踢 | `Assets/Core/Animations/Characters/娜娜莉（华丽飞踢）.overrideController` |
+| 学园之星 | `Assets/Core/Animations/Characters/娜娜莉（学园之星）.overrideController` |
+
+两份 `AnimatorOverrideController` 共用逻辑资产，各覆盖待机、跳跃和两组十方向移动，共 22 个有效片段槽位。角色片段通过覆盖资产 Inspector 配置，同一角色的 Local、Sync 与模型目录中的 Prefab 共用一份覆盖资产。六个 Prefab 的 Root Motion 均关闭。
+
+`CharacterAnimator` 使用 Animator 已绑定的 Controller 执行初始化、参数写入与落地首帧处理。模型重绑与销毁保持共用覆盖资产引用有效，各 Animator 的参数独立。
 
 ### 华丽飞踢模型与 Avatar 导入
 
@@ -131,8 +144,8 @@
 
 ## 验证覆盖
 
-`Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、本地角色 Prefab 完整性和出生点高度。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
+`Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、本地角色 Prefab 完整性、出生点高度、两份角色动画覆盖资产的完整性和六个 Prefab 的 Controller 绑定。`Core.Networking.PlayModeTests` 覆盖模型延迟挂载后的 Controller 绑定与初始化。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
 
 ## 维护触发
 
-修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
+修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。

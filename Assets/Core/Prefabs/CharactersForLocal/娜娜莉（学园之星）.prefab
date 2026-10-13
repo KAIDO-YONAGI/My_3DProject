@@ -3369,10 +3369,10 @@ Animator:
   m_GameObject: {fileID: 1418679974092018017}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: fe966f01d79457f44969176ebdd4d62a, type: 3}
-  m_Controller: {fileID: 9100000, guid: a24d00e550624540afae18e9578161c1, type: 2}
+  m_Controller: {fileID: 22100000, guid: b5443ffea90c7554b9b52d3f29519732, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 1
-  m_ApplyRootMotion: 1
+  m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_WarningMessage: 
@@ -3433,78 +3433,6 @@ MonoBehaviour:
     groundedPull: -2
     orientToMovement: 0
     airborneTolerance: 0.3
-  idleClip: {fileID: 7400000, guid: 6ecc931ef52f4498aabccd9cb9b23164, type: 3}
-  runDirectionalSet:
-    label: Run 2D Blend
-    samples:
-    - label: Forward
-      position: {x: 0, y: 1}
-      clip: {fileID: 7400000, guid: a3546959e5974b6881520a32bf6f0a4e, type: 3}
-    - label: Front Right Diagonal
-      position: {x: 0.7071, y: 0.7071}
-      clip: {fileID: 7400000, guid: ce2d7e97219642d9b312e24789681816, type: 3}
-    - label: Right Forward
-      position: {x: 1, y: 0.25}
-      clip: {fileID: 7400000, guid: f8d41e179a8c46ca9b4c284ed707d363, type: 3}
-    - label: Right Backward
-      position: {x: 1, y: -0.25}
-      clip: {fileID: 7400000, guid: c8851acb192d43b699dc4a9917be26cf, type: 3}
-    - label: Back Right Diagonal
-      position: {x: 0.7071, y: -0.7071}
-      clip: {fileID: 7400000, guid: 356b6f8b779d457e914250d46962d3db, type: 3}
-    - label: Backward
-      position: {x: 0, y: -1}
-      clip: {fileID: 7400000, guid: 71b623f1a12b4fcc9afb6015d4f29c1c, type: 3}
-    - label: Back Left Diagonal
-      position: {x: -0.7071, y: -0.7071}
-      clip: {fileID: 7400000, guid: 21643f0413134eaaa07cc2821e4f799f, type: 3}
-    - label: Left Backward
-      position: {x: -1, y: -0.25}
-      clip: {fileID: 7400000, guid: 4cacab9a820d4a539a0ff97ceef2a871, type: 3}
-    - label: Left Forward
-      position: {x: -1, y: 0.25}
-      clip: {fileID: 7400000, guid: 94c258742b9e43ad8d64d4955e0e2b8f, type: 3}
-    - label: Front Left Diagonal
-      position: {x: -0.7071, y: 0.7071}
-      clip: {fileID: 7400000, guid: 00c1f9b285364d8c95dc6c8f965bba2b, type: 3}
-  sprintDirectionalSet:
-    label: Sprint 2D Blend
-    samples:
-    - label: Forward
-      position: {x: 0, y: 1}
-      clip: {fileID: 7400000, guid: 8f2f0a696520433db07a197b32df4f58, type: 3}
-    - label: Front Right Diagonal
-      position: {x: 0.7071, y: 0.7071}
-      clip: {fileID: 7400000, guid: dee7503f09de4d4cbf80606325e6a5a0, type: 3}
-    - label: Right Forward
-      position: {x: 1, y: 0.25}
-      clip: {fileID: 7400000, guid: 9a61631e60444753b666e870cf5ed542, type: 3}
-    - label: Right Backward
-      position: {x: 1, y: -0.25}
-      clip: {fileID: 7400000, guid: 58551fc6c0254d1880f827ccac88ecba, type: 3}
-    - label: Back Right Diagonal
-      position: {x: 0.7071, y: -0.7071}
-      clip: {fileID: 7400000, guid: 89bdde5e4b6b4431b40b7f9b625bfd49, type: 3}
-    - label: Backward
-      position: {x: 0, y: -1}
-      clip: {fileID: 7400000, guid: f835d5b047724314871864f14e72d1c6, type: 3}
-    - label: Back Left Diagonal
-      position: {x: -0.7071, y: -0.7071}
-      clip: {fileID: 7400000, guid: 061164f6dd614b619ff1ee4a8efc826a, type: 3}
-    - label: Left Backward
-      position: {x: -1, y: -0.25}
-      clip: {fileID: 7400000, guid: 3c6cf82619b04b58bf8d578defcd0ad0, type: 3}
-    - label: Left Forward
-      position: {x: -1, y: 0.25}
-      clip: {fileID: 7400000, guid: ba655836b0274680af370b21900ca71b, type: 3}
-    - label: Front Left Diagonal
-      position: {x: -0.7071, y: 0.7071}
-      clip: {fileID: 7400000, guid: 98a3325488994e1bb4f282c7e036b682, type: 3}
-  jumpAnimationSet:
-    fullJumpClip: {fileID: 7400000, guid: 482624fbae274a8a885d34de2dadd8a9, type: 3}
-    jumpStartClip: {fileID: 0}
-    jumpUpLoopClip: {fileID: 0}
-    jumpDownLoopClip: {fileID: 0}
   ponytailFollower:
     enabled: 1
     headBone: {fileID: 5418918230854163198}

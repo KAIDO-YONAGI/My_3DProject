@@ -2,7 +2,7 @@
 
 文档 ID：`CHARACTER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-11`
+最后核验：`2026-10-13`
 
 ## 角色渲染
 
@@ -54,7 +54,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - `CharacterMotor` 根据相机水平朝向计算世界移动方向，处理加减速、重力、跳跃和 `CharacterController.Move`。
 - `CharacterMovementStateMachine` 接收 `CharacterMotor` 的运动后反馈，维护五个离散状态；状态树按「根 → 地面/空中 → 叶子」三层组织，`CharacterMotion.State` 记录当前叶子状态。
 - `CharacterMotion` 保存动画层使用的移动状态。
-- `CharacterAnimator` 配置方向动画和 AnimatorOverrideController。
+- `CharacterAnimator` 读取 `CharacterMotion`，驱动已配置 Animator 的参数并处理落地首帧。
 - `CharacterBoneFollower` 在动画更新后执行骨骼跟随。
 - `ThirdPersonCamera` 保留序列化配置、`SetTarget` 和生命周期编排；普通 C# 对象 `CameraOrbitState`、`CameraCursorController`、`CameraCollisionResolver` 与 `CameraRotationMath` 分别负责轨道状态、光标状态、最终候选避让和旋转数学。
 
@@ -69,12 +69,31 @@ CharacterInputReader（PlayerControls.inputactions）
 - 状态机**不对外暴露状态转换边沿**，边沿信息无法跨客户端复现；需要落地这类边沿的表现层自行比较相邻两帧快照，本地与远程才有一致语义。
 - `CharacterMotor` 在移动前读取 `CharacterController.isGrounded` 决定跳跃许可，依次处理跳跃、目标水平速度、加减速与空中控制和重力，每帧只调用一次 `CharacterController.Move`，再清除顶碰上升速度、处理接地拉力、维护非跳跃离地计时并更新代码状态。
 - 运动链路按帧长积分，起跳在按下当帧生效，动画权重直接取输入幅度。松开输入后物理速度按配置的减速度衰减。
-- Animator 保留 Grounded 内 Idle/Run/Sprint 与方向混合；`Rising` 与 `Falling` 使用 Jump 素材，落地时重置权重，缺失素材回退到 Idle 或前进跑步片段。
-- `CharacterAnimator.Initialize` 在绑定素材时缓存跑步组与冲刺组的可用性，`Apply` 读取缓存并写入动画参数。角色模型重绑时创建动画驱动并重新计算缓存。
+- Animator 的 Grounded 状态通过 Direct 混合树组合 Idle、Run、Sprint，Run 与 Sprint 各使用一个方向混合树；`Rising` 与 `Falling` 使用 Jump 片段，落地首帧重置为待机权重，下一帧恢复运动权重。
+- `CharacterAnimator.Initialize` 使用 Animator 已绑定的 Controller，关闭 Root Motion、执行 `Rebind` 并初始化参数。`Apply` 写入方向、接地和运动权重；`LocomotionWeight01` 夹取到 `0..1`。模型重绑创建新的动画驱动，沿用 Inspector 配置的 Controller 资产和根对象的运动驱动。
 
 `CharacterMotion` 是 `CharacterMotor` 输出给 `CharacterAnimator` 的单帧表现快照，字段为离散状态 `State`、角色自身坐标系的移动方向 `LocalDirection` 和移动权重 `LocomotionWeight01`。`IsGrounded` 与 `WantsSprint` 由 `State` 派生。网络传输该快照的字段约定见 `../Multiplayer/Sync_Protocol.md`。
 
 `CharacterMotionSnapshot`（`Animation/CharacterMotionSnapshot.cs`）是其中**能够跨客户端复现**的那部分，也是网络传输的唯一格式，只含上述三个字段。远程角色经 `PlayerCharacterController.ReceiveRemoteMotion(CharacterMotionSnapshot)` 接收后构造表现快照，表现层只依赖该结构体的字段。
+
+## 编辑器动画配置
+
+共用逻辑资产为 `Assets/Core/Models/Resources/CharacterLocomotion.controller`。在 Animator 窗口维护混合树、方向采样位置与跳跃转换。
+
+- Grounded 的 Direct 混合树使用 `IdleWeight`、`RunWeight`、`SprintWeight`，运行时三者之和为 `1`。
+- Run 与 Sprint 均为 `2D Freeform Directional`，使用 `MoveX`、`MoveY`，各有十个方向采样点。
+- `Grounded` 布尔参数为 false 时进入 Jump，为 true 时返回 Grounded。两个转换均使用固定 `0.1` 秒过渡并关闭 Exit Time。
+
+每个角色的动画片段在对应 `AnimatorOverrideController` 的 Inspector 中配置：
+
+| 角色 | 覆盖资产 |
+|---|---|
+| 华丽飞踢 | `Assets/Core/Animations/Characters/娜娜莉（华丽飞踢）.overrideController` |
+| 学园之星 | `Assets/Core/Animations/Characters/娜娜莉（学园之星）.overrideController` |
+
+每份资产覆盖 22 个槽位：`__Idle`、`__Jump`、十个 `__Run_` 方向槽位和十个 `__Sprint_` 方向槽位，全部绑定有效片段。同一角色的 Local、Sync 与模型目录中的 Prefab 共用该覆盖资产，Animator 的 Controller 字段引用它。替换角色动画时选择覆盖资产，在 Inspector 的对应槽位指定片段；调整混合或转换规则时编辑共用 Controller。
+
+`PlayerCharacterController` 保存运动、骨骼跟随与相机配置，模型重绑复制骨骼跟随配置和相机参考，并绑定模型已配置的 Animator。Controller 资产生命周期归资源系统管理，同一覆盖资产可供多个 Animator 使用，各实例独立维护动画参数。
 
 ## 人形映射与面部骨骼
 
@@ -132,7 +151,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 目录约定
 
-- 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。移动参数随运动代码，动画配置随动画代码。
+- 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。移动参数随运动代码，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 通用分层状态机框架归入 `Assets/Core/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`，`autoReferenced` 使其可被运行时与测试引用；角色专用的状态节点留在 `Movement/States/`，不放进框架目录。新增状态的写法和联网需同步改动的清单见该目录 `README.md`。
 - 相机位于 `Assets/Core/Scripts/Camera/Runtime/`。
 - `AutoStartClient`、`NetworkCharacterManager`、`NetworkCharacterSync` 位于 `Assets/Core/Scripts/Networking/`。
@@ -141,10 +160,10 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 验证覆盖
 
-`Core.EditorTests` 覆盖地面状态、起跳、最高点、下降、平台边缘掉落、落地，以及状态边沿信息与同步状态编号冻结；其中 `HierarchicalStateMachineTests` 覆盖分层框架的启动下钻、子树内兄弟切换、父状态发起转换时退出活动子状态、同帧完成转换、目标等于当前叶子时不重复触发钩子，以及回到祖先时重建默认分支。`CharacterUpdateLoopTests` 覆盖显式模型绑定、解绑后保留空引用、重绑时沿用运动驱动、动画素材可用性缓存、缺失素材回退与落地首帧权重重置。`Core.Camera.PlayModeTests` 与 `Core.Networking.PlayModeTests` 覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停与外部解锁后捕获、目标销毁重绑，以及限速积分一致性和暂停后平滑恢复。两个本地角色 Prefab 保留相机旋转参数的序列化字段。
+`Core.EditorTests` 覆盖地面状态、起跳、最高点、下降、平台边缘掉落、落地，以及同步状态编号冻结；其中 `HierarchicalStateMachineTests` 覆盖分层框架的启动下钻、子树内兄弟切换、父状态发起转换时退出活动子状态、同帧完成转换、目标等于当前叶子时不重复触发钩子，以及回到祖先时重建默认分支。`CharacterUpdateLoopTests` 覆盖显式模型绑定、解绑后保留空引用、重绑时沿用运动驱动、Inspector Controller 引用保持、共享覆盖资产的参数独立性、运动权重夹取、落地首帧重置，以及两份覆盖资产的 22 个槽位和六个 Prefab 引用完整性。`Core.Camera.PlayModeTests` 与 `Core.Networking.PlayModeTests` 覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停与外部解锁后捕获、目标销毁重绑，以及限速积分一致性和暂停后平滑恢复。网络表现测试同时覆盖模型延迟挂载时已配置 Controller 的绑定与初始化。两个本地角色 Prefab 保留相机旋转参数的序列化字段。
 
 两套华丽飞踢 Prefab 各播放全部配置片段，最大嘴部旋转与嘴部引起的蒙皮顶点差均为零；按两套 Prefab 实际配置调用 `CharacterAnimator.Initialize` 推进后，实际播放 `Idle_Wait_A`，嘴部旋转仍为零。
 
 ## 维护触发
 
-修改 Character 目录、Camera 目录、输入资产、输入系统设置、角色输入、CharacterController、动画数据流、本地相机、朝向参数与 Tooltip 约定、光标规则、分层状态机框架或角色状态树时更新本文档。角色 FBX 导入、人形 Avatar 映射或面部骨骼配置变化时，同时维护本文档与 `../Project/Project_Guide.md`；分层状态机框架的程序集边界变化时，同时维护 `../Project/Project_Guide.md` 的工程配置一节。
+修改 Character 目录、Camera 目录、输入资产、输入系统设置、角色输入、CharacterController、动画数据流、本地相机、朝向参数与 Tooltip 约定、光标规则、分层状态机框架或角色状态树时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、人形 Avatar 映射或面部骨骼配置变化时，同时维护本文档与 `../Project/Project_Guide.md`；分层状态机框架的程序集边界变化时，同时维护 `../Project/Project_Guide.md` 的工程配置一节。

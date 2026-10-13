@@ -99,7 +99,13 @@ public sealed class NetworkCharacterPresentationTests
     {
         Assert.That(GetField(controller, "animator"), Is.Null);
         Assert.That(GetField(controller, "animationDriver"), Is.Null);
-        localPrefab.AddComponent<Animator>();
+        RuntimeAnimatorController configuredController =
+            Resources.Load<RuntimeAnimatorController>("CharacterLocomotion");
+        Assert.That(configuredController, Is.Not.Null);
+        localPrefab.AddComponent<Animator>().runtimeAnimatorController = configuredController;
+        ((Behaviour)FindComponent(localPrefab, "PlayerCharacterController")).enabled = false;
+        localPrefab.GetComponentInChildren<Camera>(true).gameObject.SetActive(false);
+        localPrefab.SetActive(true);
         SetLocal(true);
 
         Apply();
@@ -108,7 +114,8 @@ public sealed class NetworkCharacterPresentationTests
         Assert.That(mountedAnimator, Is.Not.Null);
         Assert.That(GetField(controller, "animator"), Is.SameAs(mountedAnimator));
         Assert.That(GetField(controller, "animationDriver"), Is.Not.Null);
-        Assert.That(mountedAnimator.runtimeAnimatorController, Is.Not.Null);
+        Assert.That(mountedAnimator.runtimeAnimatorController, Is.SameAs(configuredController));
+        Assert.That(mountedAnimator.GetFloat("IdleWeight"), Is.EqualTo(1f));
         Assert.That(GetField(controller, "networkIdentity"), Is.SameAs(identity));
     }
 

@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`2/5`
-最后更新：`2026-10-11`
+维护计数：`3/5`
+最后更新：`2026-10-13`
 
 ## 任务路由
 
@@ -14,6 +14,7 @@
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
 | Prefab 组件组成 | `Project_Guide.md` |
+| 共用 Animator Controller、角色覆盖资产与 Prefab 动画绑定 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对共用 Controller 与 `Assets/Core/Animations/Characters/` |
 | 角色 FBX 导入、Humanoid Avatar 与骨骼映射 | `Project_Guide.md`、`../Character/Character_Guide.md` |
 | 学园之星裙摆起点、动态骨骼与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对 Local、Sync 两套 Prefab |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Mirror_KCP_Config.md` |
@@ -49,6 +50,8 @@
 - `Assets/Core/Prefabs/NetworkManager.prefab`
 - `Assets/Core/Prefabs/CharactersForLocal/`
 - `Assets/Core/Prefabs/CharactersForSync/`
+- `Assets/Core/Models/Resources/CharacterLocomotion.controller`
+- `Assets/Core/Animations/Characters/`
 - `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`
 - `Assets/Materials/`
 - `D:/Unity/Releases/3D_MultiplayerGame/`
@@ -62,6 +65,8 @@
 - `path:Assets/ToonEditor`
 - `path:Assets/Core/Scripts/GamePlayFrameWork`
 - `path:Assets/Core/Scripts/StateMachine`
+- `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
+- `path:Assets/Core/Animations/Characters`
 - `path:Assets/Rendering`
 - `path:Assets/Tests`
 - `path:Assets/Terrain`

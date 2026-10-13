@@ -142,18 +142,6 @@ MonoBehaviour:
     groundedPull: -2
     orientToMovement: 0
     airborneTolerance: 0.3
-  idleClip: {fileID: 0}
-  runDirectionalSet:
-    label: Run 2D Blend
-    samples: []
-  sprintDirectionalSet:
-    label: Sprint 2D Blend
-    samples: []
-  jumpAnimationSet:
-    fullJumpClip: {fileID: 0}
-    jumpStartClip: {fileID: 0}
-    jumpUpLoopClip: {fileID: 0}
-    jumpDownLoopClip: {fileID: 0}
   ponytailFollower:
     enabled: 0
     headBone: {fileID: 0}

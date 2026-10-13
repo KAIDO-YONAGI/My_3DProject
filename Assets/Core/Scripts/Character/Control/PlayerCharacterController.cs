@@ -28,13 +28,6 @@ namespace Core.Scripts.Character.Control
         // 参数对象只描述手感，实际速度状态保存在 CharacterMotor 中。
         [SerializeField] private CharacterMovementSettings movementSettings = new CharacterMovementSettings();
 
-        [Header("动画")]
-        // 这些素材会覆盖 Resources/CharacterLocomotion.controller 中的通用占位片段。
-        [SerializeField] private AnimationClip idleClip;
-        [SerializeField] private DirectionalAnimationSet runDirectionalSet = new DirectionalAnimationSet();
-        [SerializeField] private DirectionalAnimationSet sprintDirectionalSet = new DirectionalAnimationSet();
-        [SerializeField] private CharacterJumpAnimationSet jumpAnimationSet = new CharacterJumpAnimationSet();
-
         [Header("发辫跟随")]
         // 可选修正项，在 Animator 完成骨骼更新后执行。
         [SerializeField] private CharacterBoneFollower ponytailFollower = new CharacterBoneFollower();
@@ -42,7 +35,7 @@ namespace Core.Scripts.Character.Control
         // 输入读取器按需创建 PlayerControls，只有真正读取输入的本地玩家才会占用输入资源。
         private readonly CharacterInputReader input = new();
 
-        // 两个运行时对象不参与序列化，分别管理运动状态和 AnimatorOverrideController。
+        // 两个运行时对象不参与序列化，分别管理运动状态和动画参数。
         private CharacterMotor motor;
         private CharacterAnimator animationDriver;
         private NetworkIdentity networkIdentity;
@@ -113,9 +106,6 @@ namespace Core.Scripts.Character.Control
 
         private void OnDestroy()
         {
-            // CharacterAnimator 内部创建了运行时覆盖器，需要显式释放。
-            animationDriver?.Dispose();
-
             // 生成的包装类在终结时会断言动作表仍然启用，必须显式释放输入资源。
             input.Dispose();
         }
@@ -157,12 +147,7 @@ namespace Core.Scripts.Character.Control
 
             if (animationDriver == null && animator != null)
             {
-                animationDriver = new CharacterAnimator(
-                    animator,
-                    idleClip,
-                    runDirectionalSet,
-                    sprintDirectionalSet,
-                    jumpAnimationSet);
+                animationDriver = new CharacterAnimator(animator);
                 animationDriver.Initialize();
                 ponytailFollower.Initialize(animator);
             }
@@ -175,15 +160,12 @@ namespace Core.Scripts.Character.Control
         /// </summary>
         public void RebindAnimator(Animator replacementAnimator, PlayerCharacterController visualConfiguration = null)
         {
-            animationDriver?.Dispose();
             animationDriver = null;
             animator = replacementAnimator;
 
-            // 当前本地或远程视觉预制体拥有具体角色的 Idle/Run/Sprint/Jump 素材；
-            // 网络根对象只负责移动和网络身份，因此绑定 Animator 时必须把这些配置复制过来。
             if (visualConfiguration != null)
             {
-                CopyAnimationConfiguration(visualConfiguration);
+                CopyVisualConfiguration(visualConfiguration);
             }
 
             // 清空引用时只保留“无动画驱动”状态，避免 CacheReferences 又找回正在销毁的旧模型。
@@ -205,16 +187,11 @@ namespace Core.Scripts.Character.Control
         }
 
         /// <summary>
-        /// 从当前视觉预制体的控制器复制动画素材配置。
+        /// 从当前视觉预制体的控制器复制骨骼跟随配置。
         /// 不复制 CharacterController、移动参数和输入引用，避免远程视觉模型重新接管移动。
         /// </summary>
-        private void CopyAnimationConfiguration(PlayerCharacterController source)
+        private void CopyVisualConfiguration(PlayerCharacterController source)
         {
-            idleClip = source.idleClip;
-            runDirectionalSet = source.runDirectionalSet;
-            sprintDirectionalSet = source.sprintDirectionalSet;
-            jumpAnimationSet = source.jumpAnimationSet;
-
             // 发辫跟随配置属于角色视觉预制体，网络根对象只在这里接管它的引用，
             // 不重新创建或改写视觉预制体上的 DynamicBone 组件。
             ponytailFollower.CopyConfigurationFrom(source.ponytailFollower);
@@ -244,9 +221,6 @@ namespace Core.Scripts.Character.Control
         private void EnsureSettings()
         {
             movementSettings ??= new CharacterMovementSettings();
-            runDirectionalSet ??= new DirectionalAnimationSet();
-            sprintDirectionalSet ??= new DirectionalAnimationSet();
-            jumpAnimationSet ??= new CharacterJumpAnimationSet();
             ponytailFollower ??= new CharacterBoneFollower();
         }
 

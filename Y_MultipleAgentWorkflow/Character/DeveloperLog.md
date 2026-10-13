@@ -1,5 +1,13 @@
 # Character 开发记录
 
+## 2026-10-13：角色动画配置迁移到编辑器资产
+
+- 共用逻辑为 `Assets/Core/Models/Resources/CharacterLocomotion.controller`，Grounded 的 Direct 混合树组合 Idle、Run、Sprint，Run 与 Sprint 使用十方向混合，`Grounded` 参数控制 Jump 的进入与退出。
+- 两个角色分别配置 `Assets/Core/Animations/Characters/` 中的 `AnimatorOverrideController`，每份覆盖 22 个槽位。同一角色的 Local、Sync 和模型目录 Prefab 共用覆盖资产，六个 Animator 的 Root Motion 均关闭。
+- `CharacterAnimator` 负责读取 `CharacterMotion`、初始化、写参数和落地首帧重置。`PlayerCharacterController` 重绑模型时使用模型已配置的 Animator，复制骨骼跟随与相机参考，沿用根对象运动驱动。
+- 验证：`Core.EditorTests` 34/34，`Core.Networking.PlayModeTests` 12/12。六个 Prefab 的 132 个槽位引用与迁移基线逐项一致，待机、跑步、疾跑、跳跃、落地共 30 项实际播放检查通过。证据见 `Logs/AnimatorEditorConfig/Baseline.json` 与 `Verification.json`。
+- Character、Project 两域 Guide 与 Router 同步配置入口和资产引用，Character 维护计数为 `3/5`。
+
 ## 2026-10-11：修复空中重播跳跃动画
 
 - 现象：正常跳跃后角色在空中重播一次跳跃动画。
