@@ -1,4 +1,4 @@
-namespace Core.My_FrameWork.Scripts.Core
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Core
 {
     public enum SceneType
     {

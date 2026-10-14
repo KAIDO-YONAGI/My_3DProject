@@ -1,9 +1,9 @@
-using Core.My_FrameWork.Scripts.Core;
-using Core.My_FrameWork.Scripts.Scene;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.Scene;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.UI.SystemCanvasManagers
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI.SystemCanvasManagers
 {
     /// <summary>
     /// GameOver 画布管理器，结构和 ESCMenuManager 一致。

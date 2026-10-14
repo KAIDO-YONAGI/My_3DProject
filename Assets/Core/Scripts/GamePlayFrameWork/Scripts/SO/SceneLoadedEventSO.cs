@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.SO
+namespace Core.Scripts.GamePlayFrameWork.Scripts.SO
 {
     [CreateAssetMenu(fileName = "SceneLoadedEventSO", menuName = "Events/SceneLoadedEventSO", order = 1)]
     public class SceneLoadedEventSO : ScriptableObject

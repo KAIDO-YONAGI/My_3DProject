@@ -1,7 +1,7 @@
-using Core.My_FrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.Scene
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
 {
     public class TimeManager : YSingleton<TimeManager>
     {

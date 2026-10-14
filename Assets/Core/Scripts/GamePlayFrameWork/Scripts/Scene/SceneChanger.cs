@@ -1,11 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.Core;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Core.My_FrameWork.Scripts.Scene
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
 {
     /// <summary>
     /// 场景切换管理器：负责场景组的加载、卸载和过渡动画。

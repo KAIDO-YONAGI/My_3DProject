@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.SO
+namespace Core.Scripts.GamePlayFrameWork.Scripts.SO
 {
     [CreateAssetMenu(fileName = "SceneLoadEventSO", menuName = "Events/SceneLoadEventSO", order = 0)]
     public class SceneLoadEventSO : ScriptableObject

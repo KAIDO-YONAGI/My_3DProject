@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.Core
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Core
 {
     /// <summary>
     /// 抽象单例基类：提供只读 Instance 访问、重复实例销毁、OnDestroy 复位。

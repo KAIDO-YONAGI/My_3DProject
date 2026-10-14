@@ -1,9 +1,9 @@
-using Core.My_FrameWork.Scripts.Core;
-using Core.My_FrameWork.Scripts.SO;
-using Core.My_FrameWork.Scripts.UI.SystemCanvasManagers;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.UI.SystemCanvasManagers;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.UI
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI
 {
     public interface ICanvasManager
     {

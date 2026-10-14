@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.Scene
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
 {
     /// <summary>
     /// 保存绝不能由 SceneChanger 卸载的常驻场景运行时注册表。

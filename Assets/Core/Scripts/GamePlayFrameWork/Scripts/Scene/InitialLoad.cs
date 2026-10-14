@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Core.My_FrameWork.Scripts.Scene
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
 {
     public class InitialLoad : MonoBehaviour
     {

@@ -1,9 +1,9 @@
-using Core.My_FrameWork.Scripts.Core;
-using Core.My_FrameWork.Scripts.UI.SystemCanvasManagers;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.UI.SystemCanvasManagers;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Core.My_FrameWork.Scripts.UI
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI
 {
     public class ESCButton : MonoBehaviour
     {

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.Scene;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.Scene;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.UI
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI
 {
     public class ButtonSceneToggler : MonoBehaviour
     {

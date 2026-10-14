@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
 
-namespace Core.My_FrameWork.Scripts.UI.SystemCanvasManagers
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI.SystemCanvasManagers
 {
     /// <summary>
     /// 画布焦点栈：纯 C# 逻辑，负责维护已打开画布的顺序、当前焦点、sortingOrder 计算。

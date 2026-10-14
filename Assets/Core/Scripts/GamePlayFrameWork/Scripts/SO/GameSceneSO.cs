@@ -1,9 +1,9 @@
 using System;
-using Core.My_FrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
 using UnityEditor;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.SO
+namespace Core.Scripts.GamePlayFrameWork.Scripts.SO
 {
     [CreateAssetMenu(fileName = "GameSceneSO", menuName = "GameSceneSO/SceneSO", order = 0)]
     public class GameSceneSO : ScriptableObject {

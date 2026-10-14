@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Core.My_FrameWork.Scripts.SO;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.Scene
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
 {
     /// <summary>
     /// 关卡内传送触发器：玩家进入二维触发区域后，通过 SceneChanger 唯一入口切换完整场景组。

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.UI.SystemCanvasManagers
+namespace Core.Scripts.GamePlayFrameWork.Scripts.UI.SystemCanvasManagers
 {
     public class ExitManager : MonoBehaviour
     {

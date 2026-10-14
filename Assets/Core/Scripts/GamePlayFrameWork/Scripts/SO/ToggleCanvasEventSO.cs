@@ -1,8 +1,8 @@
 using System;
-using Core.My_FrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
 using UnityEngine;
 
-namespace Core.My_FrameWork.Scripts.SO
+namespace Core.Scripts.GamePlayFrameWork.Scripts.SO
 {
     [CreateAssetMenu(fileName = "ToggleCanvasEventSO", menuName = "Events/ToggleCanvasEventSO", order = 0)]
 //创建好之后不要忘了绑定到UIManager如果有键盘按键输入，可以一块绑定，没有也不影响
