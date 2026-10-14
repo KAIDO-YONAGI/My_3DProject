@@ -34,6 +34,10 @@ Thumbs.db
 *.meta
 !Assets/**/*.meta
 
+# Addressables 构建生成的链接器保留清单
+/Assets/Plugins/AddressableAssetsData/link.xml
+/Assets/Plugins/AddressableAssetsData/link.xml.meta
+
 # Local-only push helper (lives outside the repo on each machine)
 scripts/push.sh
 /push.sh
