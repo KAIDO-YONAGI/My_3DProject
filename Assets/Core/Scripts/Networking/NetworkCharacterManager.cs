@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera.Runtime;
 using Core.Scripts.Character.Control;
+using Core.Scripts.Character.Presentation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Core.Scripts.Networking
 {
     /// <summary>
-    /// 在 PersistentScene 中配置本地与远程角色资源，按网络玩家身份装配客户端表现。
+    /// 在 PersistentScene 中配置共用角色资源，按网络玩家身份装配客户端表现。
     /// 每个玩家的视觉实例、角色编号、来源 Prefab 和相机组件统一保存在表现状态中。
     /// </summary>
     public class NetworkCharacterManager : MonoBehaviour
@@ -15,16 +16,11 @@ namespace Core.Scripts.Networking
         /// <summary>网络玩家共用的角色表现管理器。</summary>
         public static NetworkCharacterManager Instance { get; private set; }
 
-        [Header("CharactersForLocal 本地玩家配置")]
+        [Header("角色资源")]
         // 下标对应角色编号，本地拥有者从这里取得模型、动画配置和本地相机。
-        [Tooltip("本地玩家的角色 Prefab 数组。下标从 0 开始作为角色编号，与 CharactersForSync 相同下标配置同一角色；本地 Prefab 提供模型、动画和本地相机。")]
-        [SerializeField] private GameObject[] localCharacterPrefabs = new GameObject[0];
-
-        [Header("CharactersForSync 远程角色配置")]
-        // 与本地数组的同一下标配置同一角色，供当前客户端显示远程玩家的模型和动画。
-        [Tooltip("远程玩家的同步表现 Prefab 数组。与 CharactersForLocal 按下标配对，配置 CharactersForSync 目录中的模型和动画资源；相机归属由本地玩家身份统一控制。")]
-        [SerializeField] private GameObject[] characterPrefabs = new GameObject[0];
-        [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号。编号从 0 开始，对应两套角色数组中同一下标，两个位置都需要配置有效 Prefab。")]
+        [Tooltip("每个编号配置一个完整角色 Prefab。单机、本地联机和远程联机共用它，运行时按身份启停组件。")]
+        [SerializeField] private GameObject[] characters = new GameObject[0];
+        [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号，对应角色资源条目下标。")]
         [SerializeField, Min(0)] private int defaultCharacterId;
 
         [Header("场景单机角色")]
@@ -53,6 +49,7 @@ namespace Core.Scripts.Networking
             public UnityEngine.Camera[] Cameras;
             public AudioListener[] Listeners;
             public ThirdPersonCamera[] CameraControllers;
+            public CharacterVisual Visual;
         }
         // 以网络玩家为键，统一查询、替换和清理其表现状态。
         private readonly Dictionary<NetworkCharacterSync, CharacterPresentation> presentations = new();
@@ -119,40 +116,21 @@ namespace Core.Scripts.Networking
             ApplyPresentationMode(networkMode);
         }
 
-        /// <summary>检查角色编号在两套数组中均对应有效 Prefab，供客户端请求和服务器校验使用。</summary>
+        /// <summary>检查角色编号是否配置了完整角色 Prefab，供客户端请求和服务器校验使用。</summary>
         public bool IsValidCharacterId(int requestedCharacterId)
         {
-            return localCharacterPrefabs != null
-                   && characterPrefabs != null
+            return characters != null
                    && requestedCharacterId >= 0
-                   && requestedCharacterId < localCharacterPrefabs.Length
-                   && requestedCharacterId < characterPrefabs.Length
-                   && localCharacterPrefabs[requestedCharacterId] != null
-                   && characterPrefabs[requestedCharacterId] != null;
+                   && requestedCharacterId < characters.Length
+                   && characters[requestedCharacterId] != null;
         }
 
-        /// <summary>校验两套数组的对应项，返回远程角色表现的 Prefab。</summary>
+        /// <summary>校验角色条目，返回远程角色表现的 Prefab。</summary>
         public bool TryGetCharacterPrefab(int requestedCharacterId, out GameObject characterPrefab)
         {
             if (IsValidCharacterId(requestedCharacterId))
             {
-                characterPrefab = characterPrefabs[requestedCharacterId];
-                return true;
-            }
-
-            characterPrefab = null;
-            return false;
-        }
-
-        // 本地装配检查本地数组，角色选择请求的双数组校验由 IsValidCharacterId 承担。
-        private bool TryGetLocalCharacterPrefab(int requestedCharacterId, out GameObject characterPrefab)
-        {
-            if (requestedCharacterId >= 0
-                && localCharacterPrefabs != null
-                && requestedCharacterId < localCharacterPrefabs.Length
-                && localCharacterPrefabs[requestedCharacterId] != null)
-            {
-                characterPrefab = localCharacterPrefabs[requestedCharacterId];
+                characterPrefab = characters[requestedCharacterId];
                 return true;
             }
 
@@ -162,8 +140,8 @@ namespace Core.Scripts.Networking
 
         /// <summary>
         /// 角色编号下行链路的本地装配终点，由 NetworkCharacterSync 的启动回调和 SyncVar hook 调用。
-        /// 使用服务器确认的编号，按当前客户端的玩家身份选择 Prefab，将表现挂到已生成的网络根下。
-        /// 本地拥有者选择 localCharacterPrefabs，其他玩家选择 characterPrefabs；模型和相机来自本地资源。
+        /// 使用服务器确认的编号，从共用角色 Prefab 装配到已生成的网络根下。
+        /// 本地拥有者启用控制器和相机，其他玩家仅保留视觉与动画。
         /// 有效实例的角色编号和来源 Prefab 相同时复用，资源变化或实例销毁时重新装配。
         /// </summary>
         public void ApplyCharacter(NetworkCharacterSync player, int requestedCharacterId)
@@ -171,13 +149,11 @@ namespace Core.Scripts.Networking
             // 同步编号决定数组下标，本地玩家身份决定使用哪套资源。
             bool isLocalPlayer = player != null && player.IsLocalPlayerCharacter;
             GameObject prefab;
-            bool hasPrefab = isLocalPlayer
-                ? TryGetLocalCharacterPrefab(requestedCharacterId, out prefab)
-                : TryGetCharacterPrefab(requestedCharacterId, out prefab);
+            bool hasPrefab = TryGetCharacterPrefab(requestedCharacterId, out prefab);
             if (player == null || !isActiveAndEnabled || !hasPrefab)
             {
                 Debug.LogWarning(
-                    $"无法加载联机角色：编号 {requestedCharacterId} 缺少对应的 {(isLocalPlayer ? "CharactersForLocal" : "CharactersForSync")} 配置。",
+                    $"无法加载联机角色：编号 {requestedCharacterId} 缺少完整角色 Prefab 配置。",
                     this);
                 return;
             }
@@ -197,9 +173,15 @@ namespace Core.Scripts.Networking
                 return;
             }
 
-            RemoveCharacter(player);
+            CharacterVisual configuredVisual = prefab.GetComponent<CharacterVisual>();
+            string issue = "Prefab 根节点缺少 CharacterVisual";
+            if (configuredVisual == null || !configuredVisual.TryValidate(isLocalPlayer, out issue))
+            {
+                Debug.LogError($"角色 {requestedCharacterId} 的资源 {prefab.name} 配置无效：{issue}。", prefab);
+                return;
+            }
 
-            GameObject characterInstance = Instantiate(prefab, player.transform);
+            GameObject characterInstance = InstantiateInactiveCharacter(prefab, player.transform);
             // 实例名标出本地或远程身份，便于核对运行时使用的资源。
             characterInstance.name = $"{prefab.name}_{(isLocalPlayer ? "LocalCharacter" : "RemoteCharacter")}";
             // 视觉实例与网络根对齐，世界位置和物理运动由根上的玩家控制器负责。
@@ -207,40 +189,35 @@ namespace Core.Scripts.Networking
             characterInstance.transform.localRotation = Quaternion.identity;
             characterInstance.transform.localScale = Vector3.one;
 
-            // 停用视觉子对象的移动和碰撞组件，由网络根统一驱动角色运动。
-            PlayerCharacterController[] visualControllers =
-                characterInstance.GetComponentsInChildren<PlayerCharacterController>(true);
-            foreach (PlayerCharacterController characterController in visualControllers)
+            CharacterVisual visual = characterInstance.GetComponent<CharacterVisual>();
+            if (visual == null || !visual.TryValidate(isLocalPlayer, out issue))
             {
-                characterController.enabled = false;
+                characterInstance.SetActive(false);
+                Destroy(characterInstance);
+                Debug.LogError($"角色 {requestedCharacterId} 的资源 {prefab.name} 实例配置无效：{issue}。", this);
+                return;
             }
 
-            foreach (CharacterController characterController in
-                     characterInstance.GetComponentsInChildren<CharacterController>(true))
-            {
-                characterController.enabled = false;
-            }
+            RemoveCharacter(player);
+            ConfigureNetworkCharacterComponents(visual);
+            // 网络根绑定视觉实例保存的 Animator，运动驱动保持根对象中的实例。
 
-            // 网络根绑定新模型的 Animator，并从已找到的首个视觉控制器复制动画素材配置。
-            PlayerCharacterController visualController =
-                visualControllers.Length > 0 ? visualControllers[0] : null;
-            player.PlayerController?.RebindAnimator(
-                characterInstance.GetComponentInChildren<Animator>(true),
-                visualController);
-
-            // 每类相机组件在装配时查找一次，后续身份配置直接使用当前实例的缓存。
+            // 每类相机组件由视觉资产保存，后续身份配置直接使用当前实例的引用。
             var presentation = new CharacterPresentation
             {
                 Instance = characterInstance,
                 CharacterId = requestedCharacterId,
                 SourcePrefab = prefab,
-                Cameras = characterInstance.GetComponentsInChildren<UnityEngine.Camera>(true),
-                Listeners = characterInstance.GetComponentsInChildren<AudioListener>(true),
-                CameraControllers = characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true)
+                Cameras = visual.Cameras,
+                Listeners = visual.Listeners,
+                CameraControllers = visual.CameraControllers,
+                Visual = visual
             };
 
             ConfigureLocalCamera(player, presentation);
             presentations[player] = presentation;
+            characterInstance.SetActive(true);
+            player.PlayerController?.RebindAnimator(visual.Animator);
         }
 
         /// <summary>解除网络根的动画和输入引用，销毁视觉实例并移除玩家的表现状态。</summary>
@@ -259,6 +236,7 @@ namespace Core.Scripts.Networking
                 && presentation != null
                 && presentation.Instance != null)
             {
+                presentation.Instance.SetActive(false);
                 Destroy(presentation.Instance);
             }
 
@@ -310,14 +288,22 @@ namespace Core.Scripts.Networking
         }
 
         // 离线切换：用目标编号的本地 Prefab 替换场景单机角色实例。
-        // 新实例沿用旧实例的世界位置和朝向，并重新收集单机相机、控制器与监听器引用。
+        // 新实例沿用旧实例的世界位置和朝向，并读取视觉组件保存的单机相机引用。
         private void ReplaceStandaloneCharacter(int requestedCharacterId)
         {
-            if (!TryGetLocalCharacterPrefab(requestedCharacterId, out GameObject prefab))
+            if (!IsValidCharacterId(requestedCharacterId))
             {
                 Debug.LogWarning(
-                    $"无法切换单机角色：编号 {requestedCharacterId} 缺少对应的 CharactersForLocal 配置。",
+                    $"无法切换单机角色：编号 {requestedCharacterId} 缺少对应的完整角色 Prefab 配置。",
                     this);
+                return;
+            }
+            GameObject prefab = characters[requestedCharacterId];
+            CharacterVisual configuredVisual = prefab.GetComponent<CharacterVisual>();
+            string issue = "Prefab 根节点缺少 CharacterVisual";
+            if (configuredVisual == null || !configuredVisual.TryValidate(true, out issue))
+            {
+                Debug.LogError($"单机角色 {requestedCharacterId} 的资源 {prefab.name} 配置无效：{issue}。", prefab);
                 return;
             }
 
@@ -344,10 +330,11 @@ namespace Core.Scripts.Networking
             // 离线选定的编号成为本机角色，本地网络玩家启动时上报同一个值。
             defaultCharacterId = requestedCharacterId;
 
-            // 相机组件随实例替换重新收集，后续启停沿用同一份引用。
-            standaloneCameras = characterInstance.GetComponentsInChildren<UnityEngine.Camera>(true);
-            standaloneCameraControllers = characterInstance.GetComponentsInChildren<ThirdPersonCamera>(true);
-            standaloneListeners = characterInstance.GetComponentsInChildren<AudioListener>(true);
+            // 相机组件随实例替换更新，后续启停沿用同一份引用。
+            CharacterVisual visual = characterInstance.GetComponent<CharacterVisual>();
+            standaloneCameras = visual.Cameras;
+            standaloneCameraControllers = visual.CameraControllers;
+            standaloneListeners = visual.Listeners;
 
             // 旧实例已无引用，销毁时一并释放它的输入与光标占用。
             if (previous != null)
@@ -361,6 +348,30 @@ namespace Core.Scripts.Networking
         }
 
         // 按当前本地身份配置缓存中的相机组件，同时绑定移动输入使用的视角。
+        private static GameObject InstantiateInactiveCharacter(GameObject prefab, Transform parent)
+        {
+            // 在停用层级内实例化，身份配置完成前不执行相机和移动的启用生命周期。
+            var staging = new GameObject("CharacterAssembly");
+            staging.SetActive(false);
+            try
+            {
+                GameObject instance = Instantiate(prefab, staging.transform);
+                instance.SetActive(false);
+                instance.transform.SetParent(parent, false);
+                return instance;
+            }
+            finally
+            {
+                Destroy(staging);
+            }
+        }
+
+        private static void ConfigureNetworkCharacterComponents(CharacterVisual visual)
+        {
+            visual.StandaloneController.enabled = false;
+            visual.MovementCollider.enabled = false;
+        }
+
         private static void ConfigureLocalCamera(
             NetworkCharacterSync player,
             CharacterPresentation presentation)
@@ -370,10 +381,6 @@ namespace Core.Scripts.Networking
             foreach (UnityEngine.Camera camera in presentation.Cameras)
             {
                 camera.enabled = enableLocalCamera;
-                if (enableLocalCamera)
-                {
-                    camera.tag = "MainCamera";
-                }
             }
 
             foreach (AudioListener listener in presentation.Listeners)
@@ -388,9 +395,9 @@ namespace Core.Scripts.Networking
                 cameraController.enabled = enableLocalCamera;
             }
 
-            // 本地玩家以当前实例的首个 Camera 作为输入参考，远程玩家清空该引用。
-            UnityEngine.Camera localCamera = enableLocalCamera && presentation.Cameras.Length > 0
-                ? presentation.Cameras[0]
+            // 本地玩家以当前实例显式配置的 Camera 作为输入参考，远程玩家清空该引用。
+            UnityEngine.Camera localCamera = enableLocalCamera
+                ? presentation.Visual.InputCamera
                 : null;
             player.PlayerController?.RebindInputSpace(localCamera != null ? localCamera.transform : null);
             presentation.CameraIsLocal = enableLocalCamera;

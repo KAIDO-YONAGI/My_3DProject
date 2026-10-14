@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`3/5`
-最后更新：`2026-10-13`
+维护计数：`4/5`
+最后更新：`2026-10-14`
 
 ## 任务路由
 
@@ -16,7 +16,7 @@
 | Prefab 组件组成 | `Project_Guide.md` |
 | 共用 Animator Controller、角色覆盖资产与 Prefab 动画绑定 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对共用 Controller 与 `Assets/Core/Animations/Characters/` |
 | 角色 FBX 导入、Humanoid Avatar 与骨骼映射 | `Project_Guide.md`、`../Character/Character_Guide.md` |
-| 学园之星裙摆起点、动态骨骼与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对 Local、Sync 两套 Prefab |
+| 学园之星裙摆起点、动态骨骼与大腿碰撞器 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对完整角色 Prefab |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Mirror_KCP_Config.md` |
 | 场景列表与场景职责 | `../Scene/Scene_Guide.md` |
 | 角色 Prefab 与移动配置 | `../Character/Character_Guide.md` |
@@ -48,8 +48,7 @@
 - `Assets/Plugins/AddressableAssetsData/`
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Prefabs/NetworkManager.prefab`
-- `Assets/Core/Prefabs/CharactersForLocal/`
-- `Assets/Core/Prefabs/CharactersForSync/`
+- `Assets/Core/Prefabs/Characters/`
 - `Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `Assets/Core/Animations/Characters/`
 - `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`

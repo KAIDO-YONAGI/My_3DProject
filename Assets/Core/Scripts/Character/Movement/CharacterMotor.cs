@@ -137,7 +137,7 @@ namespace Core.Scripts.Character.Movement
             Transform basis = inputSpace;
             if (basis is null&& UnityEngine.Camera.main is not null)
             {
-                // 本地玩家的相机属于 CharactersForLocal 子模型；
+                // 本地玩家的相机属于共用角色 Prefab；
                 // 即使相机是网络根对象的子节点，也必须用它作为前进方向基准。
                 basis = UnityEngine.Camera.main.transform;
             }

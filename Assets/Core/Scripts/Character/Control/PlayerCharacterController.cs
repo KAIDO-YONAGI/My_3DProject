@@ -1,7 +1,6 @@
 using Core.Scripts.Character.Animation;
 using Core.Scripts.Character.Input;
 using Core.Scripts.Character.Movement;
-using Core.Scripts.Character.Presentation;
 using Mirror;
 using UnityEngine;
 
@@ -10,7 +9,7 @@ namespace Core.Scripts.Character.Control
     /// <summary>
     /// 角色控制器的 Unity 生命周期入口。
     /// 本类只负责组织“采集输入 -> CharacterMotor 位移 -> CharacterAnimator 表现”的顺序，
-    /// 具体运动算法、动画绑定和骨骼跟随分别由独立类型承担。
+    /// 具体运动算法、动画绑定分别由独立类型承担，骨骼表现由视觉实例管理。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
@@ -27,10 +26,6 @@ namespace Core.Scripts.Character.Control
         [Header("移动")]
         // 参数对象只描述手感，实际速度状态保存在 CharacterMotor 中。
         [SerializeField] private CharacterMovementSettings movementSettings = new CharacterMovementSettings();
-
-        [Header("发辫跟随")]
-        // 可选修正项，在 Animator 完成骨骼更新后执行。
-        [SerializeField] private CharacterBoneFollower ponytailFollower = new CharacterBoneFollower();
 
         // 输入读取器按需创建 PlayerControls，只有真正读取输入的本地玩家才会占用输入资源。
         private readonly CharacterInputReader input = new();
@@ -100,8 +95,6 @@ namespace Core.Scripts.Character.Control
                 ApplyRemoteAnimation();
             }
 
-            // Animator 已完成骨骼计算后，再恢复发辫根节点相对头部的偏移。
-            ponytailFollower.Apply();
         }
 
         private void OnDestroy()
@@ -149,7 +142,6 @@ namespace Core.Scripts.Character.Control
             {
                 animationDriver = new CharacterAnimator(animator);
                 animationDriver.Initialize();
-                ponytailFollower.Initialize(animator);
             }
 
             return true;
@@ -158,15 +150,10 @@ namespace Core.Scripts.Character.Control
         /// <summary>
         /// 模型 Prefab 被替换后，重新绑定网络根对象使用的 Animator。
         /// </summary>
-        public void RebindAnimator(Animator replacementAnimator, PlayerCharacterController visualConfiguration = null)
+        public void RebindAnimator(Animator replacementAnimator)
         {
             animationDriver = null;
             animator = replacementAnimator;
-
-            if (visualConfiguration != null)
-            {
-                CopyVisualConfiguration(visualConfiguration);
-            }
 
             // 清空引用时只保留“无动画驱动”状态，避免 CacheReferences 又找回正在销毁的旧模型。
             if (replacementAnimator != null)
@@ -177,24 +164,13 @@ namespace Core.Scripts.Character.Control
 
         /// <summary>
         /// 绑定本地玩家的输入参考空间。
-        /// CharactersForLocal 自带相机，网络根对象必须读取这台相机的朝向，
+        /// 共用角色 Prefab 自带相机，网络根对象必须读取这台相机的朝向，
         /// 否则移动会退回 Camera.main 或根节点朝向，出现“转相机但前进方向不变”。
         /// </summary>
         public void RebindInputSpace(Transform replacementInputSpace)
         {
-            // 远程角色传入 null，表示它不采集本地输入；本地角色传入本地视觉 Prefab 的相机。
+            // 远程角色传入 null，表示它不采集本地输入；本地角色传入共用视觉 Prefab 的相机。
             inputSpace = replacementInputSpace;
-        }
-
-        /// <summary>
-        /// 从当前视觉预制体的控制器复制骨骼跟随配置。
-        /// 不复制 CharacterController、移动参数和输入引用，避免远程视觉模型重新接管移动。
-        /// </summary>
-        private void CopyVisualConfiguration(PlayerCharacterController source)
-        {
-            // 发辫跟随配置属于角色视觉预制体，网络根对象只在这里接管它的引用，
-            // 不重新创建或改写视觉预制体上的 DynamicBone 组件。
-            ponytailFollower.CopyConfigurationFrom(source.ponytailFollower);
         }
 
         private bool IsRemoteNetworkPlayer()
@@ -221,7 +197,6 @@ namespace Core.Scripts.Character.Control
         private void EnsureSettings()
         {
             movementSettings ??= new CharacterMovementSettings();
-            ponytailFollower ??= new CharacterBoneFollower();
         }
 
         /// <summary>

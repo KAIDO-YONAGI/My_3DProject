@@ -26,8 +26,7 @@ public sealed class NetworkCharacterPresentationTests
         localPrefab = CreateVisual("LocalPrefab");
         remotePrefab = CreateVisual("RemotePrefab");
         manager = CreateObject("PresentationManager").AddComponent(managerType);
-        SetField(manager, "localCharacterPrefabs", new[] { localPrefab });
-        SetField(manager, "characterPrefabs", new[] { remotePrefab });
+        ConfigureCharacters(new[] { localPrefab });
         SetField(manager, "networkPresentationMode", false);
 
         GameObject root = CreateObject("NetworkPlayer");
@@ -102,8 +101,7 @@ public sealed class NetworkCharacterPresentationTests
         RuntimeAnimatorController configuredController =
             Resources.Load<RuntimeAnimatorController>("CharacterLocomotion");
         Assert.That(configuredController, Is.Not.Null);
-        localPrefab.AddComponent<Animator>().runtimeAnimatorController = configuredController;
-        ((Behaviour)FindComponent(localPrefab, "PlayerCharacterController")).enabled = false;
+        localPrefab.GetComponent<Animator>().runtimeAnimatorController = configuredController;
         localPrefab.GetComponentInChildren<Camera>(true).gameObject.SetActive(false);
         localPrefab.SetActive(true);
         SetLocal(true);
@@ -140,7 +138,7 @@ public sealed class NetworkCharacterPresentationTests
     [Test]
     public void IdentityChangeWithSharedPrefabReusesInstanceAndReconfiguresCachedComponents()
     {
-        SetField(manager, "localCharacterPrefabs", new[] { remotePrefab });
+        ConfigureCharacters(new[] { remotePrefab });
         Apply();
         object first = Presentation();
         GameObject instance = Instance(first);
@@ -174,29 +172,28 @@ public sealed class NetworkCharacterPresentationTests
     }
 
     [UnityTest]
-    public IEnumerator IdentityChangeWithDistinctPrefabsReplacesPresentation()
+    public IEnumerator IdentityChangeKeepsSharedCharacterPrefab()
     {
         Apply();
         GameObject previous = Instance(Presentation());
-        Assert.That(previous.name, Does.StartWith(remotePrefab.name));
+        Assert.That(previous.name, Does.StartWith(localPrefab.name));
 
         SetLocal(true);
         Invoke(player, "OnStartLocalPlayer");
         GameObject current = Instance(Presentation());
 
-        Assert.That(current, Is.Not.SameAs(previous));
+        Assert.That(current, Is.SameAs(previous));
         Assert.That(current.name, Does.StartWith(localPrefab.name));
         Assert.That(current.GetComponentInChildren<Camera>(true).enabled, Is.True);
         yield return null;
-        Assert.That(previous == null, Is.True);
+        Assert.That(previous != null, Is.True);
         Assert.That(player.transform.childCount, Is.EqualTo(1));
     }
 
     [UnityTest]
     public IEnumerator CharacterIdChangeReplacesPresentation()
     {
-        SetField(manager, "localCharacterPrefabs", new[] { localPrefab, localPrefab });
-        SetField(manager, "characterPrefabs", new[] { remotePrefab, remotePrefab });
+        ConfigureCharacters(new[] { localPrefab, remotePrefab });
         Apply();
         GameObject previous = Instance(Presentation());
 
@@ -212,8 +209,7 @@ public sealed class NetworkCharacterPresentationTests
     [Test]
     public void HostCharacterSelectionUsesCommandAndValidatesId()
     {
-        SetField(manager, "localCharacterPrefabs", new[] { localPrefab, localPrefab });
-        SetField(manager, "characterPrefabs", new[] { remotePrefab, remotePrefab });
+        ConfigureCharacters(new[] { localPrefab, remotePrefab });
         SetLocal(true);
         identity.GetType().GetProperty("isServer").SetValue(identity, true);
         identity.GetType().GetProperty("isClient").SetValue(identity, true);
@@ -234,7 +230,7 @@ public sealed class NetworkCharacterPresentationTests
         Apply();
         GameObject previous = Instance(Presentation());
         GameObject replacement = CreateVisual("Replacement");
-        SetField(manager, "localCharacterPrefabs", new[] { replacement });
+        ConfigureCharacters(new[] { replacement });
 
         Apply();
 
@@ -277,15 +273,14 @@ public sealed class NetworkCharacterPresentationTests
     }
 
     [Test]
-    public void VisualControllersAreDisabledAndInactiveCamerasAreCached()
+    public void NetworkCharacterDisablesOwnMovementAndUsesExplicitReferences()
     {
         SetLocal(true);
         Apply();
         object presentation = Presentation();
         GameObject instance = Instance(presentation);
 
-        Assert.That(((Behaviour)FindComponent(instance, "PlayerCharacterController")).enabled,
-            Is.False);
+        Assert.That(((Behaviour)FindComponent(instance, "PlayerCharacterController")).enabled, Is.False);
         Assert.That(instance.GetComponent<CharacterController>().enabled, Is.False);
         Assert.That(GetField(presentation, "Cameras"),
             Is.EqualTo(instance.GetComponentsInChildren<Camera>(true)));
@@ -294,17 +289,122 @@ public sealed class NetworkCharacterPresentationTests
         Assert.That(GetField(presentation, "SourcePrefab"), Is.SameAs(localPrefab));
     }
 
+    [Test]
+    public void InvalidVisualKeepsExistingPresentationAndBindings()
+    {
+        SetLocal(true);
+        Apply();
+        object previous = Presentation();
+        object previousAnimator = GetField(controller, "animator");
+        GameObject invalid = CreateVisual("InvalidVisual");
+        SetField(invalid.GetComponent(RuntimeType("CharacterVisual")), "animator", null);
+        ConfigureCharacters(new[] { invalid });
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
+            "角色 0 的资源 InvalidVisual 配置无效"));
+
+        Apply();
+
+        Assert.That(Presentation(), Is.SameAs(previous));
+        Assert.That(GetField(controller, "animator"), Is.SameAs(previousAnimator));
+        Assert.That(player.transform.childCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void InputUsesConfiguredPrimaryCameraRatherThanArrayOrder()
+    {
+        Component visual = localPrefab.GetComponent(RuntimeType("CharacterVisual"));
+        Camera primary = localPrefab.GetComponentInChildren<Camera>(true);
+        GameObject auxiliary = CreateObject("AuxiliaryCamera");
+        auxiliary.transform.SetParent(localPrefab.transform, false);
+        Camera first = auxiliary.AddComponent<Camera>();
+        SetField(visual, "cameras", new[] { first, primary });
+        SetLocal(true);
+
+        Apply();
+
+        Component mounted = Instance(Presentation()).GetComponent(RuntimeType("CharacterVisual"));
+        var configured = (Camera)GetField(mounted, "inputCamera");
+        Assert.That(GetField(controller, "inputSpace"), Is.SameAs(configured.transform));
+        Assert.That(configured.name, Is.EqualTo(primary.name));
+        Assert.That(first.CompareTag("MainCamera"), Is.False);
+    }
+
+    [UnityTest]
+    public IEnumerator ReplacementDisablesPreviousCameraBeforeDeferredDestruction()
+    {
+        localPrefab.SetActive(true);
+        remotePrefab.SetActive(true);
+        SetLocal(true);
+        Apply();
+        GameObject previous = Instance(Presentation());
+        ConfigureCharacters(new[] { remotePrefab });
+
+        Apply();
+
+        Assert.That(previous.activeSelf, Is.False);
+        Assert.That(Instance(Presentation()).activeSelf, Is.True);
+        yield return null;
+        Assert.That(previous == null, Is.True);
+    }
+
+    [Test]
+    public void StandaloneSelectionUsesSharedPrefabAndPreservesPose()
+    {
+        GameObject standalone = CreateVisual("StandalonePrefab");
+        ConfigureCharacters(new[] { standalone });
+        GameObject previous = CreateObject("PreviousStandalone");
+        previous.transform.SetPositionAndRotation(new Vector3(3f, 4f, 5f), Quaternion.Euler(0f, 47f, 0f));
+        SetField(manager, "standalonePlayer", previous);
+
+        Invoke(manager, "RequestCharacter", 0);
+
+        var current = (GameObject)GetField(manager, "standalonePlayer");
+        Assert.That(current.GetComponent<Animator>(), Is.Not.Null);
+        Assert.That(((Behaviour)FindComponent(current, "PlayerCharacterController")).enabled, Is.True);
+        Assert.That(current.GetComponent<CharacterController>().enabled, Is.True);
+        Assert.That(current.transform.position, Is.EqualTo(previous.transform.position));
+        Assert.That(Quaternion.Angle(current.transform.rotation, previous.transform.rotation),
+            Is.LessThan(0.001f));
+        Assert.That(current.GetComponentInChildren<Camera>(true).name,
+            Does.StartWith(standalone.name));
+        objects.Add(current);
+    }
+
     private GameObject CreateVisual(string name)
     {
         GameObject visual = CreateObject(name);
         visual.SetActive(false);
-        visual.AddComponent(RuntimeType("PlayerCharacterController"));
+        CharacterController movementCollider = visual.AddComponent<CharacterController>();
+        Animator animator = visual.AddComponent<Animator>();
+        animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("CharacterLocomotion");
+        Component movement = visual.AddComponent(RuntimeType("PlayerCharacterController"));
+        SetField(movement, "animator", animator);
         GameObject camera = CreateObject(name + "Camera");
         camera.transform.SetParent(visual.transform);
-        camera.AddComponent<Camera>();
-        camera.AddComponent<AudioListener>();
-        camera.AddComponent(RuntimeType("ThirdPersonCamera"));
+        camera.tag = "MainCamera";
+        Camera cameraComponent = camera.AddComponent<Camera>();
+        cameraComponent.enabled = false;
+        AudioListener listener = camera.AddComponent<AudioListener>();
+        listener.enabled = false;
+        var cameraController = (Behaviour)camera.AddComponent(RuntimeType("ThirdPersonCamera"));
+        cameraController.enabled = false;
+        Component configuration = visual.AddComponent(RuntimeType("CharacterVisual"));
+        SetField(configuration, "animator", animator);
+        SetField(configuration, "standaloneController", movement);
+        SetField(configuration, "movementCollider", movementCollider);
+        SetField(configuration, "inputCamera", cameraComponent);
+        SetField(configuration, "cameras", new[] { cameraComponent });
+        SetField(configuration, "listeners", new[] { listener });
+        Array controllers = Array.CreateInstance(RuntimeType("ThirdPersonCamera"), 1);
+        controllers.SetValue(cameraController, 0);
+        SetField(configuration, "cameraControllers", controllers);
+        SetField(GetField(configuration, "ponytailFollower"), "enabled", false);
         return visual;
+    }
+
+    private void ConfigureCharacters(GameObject[] prefabs)
+    {
+        SetField(manager, "characters", prefabs);
     }
 
     private GameObject CreateObject(string name)
@@ -351,6 +451,7 @@ public sealed class NetworkCharacterPresentationTests
         {
             "PlayerCharacterController" => "Core.Scripts.Character.Control.PlayerCharacterController",
             "ThirdPersonCamera" => "Core.Scripts.Camera.Runtime.ThirdPersonCamera",
+            "CharacterVisual" => "Core.Scripts.Character.Presentation.CharacterVisual",
             "NetworkCharacterManager" => "Core.Scripts.Networking.NetworkCharacterManager",
             "NetworkCharacterSync" => "Core.Scripts.Networking.NetworkCharacterSync",
             _ => name

@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-MULTIPLAYER`
 状态：`Active`
-维护计数：`1/5`
-最后更新：`2026-10-11`
+维护计数：`2/5`
+最后更新：`2026-10-14`
 
 ## 任务路由
 
@@ -28,6 +28,7 @@
 - `Assets/Core/Scripts/Networking/`
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Prefabs/NetworkManager.prefab`
+- `Assets/Core/Prefabs/Characters/`
 - `Assets/Plugins/Mirror/`
 - `Assets/Tests/PlayMode/Networking/`
 

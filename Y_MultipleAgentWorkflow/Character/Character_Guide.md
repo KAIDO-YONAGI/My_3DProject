@@ -2,7 +2,7 @@
 
 文档 ID：`CHARACTER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-13`
+最后核验：`2026-10-14`
 
 ## 角色渲染
 
@@ -18,17 +18,17 @@
 
 ## 角色轮廓光
 
-`Assets/Core/Prefabs/Lights/CharacterRimLight.prefab` 是角色专用的轮廓光，作为嵌套 Prefab 实例挂在 4 个角色 Prefab 的根节点下。
+`Assets/Core/Prefabs/Lights/CharacterRimLight.prefab` 是角色专用的轮廓光，作为嵌套 Prefab 实例挂在每份完整角色 Prefab 的根节点下。
 
 光源类型为 `Point`，不依赖朝向，角色转身时效果稳定。强度基线高于 1：ToonLit 的额外光通道在 `NiloToonLightingEquation.hlsl` 里按 `0.25` 缩放，与主方向光不是同一条通路。光位在角色上方偏背后，落在照射范围之内。轮廓光不投影，省一个阴影 pass；渲染模式固定 `ForcePixel`，避免被 Unity 降级成顶点光导致效果跳变。
 
-**调整方式**：实例上的位置/旋转/缩放覆盖已清理，统一继承源 Prefab。改 `CharacterRimLight.prefab` 的属性对 4 个角色同时生效；单独调某个角色时在对应 Prefab 里覆盖那个实例的属性。颜色、强度、范围均为观感参数，按需微调。
+**调整方式**：实例上的位置/旋转/缩放覆盖已清理，统一继承轮廓光 Prefab。改 `CharacterRimLight.prefab` 的属性对所有角色同时生效；单独调某个角色时在对应完整角色 Prefab 里覆盖那个实例的属性。颜色、强度、范围均为观感参数，按需微调。
 
 **性能注意**：每个玩家角色带 1 个实时点光，走 ToonLit 的额外光通道。URP 前向渲染按每对象受光数量计算，多人同屏时该开销随人数线性增长，需要时按人数收敛范围或强度。
 
 ## 学园之星裙摆
 
-学园之星的 Local、Sync 两套 Prefab 共用同一套裙摆参数。裙骨链的 `DynamicBone.m_Root` 取下段骨骼，上段保持动画姿势，仅由下段驱动更下一级。后裙根挂着尾部骨骼，模拟起点下移，避免裙摆组件与尾部组件重复处理尾部，尾部的 DynamicBone 独立保留。
+学园之星的完整角色 Prefab 保存一套裙摆参数。裙骨链的 `DynamicBone.m_Root` 取下段骨骼，上段保持动画姿势，仅由下段驱动更下一级。后裙根挂着尾部骨骼，模拟起点下移，避免裙摆组件与尾部组件重复处理尾部，尾部的 DynamicBone 独立保留。
 
 本插件的实际参数是主值与分布曲线的乘积，判断强度时以两者乘积为准。`Inert` 越大，粒子越直接跟随角色平移，急停转身时的拖曳越小。
 
@@ -55,7 +55,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - `CharacterMovementStateMachine` 接收 `CharacterMotor` 的运动后反馈，维护五个离散状态；状态树按「根 → 地面/空中 → 叶子」三层组织，`CharacterMotion.State` 记录当前叶子状态。
 - `CharacterMotion` 保存动画层使用的移动状态。
 - `CharacterAnimator` 读取 `CharacterMotion`，驱动已配置 Animator 的参数并处理落地首帧。
-- `CharacterBoneFollower` 在动画更新后执行骨骼跟随。
+- `CharacterBoneFollower` 使用视觉 Prefab 中保存的初始姿势偏移，在动画更新后执行骨骼跟随。
 - `ThirdPersonCamera` 保留序列化配置、`SetTarget` 和生命周期编排；普通 C# 对象 `CameraOrbitState`、`CameraCursorController`、`CameraCollisionResolver` 与 `CameraRotationMath` 分别负责轨道状态、光标状态、最终候选避让和旋转数学。
 
 ## 运动状态与动画
@@ -70,7 +70,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - `CharacterMotor` 在移动前读取 `CharacterController.isGrounded` 决定跳跃许可，依次处理跳跃、目标水平速度、加减速与空中控制和重力，每帧只调用一次 `CharacterController.Move`，再清除顶碰上升速度、处理接地拉力、维护非跳跃离地计时并更新代码状态。
 - 运动链路按帧长积分，起跳在按下当帧生效，动画权重直接取输入幅度。松开输入后物理速度按配置的减速度衰减。
 - Animator 的 Grounded 状态通过 Direct 混合树组合 Idle、Run、Sprint，Run 与 Sprint 各使用一个方向混合树；`Rising` 与 `Falling` 使用 Jump 片段，落地首帧重置为待机权重，下一帧恢复运动权重。
-- `CharacterAnimator.Initialize` 使用 Animator 已绑定的 Controller，关闭 Root Motion、执行 `Rebind` 并初始化参数。`Apply` 写入方向、接地和运动权重；`LocomotionWeight01` 夹取到 `0..1`。模型重绑创建新的动画驱动，沿用 Inspector 配置的 Controller 资产和根对象的运动驱动。
+- `CharacterAnimator.Initialize` 使用 Animator 已绑定的 Controller，关闭 Root Motion、执行 `Rebind` 并初始化参数。`Apply` 写入方向、接地和运动权重；`LocomotionWeight01` 夹取到 `0..1`。模型重绑读取视觉 Prefab 已配置的 Animator，沿用 Inspector 配置的 Controller 资产和根对象的运动驱动。
 
 `CharacterMotion` 是 `CharacterMotor` 输出给 `CharacterAnimator` 的单帧表现快照，字段为离散状态 `State`、角色自身坐标系的移动方向 `LocalDirection` 和移动权重 `LocomotionWeight01`。`IsGrounded` 与 `WantsSprint` 由 `State` 派生。网络传输该快照的字段约定见 `../Multiplayer/Sync_Protocol.md`。
 
@@ -91,15 +91,15 @@ CharacterInputReader（PlayerControls.inputactions）
 | 华丽飞踢 | `Assets/Core/Animations/Characters/娜娜莉（华丽飞踢）.overrideController` |
 | 学园之星 | `Assets/Core/Animations/Characters/娜娜莉（学园之星）.overrideController` |
 
-每份资产覆盖 22 个槽位：`__Idle`、`__Jump`、十个 `__Run_` 方向槽位和十个 `__Sprint_` 方向槽位，全部绑定有效片段。同一角色的 Local、Sync 与模型目录中的 Prefab 共用该覆盖资产，Animator 的 Controller 字段引用它。替换角色动画时选择覆盖资产，在 Inspector 的对应槽位指定片段；调整混合或转换规则时编辑共用 Controller。
+每份资产覆盖 22 个槽位：`__Idle`、`__Jump`、十个 `__Run_` 方向槽位和十个 `__Sprint_` 方向槽位，全部绑定有效片段。对应角色的完整角色 Prefab 的 Animator 引用该覆盖资产。替换角色动画时选择覆盖资产，在 Inspector 的对应槽位指定片段；调整混合或转换规则时编辑共用 Controller。
 
-`PlayerCharacterController` 保存运动、骨骼跟随与相机配置，模型重绑复制骨骼跟随配置和相机参考，并绑定模型已配置的 Animator。Controller 资产生命周期归资源系统管理，同一覆盖资产可供多个 Animator 使用，各实例独立维护动画参数。
+`CharacterVisual` 保存 Animator、相机、监听器、相机控制器和骨骼跟随配置。`PlayerCharacterController` 只保留运动依赖与动画驱动入口；模型重绑直接读取视觉 Prefab 已配置的 Animator 和相机参考。Controller 资产生命周期归资源系统管理，同一覆盖资产可供多个 Animator 使用，各实例独立维护动画参数。
 
 ## 人形映射与面部骨骼
 
 华丽飞踢的模型导入配置位于 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`。该模型的 `mouth` 是脸部控制根，其下挂嘴唇、嘴角和牙齿控制骨骼，不映射为 Humanoid 的 `Jaw`。
 
-该配置通过 `ModelImporter` 保存原 Avatar 的人形描述，`humanName == "Jaw"` 的映射为空，`autoGenerateAvatarMappingIfUnspecified` 关闭，其余人形映射保留。Local、Sync 两套华丽飞踢 Prefab 共用原 GUID 的 Avatar，引用与导入约定见 `../Project/Project_Guide.md` 的“角色表现资源”。
+该配置通过 `ModelImporter` 保存原 Avatar 的人形描述，`humanName == "Jaw"` 的映射为空，`autoGenerateAvatarMappingIfUnspecified` 关闭，其余人形映射保留。完整角色 Prefab 共用该 Avatar，引用与导入约定见 `../Project/Project_Guide.md` 的“角色表现资源”。
 
 映射为 `Jaw` 时，`mouth` 在通用人形动画求值中偏离初始姿势，引起嘴部蒙皮向下变形。该骨骼的局部旋转变化驱动蒙皮位移，`mouth.localPosition` 不变与脸网格无 BlendShape 均不排除这种位移。诊断时在同一动画姿势下用 `SkinnedMeshRenderer.BakeMesh` 烘焙网格，再仅恢复 `mouth.localRotation` 后重新烘焙，对比顶点即可隔离该骨骼的影响。
 
@@ -160,9 +160,9 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 验证覆盖
 
-`Core.EditorTests` 覆盖地面状态、起跳、最高点、下降、平台边缘掉落、落地，以及同步状态编号冻结；其中 `HierarchicalStateMachineTests` 覆盖分层框架的启动下钻、子树内兄弟切换、父状态发起转换时退出活动子状态、同帧完成转换、目标等于当前叶子时不重复触发钩子，以及回到祖先时重建默认分支。`CharacterUpdateLoopTests` 覆盖显式模型绑定、解绑后保留空引用、重绑时沿用运动驱动、Inspector Controller 引用保持、共享覆盖资产的参数独立性、运动权重夹取、落地首帧重置，以及两份覆盖资产的 22 个槽位和六个 Prefab 引用完整性。`Core.Camera.PlayModeTests` 与 `Core.Networking.PlayModeTests` 覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停与外部解锁后捕获、目标销毁重绑，以及限速积分一致性和暂停后平滑恢复。网络表现测试同时覆盖模型延迟挂载时已配置 Controller 的绑定与初始化。两个本地角色 Prefab 保留相机旋转参数的序列化字段。
+`Core.EditorTests` 覆盖地面状态、起跳、最高点、下降、平台边缘掉落、落地，以及同步状态编号冻结；其中 `HierarchicalStateMachineTests` 覆盖分层框架的启动下钻、子树内兄弟切换、父状态发起转换时退出活动子状态、同帧完成转换、目标等于当前叶子时不重复触发钩子，以及回到祖先时重建默认分支。`CharacterUpdateLoopTests` 覆盖显式模型绑定、解绑后保留空引用、重绑时沿用运动驱动、Inspector Controller 引用保持、共享覆盖资产的参数独立性、运动权重夹取、落地首帧重置，以及两份覆盖资产的 22 个槽位和两份完整角色 Prefab 引用完整性。`Core.Camera.PlayModeTests` 与 `Core.Networking.PlayModeTests` 覆盖父子相机世界旋转、近墙裁剪、抬高后的路径、自身碰撞体下的避让、障碍移除恢复、起始重叠安全退出及双墙裁剪、光标交接、启停与外部解锁后捕获、目标销毁重绑，以及限速积分一致性和暂停后平滑恢复。网络表现测试同时覆盖模型延迟挂载时已配置 Controller 的绑定与初始化。完整角色 Prefab 保留相机旋转参数的序列化字段。
 
-两套华丽飞踢 Prefab 各播放全部配置片段，最大嘴部旋转与嘴部引起的蒙皮顶点差均为零；按两套 Prefab 实际配置调用 `CharacterAnimator.Initialize` 推进后，实际播放 `Idle_Wait_A`，嘴部旋转仍为零。
+两套角色视觉源各播放全部配置片段，最大嘴部旋转与嘴部引起的蒙皮顶点差均为零；按两套视觉源实际配置调用 `CharacterAnimator.Initialize` 推进后，实际播放 `Idle_Wait_A`，嘴部旋转仍为零。
 
 ## 维护触发
 

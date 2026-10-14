@@ -89,7 +89,7 @@ public sealed class MultiplayerSceneConfigurationTests
     }
 
     [Test]
-    public void LocalCharacterPrefabsReferenceCompletePrefabRoots()
+    public void SharedCharacterPrefabsReferenceCompletePrefabRoots()
     {
         Scene persistentScene = EnsureSceneLoaded(PersistentScenePath, out bool openedScene);
 
@@ -99,7 +99,7 @@ public sealed class MultiplayerSceneConfigurationTests
             Assert.That(manager, Is.Not.Null);
 
             SerializedProperty prefabs = new SerializedObject(manager)
-                .FindProperty("localCharacterPrefabs");
+                .FindProperty("characters");
             Assert.That(prefabs, Is.Not.Null);
             Assert.That(prefabs.arraySize, Is.GreaterThan(0));
 
@@ -109,6 +109,8 @@ public sealed class MultiplayerSceneConfigurationTests
                     as GameObject;
 
                 Assert.That(prefab, Is.Not.Null, $"本地角色编号 {index} 没有配置 Prefab。");
+                Assert.That(AssetDatabase.GetAssetPath(prefab),
+                    Does.StartWith("Assets/Core/Prefabs/Characters/"));
                 Assert.That(
                     prefab.transform.parent,
                     Is.Null,

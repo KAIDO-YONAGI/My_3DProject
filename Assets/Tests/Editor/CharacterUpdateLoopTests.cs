@@ -61,10 +61,10 @@ public sealed class CharacterUpdateLoopTests
     {
         Component controller = CreateController();
         Animator animator = CreateAnimator(controller.transform);
-        Invoke(controller, "RebindAnimator", animator, null);
+        Invoke(controller, "RebindAnimator", animator);
         RuntimeAnimatorController configuredController = animator.runtimeAnimatorController;
 
-        Invoke(controller, "RebindAnimator", null, null);
+        Invoke(controller, "RebindAnimator", new object[] { null });
         Invoke(controller, "ApplyRemoteAnimation");
 
         Assert.That(Field(controller, "animator"), Is.Null);
@@ -79,7 +79,7 @@ public sealed class CharacterUpdateLoopTests
         object motor = Field(controller, "motor");
         Animator animator = CreateAnimator(controller.transform);
 
-        Invoke(controller, "RebindAnimator", animator, null);
+        Invoke(controller, "RebindAnimator", animator);
         object driver = Field(controller, "animationDriver");
 
         Assert.That(Field(controller, "motor"), Is.SameAs(motor));
@@ -141,8 +141,8 @@ public sealed class CharacterUpdateLoopTests
         first.runtimeAnimatorController = shared;
         second.runtimeAnimatorController = shared;
 
-        Invoke(controller, "RebindAnimator", first, null);
-        Invoke(controller, "RebindAnimator", second, null);
+        Invoke(controller, "RebindAnimator", first);
+        Invoke(controller, "RebindAnimator", second);
         Assert.That(first.runtimeAnimatorController, Is.SameAs(shared));
         Assert.That(second.runtimeAnimatorController, Is.SameAs(shared));
 
@@ -183,19 +183,11 @@ public sealed class CharacterUpdateLoopTests
             Assert.That(pair.Value, Is.Not.SameAs(pair.Key), pair.Key.name);
         }
 
-        string[] paths =
-        {
-            "Assets/Core/Prefabs/CharactersForLocal/" + character + ".prefab",
-            "Assets/Core/Prefabs/CharactersForSync/" + character + "_Sync.prefab",
-            "Assets/Core/Models/异环_" + character + "/" + character + ".prefab"
-        };
-        foreach (string path in paths)
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            Assert.That(prefab, Is.Not.Null, path);
-            Assert.That(prefab.GetComponentInChildren<Animator>(true).runtimeAnimatorController,
-                Is.SameAs(shared), path);
-        }
+        string path = "Assets/Core/Prefabs/Characters/" + character + ".prefab";
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        Assert.That(prefab, Is.Not.Null, path);
+        Assert.That(prefab.GetComponentInChildren<Animator>(true).runtimeAnimatorController,
+            Is.SameAs(shared), path);
     }
 
     [Test]

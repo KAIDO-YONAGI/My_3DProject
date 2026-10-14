@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-SCENE`
 状态：`Active`
-维护计数：`1/5`
-最后更新：`2026-10-11`
+维护计数：`2/5`
+最后更新：`2026-10-14`
 
 ## 任务路由
 
@@ -31,6 +31,7 @@
 - `Assets/Core/Scenes/MultiplayerSampleScene 1.unity`
 - `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`
 - `Assets/Core/SO/`
+- `Assets/Core/Prefabs/Characters/`
 - `Assets/Terrain/`
 - `ProjectSettings/EditorBuildSettings.asset`
 

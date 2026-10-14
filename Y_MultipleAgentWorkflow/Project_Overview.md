@@ -2,7 +2,7 @@
 
 文档 ID：`PROJ-OVERVIEW`
 状态：`Active`
-最后核验：`2026-10-10`（角色目录与状态机局部核验）
+最后核验：`2026-10-14`
 
 ## 项目定位
 
@@ -25,8 +25,8 @@ InitialScene
   → AutoStartClient 连接 127.0.0.1
   → Mirror 创建本地和远程 NetworkPlayer
   → NetworkCharacterManager 为每个网络根装配角色表现
-  → 本地拥有者使用带相机的本地角色 Prefab
-  → 远程玩家使用同步角色 Prefab
+  → 本地拥有者与远程玩家使用同一角色 Prefab
+  → NetworkCharacterManager 按身份启停相机、输入、控制器和碰撞体
   → NetworkTransformReliable 上传并广播位置与旋转
 ```
 
@@ -37,8 +37,9 @@ InitialScene
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`：玩法环境，提供地形、碰撞和光照。
 - `Assets/Core/Prefabs/NetworkManager.prefab`：Mirror、KCP、HUD 和自动连接配置。
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`：玩家网络根，承载网络身份、同步、物理控制器和角色编号同步。
-- `Assets/Core/Prefabs/CharactersForLocal/`：本地拥有者使用的完整角色表现，包含本地相机。
-- `Assets/Core/Prefabs/CharactersForSync/`：远程玩家使用的同步角色表现。
+- `Assets/Core/Prefabs/Characters/`：每个角色一份完整 Prefab，包含模型、动画、相机和角色组件。
+- `Assets/Core/Animations/Characters/`：每个角色一份 `AnimatorOverrideController`，替换共用动画逻辑中的片段。
+- `Assets/Core/Models/Resources/CharacterLocomotion.controller`：共用 Animator 混合树、参数和跳跃转换。
 - `Assets/Core/Scripts/Networking/`：自动连接、角色编号同步和角色表现装配。
 - `Assets/Core/Scripts/Character/`：输入、移动、重力与动画数据流。
 - `Assets/Core/Scripts/Camera/`：第三人称相机轨道、光标、避让与转向数学。
@@ -75,12 +76,11 @@ Assets/Core/Scripts/
 
 ## 角色表现结构
 
-`NetworkPlayer` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据网络身份在该根下面装配视觉角色。
+`NetworkPlayer` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据 `NetworkCharacterSync.characterId` 从 `NetworkCharacterManager.characters` 选择一份完整角色 Prefab。
 
-- 本地拥有者装配 `CharactersForLocal` 中的完整角色 Prefab。
-- 远程玩家装配 `CharactersForSync` 中的同步角色 Prefab。
-- 角色编号由 `NetworkCharacterSync.characterId` 统一选择两套数组中的同一角色。
-- 视觉子对象自带的移动控制器和 `CharacterController` 在装配后停用，网络根上的组件负责运动和碰撞。
+- 单机角色、联机本地角色和远程角色共用同一角色 Prefab。
+- `NetworkCharacterManager` 只在运行时实例化选中的完整 Prefab，并按身份启停相机、输入、视觉子对象上的移动控制器和 `CharacterController`。
+- 网络根上的组件负责联机运动和碰撞，视觉子对象保留模型、Animator、相机和角色配置。
 - 本地相机绑定到网络根的 `PlayerCharacterController.inputSpace`。
 - 远程表现不启用相机、音频监听器和本地输入。
 - 网络 Transform、角色控制器和同步职责位于 `NetworkPlayer` 根节点，不向视觉子预制件添加网络同步组件。

@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-13`
+最后核验：`2026-10-14`
 
 ## 渲染管线
 
@@ -96,16 +96,18 @@
 
 ## 角色表现资源
 
-`NetworkCharacterManager` 的角色数组按下标配对：
+`NetworkCharacterManager.characters` 按角色编号保存完整角色 Prefab，每个角色只维护一份：
 
-| 角色编号 | 本地拥有者 Prefab | 远程同步 Prefab |
-|---|---|---|
-| `0` | `CharactersForLocal/娜娜莉（华丽飞踢）.prefab` | `CharactersForSync/娜娜莉（华丽飞踢）_Sync.prefab` |
-| `1` | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
+| 角色编号 | 完整角色 Prefab |
+|---|---|
+| `0` | `Assets/Core/Prefabs/Characters/娜娜莉（华丽飞踢）.prefab` |
+| `1` | `Assets/Core/Prefabs/Characters/娜娜莉（学园之星）.prefab` |
 
-默认编号取客户端本机的 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报，服务器进程内的该字段是兜底编号。本地 Prefab 提供 Camera 和 `ThirdPersonCamera`。同步 Prefab 提供远程模型和已绑定角色覆盖资产的 Animator。
+完整角色 Prefab 同时包含模型、Animator、相机、`AudioListener`、`ThirdPersonCamera`、`PlayerCharacterController`、`CharacterController`、骨骼跟随和 DynamicBone 配置。单机直接使用完整 Prefab；联机实例化后由 `NetworkCharacterManager` 根据身份启停子组件。这样身份差异属于运行时状态，不再通过复制 Prefab 表达。
 
-模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用，根节点承担网络 Transform、运动和碰撞。重绑绑定模型已配置的 Animator，复制骨骼跟随配置和本地相机参考，保留根 `CharacterMotor` 的速度与代码状态。
+默认编号取客户端本机的 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报，服务器进程内的该字段是兜底编号。
+
+模型由 `NetworkCharacterManager` 挂在 `NetworkPlayer` 下，子模型的 `PlayerCharacterController` 与 `CharacterController` 停用，根节点承担网络 Transform、运动和碰撞。重绑直接绑定视觉 Prefab 已配置的 Animator，保留根 `CharacterMotor` 的速度与代码状态。
 
 ### 角色动画 Controller
 
@@ -116,13 +118,13 @@
 | 华丽飞踢 | `Assets/Core/Animations/Characters/娜娜莉（华丽飞踢）.overrideController` |
 | 学园之星 | `Assets/Core/Animations/Characters/娜娜莉（学园之星）.overrideController` |
 
-两份 `AnimatorOverrideController` 共用逻辑资产，各覆盖待机、跳跃和两组十方向移动，共 22 个有效片段槽位。角色片段通过覆盖资产 Inspector 配置，同一角色的 Local、Sync 与模型目录中的 Prefab 共用一份覆盖资产。六个 Prefab 的 Root Motion 均关闭。
+两份 `AnimatorOverrideController` 共用逻辑资产，各覆盖待机、跳跃和两组十方向移动，共 22 个有效片段槽位。角色片段通过覆盖资产 Inspector 配置，每个完整角色 Prefab 的 Animator 引用对应覆盖资产。角色 Prefab 的 Root Motion 均关闭，模型目录只保存 FBX、Avatar、材质和贴图等导入资源。
 
 `CharacterAnimator` 使用 Animator 已绑定的 Controller 执行初始化、参数写入与落地首帧处理。模型重绑与销毁保持共用覆盖资产引用有效，各 Animator 的参数独立。
 
 ### 华丽飞踢模型与 Avatar 导入
 
-模型配置文件为 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，Local、Sync 两套华丽飞踢 Prefab 引用同一模型 Avatar。
+模型配置文件为 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/Model/娜娜莉（华丽飞踢）.fbx.meta`，角色视觉源和各用途 Variant 引用同一模型 Avatar。
 
 该文件的 Avatar 固化原 `humanDescription`，脸部控制根 `mouth` 不映射为 `Jaw`。导入类型为 Humanoid，人形映射保留，`autoGenerateAvatarMappingIfUnspecified` 关闭，导入后 Avatar 有效、为 Humanoid，Jaw 映射数为零。
 
@@ -130,7 +132,7 @@
 
 ### 学园之星裙摆 Prefab 配置
 
-`CharactersForLocal/娜娜莉（学园之星）.prefab` 与 `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` 共用同一套裙摆 DynamicBone 与碰撞器配置，模拟起点取裙骨链下段，每条裙链引用骨盆与两侧大腿的碰撞器。
+`Assets/Core/Prefabs/Characters/娜娜莉（学园之星）.prefab` 保存裙摆 DynamicBone 与碰撞器配置，模拟起点取裙骨链下段，每条裙链引用骨盆与两侧大腿的碰撞器。
 
 裙腰不产生模拟偏转，大幅抬腿存在局部穿模，骨端胶囊测试不覆盖整片裙面。参数与边界见 `../Character/Character_Guide.md` 的“学园之星裙摆”。
 
@@ -138,13 +140,13 @@
 
 `NetworkManager` Prefab 上的 `AutoStartClient` 字段显示中文 Tooltip，说明自动连接的运行环境、地址配置入口和重试间隔。连接地址统一填写在 Mirror `NetworkManager` 的 `Network Address`，使用 IP 或主机名。自动连接和 HUD 连接共用 `networkAddress`，端口由同一 Prefab 上的 `KcpTransport.Port` 提供。
 
-`PersistentScene` 中 `NetworkCharacterManager` 的两个角色数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，两套数组的同一下标表示同一角色；默认编号对应的两个位置均配置有效 Prefab。
+`PersistentScene` 中 `NetworkCharacterManager` 的 `characters` 数组与默认编号显示中文 Tooltip。数组下标从 `0` 开始，每个位置配置一份完整角色 Prefab；单机、联机本地和远程身份共用该位置的 Prefab。
 
 `standalonePlayer` 引用常驻场景内的单机角色实例，通过该引用直接启停单机角色。单机相机、控制器和监听器的引用当前均绑定该角色内的 `Main Camera`。新加入的单机角色与相机需要手动配置引用。
 
 ## 验证覆盖
 
-`Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、本地角色 Prefab 完整性、出生点高度、两份角色动画覆盖资产的完整性和六个 Prefab 的 Controller 绑定。`Core.Networking.PlayModeTests` 覆盖模型延迟挂载后的 Controller 绑定与初始化。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
+`Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、两份完整角色 Prefab、出生点高度、两份角色动画覆盖资产的完整性和 `characters` 数组绑定。`Core.Networking.PlayModeTests` 覆盖共享角色 Prefab 在单机、联机本地和远程身份下的组件启停、模型延迟挂载后的 Controller 绑定与初始化。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
 
 ## 维护触发
 

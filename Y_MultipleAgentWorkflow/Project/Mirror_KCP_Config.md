@@ -2,7 +2,7 @@
 
 文档 ID：`UNITY-NETCFG`
 状态：`Active`
-最后核验：`2026-10-10`（角色装配与暂缓范围局部核验）
+最后核验：`2026-10-14`
 
 ## 配置总览
 
@@ -62,16 +62,16 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 本地拥有者运行输入、移动和本地相机。
 - 远程实例接收服务器广播的 Transform。
 - `NetworkCharacterSync` 同步角色编号。
-- `NetworkCharacterManager` 为网络根装配本地或远程表现。
+- `NetworkCharacterManager` 为网络根装配 `characters` 数组中的完整角色 Prefab，并按身份启停组件。
 
 ## 表现装配与相机隔离
 
 `NetworkPlayer` 自身不保存具体角色模型。`NetworkCharacterManager` 读取 `characterId` 和 `isLocalPlayer`：
 
-- 本地拥有者实例化 `localCharacterPrefabs[characterId]`。
-- 远程玩家实例化 `characterPrefabs[characterId]`。
+- 本地拥有者和远程玩家都实例化 `characters[characterId]`。
+- 单机角色使用相同角色 Prefab 的场景实例。
 - 视觉实例挂到网络根下并重置局部 Transform。
-- 视觉子对象上的移动组件和 `CharacterController` 停用。
+- 联机视觉子对象上的移动组件和 `CharacterController` 停用。
 - 网络根的移动组件绑定新模型 Animator。
 - 本地 Camera 成为 `inputSpace` 和 `MainCamera`。
 - 远程 Camera、`ThirdPersonCamera` 和 `AudioListener` 保持关闭。
@@ -119,7 +119,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 - 每端只有本地拥有者的 Camera 和 `AudioListener` 启用。
 - 本地前进方向随相机水平朝向变化。
 - 玩家从出生点依据重力和地形碰撞落地。
-- 角色切换后各端使用同一 `characterId` 对应的本地或同步 Prefab。
+- 角色切换后各端使用同一 `characterId` 对应的完整角色 Prefab。
 
 ## 维护触发
 

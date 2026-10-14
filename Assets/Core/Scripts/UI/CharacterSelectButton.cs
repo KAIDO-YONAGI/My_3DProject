@@ -14,7 +14,7 @@ namespace Core.Scripts.UI
         [Tooltip("被监听的按钮。留空时自动取用同一 GameObject 上的 Button。")] [SerializeField]
         private Button targetButton;
 
-        [Tooltip("该按钮代表的角色编号，对应 CharactersForLocal 与 CharactersForSync 的同一下标。两个数组都必须在这个下标上配置有效 Prefab。")]
+        [Tooltip("该按钮代表的角色编号，对应 NetworkCharacterManager.characters 数组下标。")]
         [SerializeField, Min(0)]
         private int characterId;
 
