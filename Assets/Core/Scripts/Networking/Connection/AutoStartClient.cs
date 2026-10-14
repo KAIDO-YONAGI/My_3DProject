@@ -1,7 +1,7 @@
 using Mirror;
 using UnityEngine;
 
-namespace Core.Scripts.Networking
+namespace Core.Scripts.Networking.Connection
 {
     /// <summary>
     /// 按运行环境的开关自动连接 NetworkManager 配置的地址，使用 Time.unscaledTime 安排重试。

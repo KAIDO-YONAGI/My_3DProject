@@ -13,8 +13,8 @@ UDP Datagram
   → Mirror Transport 事件
   → Mirror 连接、Ready、AddPlayer、Spawn 和状态消息
   → NetworkTransformReliable 变换数据
-  → NetworkCharacterSync 角色编号
-  → NetworkCharacterMovementSync 运动快照
+  → CharacterIdSync 角色编号
+  → CharacterMotionSync 运动快照
 ```
 
 ## 传输层
@@ -39,7 +39,7 @@ UDP Datagram
 
 ### 角色编号
 
-`NetworkCharacterSync.characterId` 是 `SyncVar`。服务器持有最终值，客户端 Hook 收到变化后重新装配角色表现。
+`CharacterIdSync.characterId` 是 `SyncVar`。服务器持有最终值，客户端 Hook 收到变化后重新装配角色表现。
 
 本地玩家启动上报本机默认编号，运行中由本地拥有者调用 `SetLocalCharacter` 提交角色选择，两者共用同一个上行入口：
 
@@ -77,7 +77,7 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
-`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync`、`NetworkCharacterMovementSync`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
+`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
 
 ## 维护触发
 

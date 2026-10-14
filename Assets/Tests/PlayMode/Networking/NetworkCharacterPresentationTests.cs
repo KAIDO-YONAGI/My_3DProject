@@ -34,7 +34,7 @@ public sealed class NetworkCharacterPresentationTests
         identity = root.AddComponent(RuntimeType("Mirror.NetworkIdentity"));
         controller = root.AddComponent(RuntimeType("PlayerCharacterController"));
         ((Behaviour)controller).enabled = false;
-        player = root.AddComponent(RuntimeType("NetworkCharacterSync"));
+        player = root.AddComponent(RuntimeType("CharacterIdSync"));
         root.SetActive(true);
     }
 
@@ -452,8 +452,8 @@ public sealed class NetworkCharacterPresentationTests
             "PlayerCharacterController" => "Core.Scripts.Character.Control.PlayerCharacterController",
             "ThirdPersonCamera" => "Core.Scripts.Camera.Runtime.ThirdPersonCamera",
             "CharacterVisual" => "Core.Scripts.Character.Presentation.CharacterVisual",
-            "NetworkCharacterManager" => "Core.Scripts.Networking.NetworkCharacterManager",
-            "NetworkCharacterSync" => "Core.Scripts.Networking.NetworkCharacterSync",
+            "NetworkCharacterManager" => "Core.Scripts.Networking.Character.Presentation.NetworkCharacterManager",
+            "CharacterIdSync" => "Core.Scripts.Networking.Character.Sync.CharacterIdSync",
             _ => name
         };
 

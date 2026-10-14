@@ -1,8 +1,9 @@
 using Core.Scripts.Character.Control;
+using Core.Scripts.Networking.Character.Presentation;
 using Mirror;
 using UnityEngine;
 
-namespace Core.Scripts.Networking
+namespace Core.Scripts.Networking.Character.Sync
 {
     /// <summary>
     /// 同步网络玩家的角色编号，客户端与专用服务器之间分为上行请求和下行状态两条链路。
@@ -17,7 +18,7 @@ namespace Core.Scripts.Networking
     /// 本地拥有者持续使用本地运动结果，角色模型作为网络根子对象跟随其变换。
     /// </summary>
     /// 
-    public class NetworkCharacterSync : NetworkBehaviour
+    public class CharacterIdSync : NetworkBehaviour
     {
         // 下行状态由服务器写入：Spawn 携带初始编号，后续编号变化同步给拥有者和其他观察客户端。
         [SyncVar(hook = nameof(OnCharacterIdChanged))]
@@ -120,7 +121,7 @@ namespace Core.Scripts.Networking
             {
                 // 拒收时保留服务器当前编号并留下可定位的日志，避免角色编号被静默丢弃。
                 Debug.LogWarning(
-                    $"[{nameof(NetworkCharacterSync)}] 角色编号 {requestedCharacterId} 未通过服务端校验，保留编号 {characterId}。",
+                    $"[{nameof(CharacterIdSync)}] 角色编号 {requestedCharacterId} 未通过服务端校验，保留编号 {characterId}。",
                     this);
                 return;
             }

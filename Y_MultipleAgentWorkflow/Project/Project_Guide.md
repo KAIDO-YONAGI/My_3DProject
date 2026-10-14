@@ -89,8 +89,8 @@
 3. `Mirror.NetworkTransformReliable`
 4. `CharacterController`
 5. `PlayerCharacterController`
-6. `NetworkCharacterSync`
-7. `NetworkCharacterMovementSync`
+6. `CharacterIdSync`
+7. `CharacterMotionSync`
 
 `NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数。
 

@@ -61,7 +61,7 @@ Windows Server 构建使用 `HeadlessStartMode=AutoStartServer`：
 
 - 本地拥有者运行输入、移动和本地相机。
 - 远程实例接收服务器广播的 Transform。
-- `NetworkCharacterSync` 同步角色编号。
+- `CharacterIdSync` 同步角色编号。
 - `NetworkCharacterManager` 为网络根装配 `characters` 数组中的完整角色 Prefab，并按身份启停组件。
 
 ## 表现装配与相机隔离

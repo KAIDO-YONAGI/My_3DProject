@@ -70,7 +70,7 @@ InitialScene                启动引导，注册并加载常驻场景
 | Mirror onlineScene | 留空 |
 | 自动重连间隔 | `3` 秒 |
 
-`NetworkManager.prefab` 承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 与 `AutoStartClient`。`NetworkPlayer.prefab` 承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 与 `NetworkCharacterSync`。
+`NetworkManager.prefab` 承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 与 `AutoStartClient`。`NetworkPlayer.prefab` 承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 与 `CharacterIdSync`。
 
 ## 角色资源
 
@@ -91,7 +91,7 @@ InitialScene                启动引导，注册并加载常驻场景
 
 ### 装配规则
 
-`NetworkPlayer` 是稳定的网络根，服务器为每个连接生成一个网络根，客户端根据 `NetworkCharacterSync.characterId` 与 `NetworkIdentity.isLocalPlayer` 装配表现。
+`NetworkPlayer` 是稳定的网络根，服务器为每个连接生成一个网络根，客户端根据 `CharacterIdSync.characterId` 与 `NetworkIdentity.isLocalPlayer` 装配表现。
 
 - 视觉实例挂到网络根下，局部 Transform 归零。
 - 视觉实例自带的 `PlayerCharacterController` 与 `CharacterController` 停用，输入、运动与碰撞由网络根负责。

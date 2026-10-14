@@ -73,7 +73,7 @@ return ReferenceEquals(ActiveChild, target) ? null : target;
 | # | 位置 | 改法 |
 |---|---|---|
 | 1 | `CharacterMovementStateId` 枚举 | **追加在末尾**（如 `Slide = 5`）。数值就是网络包内容，插在中间会让旧值整体错位 |
-| 2 | `Assets/Core/Scripts/Networking/NetworkCharacterMovementSync.cs` 的上限校验 | `> (byte)...Falling` 改成新的最大值。漏改会让服务端把新状态当非法包丢弃，表现为「自己看得到、别人看不到」 |
+| 2 | `Assets/Core/Scripts/Networking/Character/Sync/CharacterMotionSync.cs` 的上限校验 | `> (byte)...Falling` 改成新的最大值。漏改会让服务端把新状态当非法包丢弃，表现为「自己看得到、别人看不到」 |
 | 3 | `Assets/Core/Scripts/Character/Animation/CharacterMotion.cs` 的 `IsGrounded` | 加 `\|\| State == 新状态`，否则动画把它误判成空中 |
 | 4 | `Y_MultipleAgentWorkflow/Multiplayer/Sync_Protocol.md` 的状态表 | 加一行 |
 | 5 | 专用服务器 | 重新构建，且与客户端同版本 |

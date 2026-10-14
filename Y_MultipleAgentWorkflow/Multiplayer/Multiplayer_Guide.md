@@ -8,13 +8,13 @@
 
 - `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，断线后按重试间隔重连。批处理进程、活动 Server 和活动 Client 跳过自动连接。
 - `NetworkCharacterManager`：按角色编号维护一份完整角色 Prefab，装配网络玩家表现，按身份管理相机、输入、控制器和碰撞体，并切换单机与联机表现。
-- `NetworkCharacterSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
-- `NetworkCharacterMovementSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
-- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`NetworkCharacterSync` 和 `NetworkCharacterMovementSync`。
+- `CharacterIdSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
+- `CharacterMotionSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
+- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync` 和 `CharacterMotionSync`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
-项目网络脚本位于 `Assets/Core/Scripts/Networking/`。
+项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Character/Sync/` 放角色编号与运动同步，`Character/Presentation/` 放角色表现装配。
 
 ## 连接与玩家生成
 
@@ -37,10 +37,10 @@ AutoStartClient.StartClient
 
 `NetworkPlayer` 是统一的网络根，具体角色模型在每个客户端本地装配。
 
-1. 服务器在 `NetworkCharacterSync.OnStartServer` 写入服务器配置的默认 `characterId`，作为客户端未上报时的兜底编号随初始 Spawn 下发。
+1. 服务器在 `CharacterIdSync.OnStartServer` 写入服务器配置的默认 `characterId`，作为客户端未上报时的兜底编号随初始 Spawn 下发。
 2. 客户端在 `OnStartLocalPlayer` 把本机 `NetworkCharacterManager.defaultCharacterId` 通过 `CommandSetCharacter` 上报一次，服务器校验通过后覆盖 `characterId`。
 3. 客户端在 `OnStartClient` 和 `OnStartLocalPlayer` 应用角色编号。
-4. `NetworkCharacterManager` 根据 `NetworkCharacterSync.characterId` 从 `characters` 数组取得完整角色 Prefab。
+4. `NetworkCharacterManager` 根据 `CharacterIdSync.characterId` 从 `characters` 数组取得完整角色 Prefab。
 5. 单机直接使用完整 Prefab；联机本地和远程实例化同一份 Prefab。
 6. 视觉实例成为网络根子对象，局部位置和旋转归零。
 7. 联机实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
@@ -51,7 +51,7 @@ AutoStartClient.StartClient
 
 角色条目使用下标表达角色编号，每个下标保存一份完整角色 Prefab。默认编号取客户端本机 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报；服务器自身的配置值是客户端未上报或上报编号无效时的兜底。角色资源对照见 `../Project/Project_Guide.md`。
 
-每个网络玩家在 `presentations` 字典中对应一条 `CharacterPresentation`，保存视觉实例、角色编号、来源 Prefab、已配置的本地身份以及相机组件数组。实例有效、编号和来源 Prefab 相同时复用该状态；身份相同时直接返回，身份变化时使用缓存组件重新配置相机和输入参考空间。编号或来源 Prefab 变化时替换实例，已销毁的实例重新装配。
+每个网络玩家在 `presentations` 字典中对应一条 `CharacterPresentationState`，保存视觉实例、角色编号、来源 Prefab、已配置的本地身份以及相机组件数组。实例有效、编号和来源 Prefab 相同时复用该状态；身份相同时直接返回，身份变化时使用缓存组件重新配置相机和输入参考空间。编号或来源 Prefab 变化时替换实例，已销毁的实例重新装配。
 
 装配时读取视觉 Prefab 的显式 `CharacterVisual` 引用，停用不属于当前用途的 Camera、`AudioListener` 和 `ThirdPersonCamera`，再配置本地相机目标和网络根输入空间。角色组件不通过运行时层级扫描补齐模型配置。
 
@@ -79,7 +79,7 @@ AutoStartClient.StartClient
 - 本地拥有者移动网络根，变换数据发送到服务器。
 - 服务器缓冲并广播变换快照。
 - 远程客户端插值应用位置和旋转。
-- `NetworkCharacterSync.characterId` 是 `SyncVar`。
+- `CharacterIdSync.characterId` 是 `SyncVar`。
 - `CommandSetCharacter` 将本地角色选择提交到服务器，服务器校验后更新 `SyncVar`。Host 和远端客户端使用同一入口，表现刷新交给 SyncVar hook。
 
 客户端和服务器使用相同的 NetworkBehaviour 顺序、组件布局和序列化字段。消息分层、字段约束和兼容规则见 `Sync_Protocol.md`。
@@ -92,8 +92,8 @@ AutoStartClient.StartClient
 
 - `AutoStartClient`：两个自动连接开关分别用于编辑器和构建客户端；服务端地址统一配置在 `NetworkManager.networkAddress`；重连间隔使用真实时间秒。连接端口配置在 `KcpTransport.Port`。
 - `NetworkCharacterManager`：`characters` 按下标保存每个角色的一份完整 Prefab；`defaultCharacterId` 是本机默认编号，客户端在本地玩家启动时上报它，服务器进程内的该字段是兜底编号。`presentations` 统一维护每个玩家的装配状态，清理时解除动画和输入引用、停用并销毁实例、移除该状态。
-- `NetworkCharacterSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。本机默认编号在本地玩家启动时上报一次，运行中的角色选择由拥有者经同一个 `Command` 提交到服务器，服务器拒收未通过校验的编号并记录警告。
-- `NetworkCharacterMovementSync`：按 `syncInterval` 以可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并限流记录警告。上行读取根控制器缓存的当前快照。
+- `CharacterIdSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。本机默认编号在本地玩家启动时上报一次，运行中的角色选择由拥有者经同一个 `Command` 提交到服务器，服务器拒收未通过校验的编号并记录警告。
+- `CharacterMotionSync`：按 `syncInterval` 以可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并限流记录警告。上行读取根控制器缓存的当前快照。
 
 ## 维护触发
 

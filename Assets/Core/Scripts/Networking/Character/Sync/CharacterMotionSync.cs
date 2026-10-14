@@ -4,13 +4,15 @@ using Core.Scripts.Character.Movement.States;
 using Mirror;
 using UnityEngine;
 
-namespace Core.Scripts.Networking
+namespace Core.Scripts.Networking.Character.Sync
 {
     /// <summary>
     /// 挂在 NetworkPlayer 根节点，同步控制器的运动状态、局部方向和动画权重。
     /// 拥有者客户端产生快照，服务器校验并保存后转发，远程控制器读取快照驱动动画。
+    /// 快照先校验再写入控制器，不合格的整包丢弃，控制器继续沿用上一份有效数据。
+    /// 校验必须在写入之前完成，这是本组件手写序列化的原因；SyncVar 先把值写进字段再回调。
     /// </summary>
-    public class NetworkCharacterMovementSync : NetworkBehaviour
+    public class CharacterMotionSync : NetworkBehaviour
     {
         // 缓存同一根节点上的控制器，发送时读取 CurrentMotion，接收时写入远程快照。
         private PlayerCharacterController controller;
@@ -138,7 +140,7 @@ namespace Core.Scripts.Networking
             }
 
             Debug.LogWarning(
-                $"[NetworkCharacterMovementSync] 丢弃异常运动快照：{reason}。控制器保留上一份有效快照。",
+                $"[CharacterMotionSync] 丢弃异常运动快照：{reason}。控制器保留上一份有效快照。",
                 this);
         }
     }

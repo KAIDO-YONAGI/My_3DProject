@@ -1,5 +1,15 @@
 # Multiplayer 开发记录
 
+## 2026-10-14：Networking 脚本按职责分层并重命名
+
+- 目录重组：`Assets/Core/Scripts/Networking/` 的 6 个脚本由平铺改为 `Connection/`、`Character/Sync/`、`Character/Presentation/` 三层存放，脚本与 `.meta` 成对移动，四个受跟踪脚本的 GUID 保持不变。
+- 重命名：`NetworkCharacterSync` 为 `CharacterIdSync`，`NetworkCharacterMovementSync` 为 `CharacterMotionSync`，`NetworkCharacterPresentationService` 为 `CharacterPresentationService`，`CharacterPresentation` 为 `CharacterPresentationState`；`AutoStartClient` 与 `NetworkCharacterManager` 名称不变。
+- 命名空间跟随目录：`Core.Scripts.Networking.Connection`、`Core.Scripts.Networking.Character.Sync`、`Core.Scripts.Networking.Character.Presentation`。
+- 调用方同步：`CharacterSelectButton` 的 `using` 指向表现命名空间；`NetworkCharacterPresentationTests` 的类型名字符串与全限定名映射同步更新。
+- 文档同步：`Project_Overview.md` 代码模块地图、`Multiplayer_Guide.md`、`Sync_Protocol.md`、`Dedicated_Server.md`、`Project_Guide.md`、`Mirror_KCP_Config.md`、`Character_Guide.md`、`README.md`、`StateMachine/README.md` 与 `docs/开发计划/联机系统教学/` 的标识符与路径已更新。
+- 验证：全仓检索旧类名与旧路径，运行时代码、测试与权威文档无残留。
+- 计数：`2/5 → 3/5`。
+
 ## 2026-10-11：客户端启动上报默认角色编号
 
 - 默认编号来源由服务器单方配置改为客户端本机配置：`NetworkCharacterSync.OnStartLocalPlayer` 新增 `ReportLocalDefaultCharacter`，读取本机 `NetworkCharacterManager.defaultCharacterId` 并经现有 `CommandSetCharacter` 上行一次；`OnStartServer` 写入的服务器默认编号作为客户端未上报或上报编号无效时的兜底值。

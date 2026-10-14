@@ -61,7 +61,11 @@ Assets/Core/Scripts/
 │  │  └─ States/          CharacterMovementStateMachine、CharacterMovementStates
 │  ├─ Animation/          CharacterAnimator、CharacterMotion、方向与跳跃动画配置
 │  └─ Presentation/       CharacterBoneFollower
-└─ Networking/            AutoStartClient、NetworkCharacterManager、NetworkCharacterSync
+└─ Networking/
+   ├─ Connection/         AutoStartClient
+   └─ Character/
+      ├─ Sync/            CharacterIdSync、CharacterMotionSync
+      └─ Presentation/    NetworkCharacterManager
 ```
 
 五个运动状态是独立类，集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`。
@@ -76,7 +80,7 @@ Assets/Core/Scripts/
 
 ## 角色表现结构
 
-`NetworkPlayer` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据 `NetworkCharacterSync.characterId` 从 `NetworkCharacterManager.characters` 选择一份完整角色 Prefab。
+`NetworkPlayer` 是稳定的网络根。服务器为每个连接生成一个网络根，客户端根据 `CharacterIdSync.characterId` 从 `NetworkCharacterManager.characters` 选择一份完整角色 Prefab。
 
 - 单机角色、联机本地角色和远程角色共用同一角色 Prefab。
 - `NetworkCharacterManager` 只在运行时实例化选中的完整 Prefab，并按身份启停相机、输入、视觉子对象上的移动控制器和 `CharacterController`。
@@ -98,7 +102,7 @@ Assets/Core/Scripts/
 - Mirror 的 `onlineScene` 为空，玩法场景由 `SceneChanger` 加载。
 - `autoCreatePlayer=true`，出生点选择模式为 `Random`。
 - `NetworkTransformReliable.SyncDirection=ClientToServer`。
-- `NetworkCharacterSync` 使用 `SyncVar characterId` 和 `Command CmdSetCharacter`。
+- `CharacterIdSync` 使用 `SyncVar characterId` 和 `Command CmdSetCharacter`。
 - `AutoStartClient` 连接 `127.0.0.1`，断开后每 3 秒重试。
 - 客户端和服务器使用相同的网络组件布局与序列化字段。
 

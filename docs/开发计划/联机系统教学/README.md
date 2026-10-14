@@ -65,10 +65,10 @@
 | 要查的事实 | 入口 |
 | --- | --- |
 | 玩家网络根与同步方向 | [NetworkPlayer.prefab](../../../Assets/Core/Prefabs/NetworkPlayer.prefab) |
-| 角色请求与编号状态 | [NetworkCharacterSync.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterSync.cs) |
-| 模型、动画和相机装配 | [NetworkCharacterManager.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterManager.cs) |
+| 角色请求与编号状态 | [CharacterIdSync.cs](../../../Assets/Core/Scripts/Networking/Character/Sync/CharacterIdSync.cs) |
+| 模型、动画和相机装配 | [NetworkCharacterManager.cs](../../../Assets/Core/Scripts/Networking/Character/Presentation/NetworkCharacterManager.cs) |
 | 本地运动与远程动画 | [PlayerCharacterController.cs](../../../Assets/Core/Scripts/Character/Control/PlayerCharacterController.cs) |
-| 运动表现状态上行与转发 | [NetworkCharacterMovementSync.cs](../../../Assets/Core/Scripts/Networking/NetworkCharacterMovementSync.cs) |
+| 运动表现状态上行与转发 | [CharacterMotionSync.cs](../../../Assets/Core/Scripts/Networking/Character/Sync/CharacterMotionSync.cs) |
 | 变换快照同步 | [NetworkTransformReliable.cs](../../../Assets/Plugins/Mirror/Components/NetworkTransform/NetworkTransformReliable.cs) |
 | 刚体的模拟侧控制 | [NetworkRigidbodyReliable.cs](../../../Assets/Plugins/Mirror/Components/NetworkRigidbody/NetworkRigidbodyReliable.cs) |
 | 网络时间与显示时间线 | [NetworkTime.cs](../../../Assets/Plugins/Mirror/Core/NetworkTime.cs) |

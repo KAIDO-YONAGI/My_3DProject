@@ -1,4 +1,4 @@
-using Core.Scripts.Networking;
+using Core.Scripts.Networking.Character.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 
