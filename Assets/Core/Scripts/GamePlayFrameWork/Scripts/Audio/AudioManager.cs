@@ -1,0 +1,199 @@
+using System.Collections;
+using System.Collections.Generic;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
+using UnityEngine;
+
+namespace Core.Scripts.GamePlayFrameWork.Scripts.Audio
+{
+    /// <summary>
+    /// 全局音频管理：音效按枚举从 AudioConfigSO 取片段，交给 AudioPlayer 对象池播放；
+    /// 背景音乐使用独立音源做淡入淡出，场景加载完成时播放加载音效。
+    /// 常驻场景承载，随常驻场景长期存在。
+    /// </summary>
+    public class AudioManager : YSingleton<AudioManager>
+    {
+        [Header("配置")]
+        [SerializeField] private AudioConfigSO config;
+        [SerializeField] private int maxPoolSize = 16;
+        [SerializeField] private int warmupCount = 4;
+
+        [Header("背景音乐")]
+        [SerializeField] private float crossfadeDuration = 1f;
+
+        [Header("启动")]
+        [Tooltip("启动时自动播放的背景音乐类型。设为默认类型时不自动播放。")]
+        [SerializeField] private BGMType startupBGM = BGMType.Gaming;
+
+        [Header("场景事件")]
+        [SerializeField] private SceneLoadedEventSO sceneLoadedEvent;
+
+        [Header("音量")]
+        [Range(0f, 1f)] public float sfxVolume = 0.5f;
+        [Range(0f, 1f)] public float bgmVolume = 0.5f;
+
+        private AudioSource _bgmSource;
+        private Queue<AudioPlayer> _pool = new Queue<AudioPlayer>();
+        private int _totalCreated;
+        private BGMType _currentBGM;
+        private Coroutine _crossfadeCoroutine;
+
+        protected override void OnSingletonInitialized()
+        {
+            _bgmSource = gameObject.AddComponent<AudioSource>();
+            _bgmSource.playOnAwake = false;
+            _bgmSource.loop = true;
+        }
+
+        private void Start()
+        {
+            Prewarm();
+            // 启动时自动播放全局 BGM（AudioConfig 未配置该类型时安全跳过）
+            if (startupBGM != BGMType.Default)
+                PlayBGM(startupBGM);
+        }
+
+        private void OnEnable()
+        {
+            if (sceneLoadedEvent != null)
+                sceneLoadedEvent.SceneLoadedEvent += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            if (sceneLoadedEvent != null)
+                sceneLoadedEvent.SceneLoadedEvent -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(GameSceneSO currentScene)
+        {
+            PlaySFX(SFXType.LoadScene);
+        }
+
+        private void Prewarm()
+        {
+            for (int i = 0; i < warmupCount; i++)
+            {
+                var go = new GameObject("AudioPlayer");
+                go.transform.SetParent(transform);
+                var p = go.AddComponent<AudioPlayer>();
+                p.Init(this);
+                p.StopAllCoroutines();
+                go.SetActive(false);
+                _pool.Enqueue(p);
+                _totalCreated++;
+            }
+        }
+
+        /// <summary>根据音效枚举播放</summary>
+        public void PlaySFX(SFXType type)
+        {
+            if (config == null) return;
+            AudioClip clip = config.GetSFXClip(type);
+            if (clip == null) return;
+            PlayClip(clip);
+        }
+
+        /// <summary>直接播放指定 AudioClip</summary>
+        public void PlayClip(AudioClip clip)
+        {
+            if (clip == null) return;
+            AudioPlayer player = GetPlayer();
+            if (player == null) return;
+            player.Play(clip, sfxVolume);
+        }
+
+        /// <summary>播放 BGM（带淡入淡出）</summary>
+        public void PlayBGM(BGMType type)
+        {
+            if (config == null) return;
+            if (type == _currentBGM && _bgmSource.isPlaying) return;
+            AudioClip clip = config.GetBGMClip(type);
+            if (clip == null) return;
+
+            if (_crossfadeCoroutine != null)
+                StopCoroutine(_crossfadeCoroutine);
+            _crossfadeCoroutine = StartCoroutine(CrossfadeBGM(clip));
+            _currentBGM = type;
+        }
+
+        private IEnumerator CrossfadeBGM(AudioClip newClip)
+        {
+            if (_bgmSource.isPlaying && _bgmSource.clip != null)
+            {
+                float startVol = _bgmSource.volume;
+                float elapsed = 0f;
+                while (elapsed < crossfadeDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    _bgmSource.volume = Mathf.Lerp(startVol, 0f, elapsed / crossfadeDuration);
+                    yield return null;
+                }
+                _bgmSource.Stop();
+            }
+
+            _bgmSource.clip = newClip;
+            _bgmSource.volume = 0f;
+            _bgmSource.Play();
+
+            float elapsed2 = 0f;
+            while (elapsed2 < crossfadeDuration)
+            {
+                elapsed2 += Time.deltaTime;
+                _bgmSource.volume = Mathf.Lerp(0f, bgmVolume, elapsed2 / crossfadeDuration);
+                yield return null;
+            }
+            _bgmSource.volume = bgmVolume;
+            _crossfadeCoroutine = null;
+        }
+
+        private AudioPlayer GetPlayer()
+        {
+            if (_pool.Count > 0)
+            {
+                var p = _pool.Dequeue();
+                if (p != null) return p;
+            }
+
+            if (_totalCreated < maxPoolSize)
+            {
+                var go = new GameObject("AudioPlayer");
+                go.transform.SetParent(transform);
+                var p = go.AddComponent<AudioPlayer>();
+                p.Init(this);
+                _totalCreated++;
+                return p;
+            }
+
+            return null;
+        }
+
+        public void ReturnPlayer(AudioPlayer player)
+        {
+            if (player == null) return;
+            player.StopAllCoroutines();
+            if (player.gameObject != null)
+            {
+                player.gameObject.SetActive(false);
+                player.transform.SetParent(transform);
+            }
+            _pool.Enqueue(player);
+        }
+
+        public void StopAllSFX()
+        {
+            foreach (var p in GetComponentsInChildren<AudioPlayer>(true))
+                p.StopAndReturn();
+        }
+
+        public void StopBGM()
+        {
+            if (_crossfadeCoroutine != null)
+            {
+                StopCoroutine(_crossfadeCoroutine);
+                _crossfadeCoroutine = null;
+            }
+            _bgmSource.Stop();
+        }
+    }
+}

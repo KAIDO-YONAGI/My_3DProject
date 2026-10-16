@@ -1,9 +1,9 @@
 using Core.Scripts.Character.Control;
-using Core.Scripts.Networking.Character.Presentation;
+using Core.Scripts.Networking.CharacterPresentation;
 using Mirror;
 using UnityEngine;
 
-namespace Core.Scripts.Networking.Character.Sync
+namespace Core.Scripts.Networking.Sync
 {
     /// <summary>
     /// 同步网络玩家的角色编号，客户端与专用服务器之间分为上行请求和下行状态两条链路。

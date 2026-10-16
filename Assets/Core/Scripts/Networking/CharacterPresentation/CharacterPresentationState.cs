@@ -2,7 +2,7 @@ using Core.Scripts.Camera.Runtime;
 using Core.Scripts.Character.Presentation;
 using UnityEngine;
 
-namespace Core.Scripts.Networking.Character.Presentation
+namespace Core.Scripts.Networking.CharacterPresentation
 {
     internal sealed class CharacterPresentationState
     {

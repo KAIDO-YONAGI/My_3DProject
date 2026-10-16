@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera.Runtime;
 using Core.Scripts.Character.Presentation;
-using Core.Scripts.Networking.Character.Sync;
+using Core.Scripts.Networking.Sync;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Core.Scripts.Networking.Character.Presentation
+namespace Core.Scripts.Networking.CharacterPresentation
 {
     /// <summary>
     /// 在 PersistentScene 中配置共用角色资源，按网络玩家身份装配客户端表现。

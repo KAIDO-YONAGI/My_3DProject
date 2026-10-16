@@ -4,7 +4,7 @@ using Core.Scripts.Character.Movement.States;
 using Mirror;
 using UnityEngine;
 
-namespace Core.Scripts.Networking.Character.Sync
+namespace Core.Scripts.Networking.Sync
 {
     /// <summary>
     /// 挂在 NetworkPlayer 根节点，同步控制器的运动状态、局部方向和动画权重。

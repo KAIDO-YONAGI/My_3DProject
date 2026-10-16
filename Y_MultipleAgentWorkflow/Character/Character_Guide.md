@@ -154,7 +154,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。移动参数随运动代码，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 通用分层状态机框架归入 `Assets/Core/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`，`autoReferenced` 使其可被运行时与测试引用；角色专用的状态节点留在 `Movement/States/`，不放进框架目录。新增状态的写法和联网需同步改动的清单见该目录 `README.md`。
 - 相机位于 `Assets/Core/Scripts/Camera/Runtime/`。
-- 网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Character/Sync/` 放角色编号与运动同步，`Character/Presentation/` 放角色表现装配。
+- 网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
 - 第三方插件统一放 `Assets/Plugins/`：`Mirror/` 带 asmdef，`DynamicBone/` 无 asmdef，编译进 `Assembly-CSharp-firstpass`，被角色 Prefab 以 GUID 引用。
 - 测试目录与运行时代码同构：`Assets/Tests/PlayMode/Camera/` 对应程序集 `Core.Camera.PlayModeTests`，`Assets/Tests/PlayMode/Networking/` 对应 `Core.Networking.PlayModeTests`，`Assets/Tests/Editor/` 对应 `Core.EditorTests`。移动脚本必须连同 `.meta` 一起移动，保持 Prefab 与场景引用有效。
 

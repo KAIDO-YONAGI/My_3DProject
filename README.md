@@ -35,9 +35,9 @@ InitialScene                启动引导，注册并加载常驻场景
 | 路径 | 内容 |
 |---|---|
 | `Assets/Core/Scenes/` | 三个场景 |
-| `Assets/Core/Prefabs/` | `NetworkManager`、`NetworkPlayer`、`CharactersForLocal`、`CharactersForSync` |
+| `Assets/Core/Prefabs/` | `NetworkManager`、`NetworkPlayer`、`Characters/`、`Lights/` |
 | `Assets/Core/Scripts/Networking/` | 自动连接、角色编号同步、角色表现装配 |
-| `Assets/Core/Scripts/Character/` | 输入、移动、重力与动画数据流（内含 `Config/`、`Runtime/`） |
+| `Assets/Core/Scripts/Character/` | 输入、移动、动画数据流与角色表现 |
 | `Assets/Core/Scripts/Camera/` | 第三人称相机轨道、光标、避让与转向数学 |
 | `Assets/Core/Models/` | 角色模型源文件与骨骼配置说明 |
 | `Assets/Terrain/` | 玩法地形数据 |
@@ -49,6 +49,8 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/Plugins/AddressableAssetsData/` | Addressables 分组与构建配置 |
 | `Assets/Core/Scripts/GamePlayFrameWork/` | 场景管理、时间管理、UI 与 ScriptableObject 基础设施 |
 | `Assets/Materials/ForestMaterials/` | 地形植被与地表贴图 |
+| `Assets/Materials/SFX/` | 音效与背景音乐素材 |
+| `Assets/Core/SO/Audio/` | 音频配置资产 |
 | `Assets/Plugins/TextMesh Pro/` | TextMeshPro 资源 |
 | `Assets/Plugins/Mirror/MirrorScriptTemplates/` | Mirror 脚本模板 |
 | `Assets/Plugins/ParrelSync/` | 多编辑器实例工具 |

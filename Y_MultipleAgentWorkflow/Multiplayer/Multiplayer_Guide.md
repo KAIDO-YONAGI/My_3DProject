@@ -14,7 +14,7 @@
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
-项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Character/Sync/` 放角色编号与运动同步，`Character/Presentation/` 放角色表现装配。
+项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
 
 ## 连接与玩家生成
 

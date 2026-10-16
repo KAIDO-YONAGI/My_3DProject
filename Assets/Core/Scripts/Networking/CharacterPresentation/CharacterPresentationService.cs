@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera.Runtime;
 using Core.Scripts.Character.Presentation;
-using Core.Scripts.Networking.Character.Sync;
+using Core.Scripts.Networking.Sync;
 using UnityEngine;
 
-namespace Core.Scripts.Networking.Character.Presentation
+namespace Core.Scripts.Networking.CharacterPresentation
 {
     internal sealed class CharacterPresentationService
     {

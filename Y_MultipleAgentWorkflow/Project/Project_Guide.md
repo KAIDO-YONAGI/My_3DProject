@@ -38,7 +38,7 @@
 | 目录 | 内容 |
 |---|---|
 | `Core/` | 项目自有代码、场景、Prefab 与模型 |
-| `Materials/` | 地形植被与地表贴图等素材 |
+| `Materials/` | 地形植被与地表贴图、音效与背景音乐等素材 |
 | `Plugins/` | 第三方插件 |
 | `Tests/` | EditMode 与 PlayMode 测试程序集 |
 | `ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
@@ -52,7 +52,8 @@
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
-- 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`。
+- 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`，按 `Connection/`、`Sync/`、`CharacterPresentation/` 分目录。
+- 全局音频由 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Audio/` 的 `AudioManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
 - 测试程序集位于 `Assets/Tests/`：`Editor/` 为 `Core.EditorTests`，`PlayMode/Camera/` 为 `Core.Camera.PlayModeTests`，`PlayMode/Networking/` 为 `Core.Networking.PlayModeTests`。移动或重命名测试脚本时必须连同 `.meta` 一起移动。
 
 ## Addressables
