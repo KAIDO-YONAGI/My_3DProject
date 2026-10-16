@@ -62,7 +62,7 @@
 
 每个 `AudioPlayer` 管理一个带 `AudioSource` 的场景 GameObject，预热与按需创建的对象统一位于 `AudioPlayerManager` 节点下。每次播放都重新设置位置与 `spatialBlend`，同一实例可以交替承载 2D 与 3D 音效。播放结束或主动停止时，管理器停用对象并将其归还空闲队列；重复停止保持每个实例只入队一次。背景音乐使用管理器上的独立循环音源。
 
-`AudioTriggerManager` 在本地输入触发时记录声源对象与触发位置，先由本机 `AudioPlayerManager` 播放一次，再经 `AudioTriggerEventSO` 通知本地网络玩家。`NetworkAudioPlayer` 只允许本地拥有者的实例调用 `CommandPlayAudio`，服务器收到后经 `RpcPlayAudio` 转发给其他观察者，并通过 `includeOwner = false` 排除已经本地播放过的拥有者。远端客户端使用消息中的世界坐标播放，不读取自身角色位置。
+`AudioTriggerManager` 在本地输入触发时记录声源对象与触发位置，先由本机 `AudioPlayerManager` 播放一次，再经 `FeedbackEventSO` 通知本地网络玩家。`NetworkAudioPlayer` 只允许本地拥有者的实例调用 `CommandPlayAudio`，服务器收到后经 `RpcPlayAudio` 转发给其他观察者，并通过 `includeOwner = false` 排除已经本地播放过的拥有者。远端客户端使用消息中的世界坐标播放，不读取自身角色位置。
 
 `Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收，以及音频事件消息的声源和位置传递、触发器输入资源释放。
 

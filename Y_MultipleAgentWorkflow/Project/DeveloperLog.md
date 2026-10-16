@@ -4,7 +4,7 @@
 
 - 播放：`AudioPlayerManager` 单例按 `AudioType` 从 `AudioConfigSO` 取片段，交给 `AudioPlayer` 对象池播放；背景音乐使用独立音源做淡入淡出，场景加载完成时播放加载音效。
 - 资源：配置资产为 `Assets/Core/SO/Audio/AudioConfig.asset`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
-- 触发：`AudioTriggerManager` 把音频类型、来源对象与世界坐标封装为 `AudioTriggerMessage`，经 `AudioTriggerEventSO` 广播。
+- 触发：`AudioTriggerManager` 把音频类型、来源对象与世界坐标封装为 `FeedbackMessage`，经 `FeedbackEventSO` 广播。
 - 入口：输入资产新增 `Test` 动作并绑定反引号键，`CharacterInputReader.TestPressed` 暴露该动作。
 - 测试：新增 `Assets/Tests/Editor/AudioPlayerTests.cs`。
 - 计数：`1/5 → 2/5`。

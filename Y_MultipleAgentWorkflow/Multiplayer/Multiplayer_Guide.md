@@ -17,7 +17,7 @@
 
 项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
 
-音频事件由 `AudioTriggerManager` 记录声源对象和触发时的世界坐标。本地 `AudioPlayerManager` 立即播放一次，`NetworkAudioPlayer` 只在事件来源属于本地网络玩家且客户端已 Ready 时发送 Command。服务器收到后向其他观察者发送 ClientRpc，远端按消息坐标播放。
+反馈由 `AudioTriggerManager` 记录声源对象和触发时的世界坐标。本地 `AudioPlayerManager` 立即播放一次，`NetworkAudioPlayer` 只在反馈来源属于本地网络玩家且客户端已 Ready 时发送 Command。服务器收到后向其他观察者发送 ClientRpc，远端按消息坐标播放。
 
 ## 连接与玩家生成
 

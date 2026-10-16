@@ -8,36 +8,54 @@ namespace Core.Scripts.Networking.Sync
 {
     public class NetworkAudioPlayer : NetworkBehaviour
     {
-        [SerializeField] private AudioTriggerEventSO audioTriggerEvent;
+        [SerializeField] private FeedbackEventSO feedbackEvent;
+        private bool isSubscribed;
 
         private void OnEnable()
         {
-            if (audioTriggerEvent != null)
-            {
-                // 每个网络玩家实例都订阅同一个事件资产，收到事件后再通过下面的守卫判断自己是否应该处理。
-                audioTriggerEvent.AudioTriggerEvent += OnAudioTrigger;
-            }
+            SubscribeToFeedback();
+        }
+
+        public override void OnStartLocalPlayer()
+        {
+            base.OnStartLocalPlayer();
+            // 首次生成网络玩家时，本地身份在 OnEnable 之后才确定，因此在这里完成订阅。
+            SubscribeToFeedback();
+        }
+
+        public override void OnStopLocalPlayer()
+        {
+            UnsubscribeFromFeedback();
+            base.OnStopLocalPlayer();
         }
 
         private void OnDisable()
         {
-            if (audioTriggerEvent != null)
-            {
-                // 组件禁用或销毁时解除订阅，避免失效对象继续响应音频事件。
-                audioTriggerEvent.AudioTriggerEvent -= OnAudioTrigger;
-            }
+            UnsubscribeFromFeedback();
         }
 
-        private void OnAudioTrigger(AudioTriggerMessage audioTriggerMessage)
+        private void SubscribeToFeedback()
         {
-            // 事件会被所有 NetworkAudioPlayer 收到，只有产生事件的那个网络玩家对象可以继续处理。
-            if (audioTriggerMessage.Source != gameObject)
-            {
+            if (isSubscribed || !isLocalPlayer || feedbackEvent == null)
                 return;
-            }
+            // 只有本地玩家订阅反馈，远程玩家对象不会收到本地反馈通知。
+            // 这里订阅的价值在于唤醒将来会有的多个反馈系统（单本地玩家）
+            feedbackEvent.FeedbackEvent += OnFeedback;
+            isSubscribed = true;
+        }
 
-            // 只有本地拥有者能向服务器发送该对象的 Command，远程客户端不能代发。
-            if (!isLocalPlayer)
+        private void UnsubscribeFromFeedback()
+        {
+            if (!isSubscribed) return;
+            // 组件停用、销毁或本地身份结束时解除订阅，避免失效对象继续响应反馈。
+            feedbackEvent.FeedbackEvent -= OnFeedback;
+            isSubscribed = false;
+        }
+
+        private void OnFeedback(FeedbackMessage feedbackMessage)
+        {
+            // 反馈来源必须是当前本地玩家对象，避免其他来源误发网络反馈。
+            if (feedbackMessage.Source != gameObject)
             {
                 return;
             }
@@ -48,8 +66,8 @@ namespace Core.Scripts.Networking.Sync
                 return;
             }
 
-            // 本地玩家已经在 AudioTriggerManager 中播放一次，这里只把事件提交给服务器。
-            CommandPlayAudio(audioTriggerMessage.AudioType, audioTriggerMessage.WorldPosition);
+            // 本地玩家已经在 AudioTriggerManager 中播放一次，这里只把反馈提交给服务器。
+            CommandPlayAudio(feedbackMessage.AudioType, feedbackMessage.WorldPosition);
         }
 
         [Command]
@@ -59,7 +77,7 @@ namespace Core.Scripts.Networking.Sync
             RpcPlayAudio(audioType, worldPosition);
         }
 
-        [ClientRpc(includeOwner = false)]//owner不播放
+        [ClientRpc(includeOwner = false)] //owner不播放
         private void RpcPlayAudio(AudioType audioType, Vector3 worldPosition)
         {
             // includeOwner=false 排除发起 Command 的拥有者，避免本地即时播放和 RPC 播放重复。

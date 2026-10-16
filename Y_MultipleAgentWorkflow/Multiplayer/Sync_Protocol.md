@@ -76,12 +76,12 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 ### 音频事件
 
-音频事件不作为持续状态同步。`AudioTriggerManager` 在本地触发时生成 `AudioTriggerMessage`，携带 `AudioType`、声源对象和触发时的 `WorldPosition`。本地先播放一次，再由来源对象对应的本地 `NetworkAudioPlayer` 调用 Command：
+反馈不作为持续状态同步。`AudioTriggerManager` 在本地触发时生成 `FeedbackMessage`，携带 `AudioType`、声源对象和触发时的 `WorldPosition`。本地先播放一次，再由来源对象对应的本地 `NetworkAudioPlayer` 调用 Command：
 
 ```text
 本地输入
   → AudioPlayerManager 本地播放
-  → AudioTriggerEventSO
+  → FeedbackEventSO
   → 本地拥有者 NetworkAudioPlayer
   → CommandPlayAudio
   → 服务器

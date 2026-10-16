@@ -2,7 +2,7 @@
 
 ## 2026-10-16：网络音频播放与网络脚本目录收敛
 
-- `NetworkAudioPlayer` 是 `NetworkBehaviour`，挂在网络玩家根节点，订阅 `AudioTriggerEventSO` 后按自身网络身份决定是否播放，音频触发因此能区分来源玩家。
+- `NetworkAudioPlayer` 是 `NetworkBehaviour`，挂在网络玩家根节点，仅由本地玩家订阅 `FeedbackEventSO`，反馈因此能区分来源玩家。
 - 网络脚本目录由 `Connection/`、`Character/Sync/`、`Character/Presentation/` 收敛为 `Connection/`、`Sync/` 与 `CharacterPresentation/`，命名空间同步为 `Core.Scripts.Networking.Connection`、`Core.Scripts.Networking.Sync` 与 `Core.Scripts.Networking.CharacterPresentation`。`Sync/` 收纳角色编号、运动与音频三类同步组件。
 - 复核：`Assets/Core/Scripts/Networking/` 的实际脚本与本域 Guide 的组件清单、`Sync_Protocol.md` 的协议分层一致，旧标识符只保留在历史记录中。
 - 计数：`4/5 → 5/5`，达到阈值并完成复核，重置为 `0/5`。
