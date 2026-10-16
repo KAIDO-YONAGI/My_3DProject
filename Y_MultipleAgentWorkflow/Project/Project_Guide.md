@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-14`
+最后核验：`2026-10-16`
 
 ## 渲染管线
 
@@ -53,8 +53,18 @@
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`，按 `Connection/`、`Sync/`、`CharacterPresentation/` 分目录。
-- 全局音频由 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Audio/` 的 `AudioManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
+- 全局音频由 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Audio/` 的 `AudioPlayerManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
 - 测试程序集位于 `Assets/Tests/`：`Editor/` 为 `Core.EditorTests`，`PlayMode/Camera/` 为 `Core.Camera.PlayModeTests`，`PlayMode/Networking/` 为 `Core.Networking.PlayModeTests`。移动或重命名测试脚本时必须连同 `.meta` 一起移动。
+
+## 音效播放与回收
+
+`AudioPlayerManager.PlaySfx(AudioType audioType, Vector3? worldPosition = null)` 从 `AudioConfigSO` 选取片段，再交给 `AudioPlayer` 播放。省略坐标时使用 2D 音效；传入世界坐标时将音源放到该位置，使用 3D 音效。传入角色的 `transform.position` 表示调用时的角色位置。
+
+每个 `AudioPlayer` 管理一个带 `AudioSource` 的场景 GameObject，预热与按需创建的对象统一位于 `AudioPlayerManager` 节点下。每次播放都重新设置位置与 `spatialBlend`，同一实例可以交替承载 2D 与 3D 音效。播放结束或主动停止时，管理器停用对象并将其归还空闲队列；重复停止保持每个实例只入队一次。背景音乐使用管理器上的独立循环音源。
+
+`AudioTriggerManager` 在本地输入触发时记录声源对象与触发位置，先由本机 `AudioPlayerManager` 播放一次，再经 `AudioTriggerEventSO` 通知本地网络玩家。`NetworkAudioPlayer` 只允许本地拥有者的实例调用 `CommandPlayAudio`，服务器收到后经 `RpcPlayAudio` 转发给其他观察者，并通过 `includeOwner = false` 排除已经本地播放过的拥有者。远端客户端使用消息中的世界坐标播放，不读取自身角色位置。
+
+`Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收，以及音频事件消息的声源和位置传递、触发器输入资源释放。
 
 ## Addressables
 
@@ -83,7 +93,7 @@
 
 路径：`Assets/Core/Prefabs/NetworkPlayer.prefab`
 
-根节点共 7 个组件，顺序如下：
+根节点共 8 个组件，顺序如下：
 
 1. `Transform`
 2. `Mirror.NetworkIdentity`
@@ -92,8 +102,9 @@
 5. `PlayerCharacterController`
 6. `CharacterIdSync`
 7. `CharacterMotionSync`
+8. `NetworkAudioPlayer`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数，`NetworkAudioPlayer` 位于网络行为末尾，负责音频事件的拥有者上行和远端播放。
 
 ## 角色表现资源
 

@@ -3,45 +3,52 @@ using UnityEngine;
 namespace Core.Scripts.GamePlayFrameWork.Scripts.Audio
 {
     /// <summary>
-    /// 单个音效播放器：由 AudioManager 池化复用，播完后自行归还。
+    /// 单个音效播放器：由 AudioPlayerManager 池化复用，播完后自行归还。
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class AudioPlayer : MonoBehaviour
     {
-        private AudioSource _source;
-        private AudioManager _manager;
+        private AudioSource audioSource;
+        private AudioPlayerManager _audioPlayerManager;
 
-        public void Init(AudioManager manager)
+        /// <summary>绑定所属管理器并初始化池内音源。</summary>
+        public void Init(AudioPlayerManager playerManager)
         {
-            _manager = manager;
-            _source = GetComponent<AudioSource>();
-            _source.playOnAwake = false;
-            _source.loop = false;
+            _audioPlayerManager = playerManager;
+            audioSource = GetComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
             gameObject.SetActive(false);
         }
 
-        public void Play(AudioClip clip, float volume, float pitch = 1f)
+        /// <summary>在指定世界坐标播放音效，省略坐标时使用 2D 播放。</summary>
+        public void Play(AudioClip clip, float volume, float pitch = 1f, Vector3? worldPosition = null)
         {
-            _source.clip = clip;
-            _source.volume = volume;
-            _source.pitch = pitch;
+            // 池中实例可交替用于 2D 与 3D 音效，每次播放都重置空间状态。
+            transform.position = worldPosition ?? _audioPlayerManager.transform.position;
+            audioSource.spatialBlend = worldPosition.HasValue ? 1f : 0f;
+            audioSource.clip = clip;
+            audioSource.volume = volume;
+            audioSource.pitch = pitch;
             gameObject.SetActive(true);
-            _source.Play();
+            audioSource.Play();
             StartCoroutine(WaitForEnd());
         }
 
+        /// <summary>等待音源播放结束，再由管理器停用并回收实例。</summary>
         private System.Collections.IEnumerator WaitForEnd()
         {
-            while (_source.isPlaying)
+            while (audioSource.isPlaying)
                 yield return null;
-            _manager.ReturnPlayer(this);
+            _audioPlayerManager.ReturnPlayer(this);
         }
 
+        /// <summary>立即停止音效并归还对象池。</summary>
         public void StopAndReturn()
         {
             StopAllCoroutines();
-            if (_source != null) _source.Stop();
-            _manager.ReturnPlayer(this);
+            if (audioSource != null) audioSource.Stop();
+            _audioPlayerManager.ReturnPlayer(this);
         }
 
         private void OnDisable()

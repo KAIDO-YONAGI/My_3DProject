@@ -2,7 +2,7 @@
 
 文档 ID：`SYNC-PROTOCOL`
 状态：`Active`
-最后核验：`2026-10-11`
+最后核验：`2026-10-16`
 
 ## 协议分层
 
@@ -15,6 +15,7 @@ UDP Datagram
   → NetworkTransformReliable 变换数据
   → CharacterIdSync 角色编号
   → CharacterMotionSync 运动快照
+  → NetworkAudioPlayer 音频事件
 ```
 
 ## 传输层
@@ -73,12 +74,29 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 验收覆盖首次加入、延迟装配、换角色、停止移动、异常快照和缓冲上限，以及同版本双客户端、Host、专用服务器与延迟条件下的位置和状态时序。
 
+### 音频事件
+
+音频事件不作为持续状态同步。`AudioTriggerManager` 在本地触发时生成 `AudioTriggerMessage`，携带 `AudioType`、声源对象和触发时的 `WorldPosition`。本地先播放一次，再由来源对象对应的本地 `NetworkAudioPlayer` 调用 Command：
+
+```text
+本地输入
+  → AudioPlayerManager 本地播放
+  → AudioTriggerEventSO
+  → 本地拥有者 NetworkAudioPlayer
+  → CommandPlayAudio
+  → 服务器
+  → RpcPlayAudio(includeOwner = false)
+  → 其他观察者按 WorldPosition 播放
+```
+
+`isLocalPlayer` 用于限制 Command 的发起者，`includeOwner = false` 用于限制 ClientRpc 的接收者，两者职责不同，不能互相替代。事件来源不是本地网络玩家时直接忽略；客户端未 Ready 时不发送 Command。
+
 ## 兼容性规则
 
 客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
-`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
+`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
 
 ## 维护触发
 
-修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、序列化字段或兼容规则时更新本文档。
+修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频事件、序列化字段或兼容规则时更新本文档。

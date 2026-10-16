@@ -67,6 +67,7 @@ namespace Core.Scripts.Character.Input
 
         /// <summary>本帧是否按下重新捕获光标键。</summary>
         public bool LockCursorPressed => Controls.Player.LockCursor.WasPressedThisFrame();
+        public bool TestPressed => Controls.Player.Test.WasPressedThisFrame();
 
         /// <summary>
         /// 释放输入资源。必须调用：生成的包装类在终结时会断言动作表仍处于启用状态。

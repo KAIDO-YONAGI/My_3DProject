@@ -51,6 +51,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
         /// </summary>
         public int DefaultCharacterId => defaultCharacterId;
 
+        /// <summary>当前单机模式使用的角色实例，角色替换后始终指向新实例。</summary>
+        public GameObject StandalonePlayer => standalonePlayer;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)

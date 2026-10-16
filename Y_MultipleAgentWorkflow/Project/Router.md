@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`4/5`
-最后更新：`2026-10-14`
+维护计数：`1/5`
+最后更新：`2026-10-16`
 
 ## 任务路由
 
@@ -13,6 +13,7 @@
 | 渲染管线、URP 资产、三渲二着色器与调参 | `Project_Guide.md`、`Assets/Core/Shaders/Toon/TOON_MIGRATION.md` |
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
+| 音效播放、空间坐标与播放器对象池 | `Project_Guide.md` |
 | Prefab 组件组成 | `Project_Guide.md` |
 | 共用 Animator Controller、角色覆盖资产与 Prefab 动画绑定 | `Project_Guide.md`、`../Character/Character_Guide.md`，核对共用 Controller 与 `Assets/Core/Animations/Characters/` |
 | 角色 FBX 导入、Humanoid Avatar 与骨骼映射 | `Project_Guide.md`、`../Character/Character_Guide.md` |

@@ -10,7 +10,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Core
     /// </summary>
     public abstract class YSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
-        protected static T _instance;
+        private static T _instance;
 
         public static T Instance => _instance;
 
@@ -22,12 +22,15 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Core
                 Destroy(this);
                 return;
             }
+
             _instance = this as T;
             OnSingletonInitialized();
         }
 
         /// <summary>子类初始化钩子：仅在合法实例的 Awake 中调用一次</summary>
-        protected virtual void OnSingletonInitialized() { }
+        protected virtual void OnSingletonInitialized()
+        {
+        }
 
         protected virtual void OnDestroy()
         {

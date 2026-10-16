@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-10-14`
+最后核验：`2026-10-16`
 
 ## 场景列表
 
@@ -41,6 +41,8 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 `NetworkCharacterManager` 以 `NetworkClient.isConnected` 判断表现模式：连接尝试期间保留场景中的单机角色和相机，连接完成后收起单机角色，把表现交给 Mirror 创建的网络玩家。单机、联机本地和远程角色使用 `characters` 数组中同一编号的完整角色 Prefab，身份差异由运行时组件启停处理。
 
+`AudioPlayerManager` 与 `AudioTriggerManager` 位于常驻层。单机触发器从 `NetworkCharacterManager.StandalonePlayer` 取得当前单机角色，角色替换后继续使用新实例；联机时从 `NetworkClient.localPlayer` 取得本地网络玩家。
+
 ### MultiplayerSampleScene
 
 玩法环境层，提供地形、碰撞和光照。场景中的 `Camera` 对象保持停用，运行视角来自单机角色或本地网络角色。
@@ -61,4 +63,4 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ## 维护触发
 
-修改场景列表、场景内容、加载与卸载链路、场景配置资产或单机联机表现切换规则时更新本文档。
+修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。

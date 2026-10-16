@@ -12,7 +12,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Audio
     [System.Serializable]
     public class SFXEntry
     {
-        public SFXType type;
+        public AudioType type;
         public AudioItem[] items;
     }
 
@@ -34,7 +34,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Audio
         public BGMEntry[] bgmEntries;
 
         /// <summary>按音效类型取一条片段，未登记该类型时返回空</summary>
-        public AudioClip GetSFXClip(SFXType type)
+        public AudioClip GetSFXClip(AudioType type)
         {
             foreach (var entry in sfxEntries)
             {

@@ -2,7 +2,7 @@
 
 文档 ID：`MULTIPLAYER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-14`
+最后核验：`2026-10-16`
 
 ## 当前组件
 
@@ -10,11 +10,14 @@
 - `NetworkCharacterManager`：按角色编号维护一份完整角色 Prefab，装配网络玩家表现，按身份管理相机、输入、控制器和碰撞体，并切换单机与联机表现。
 - `CharacterIdSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
 - `CharacterMotionSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
-- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync` 和 `CharacterMotionSync`。
+- `NetworkAudioPlayer`：接收本地音频事件，只有本地拥有者通过 `CommandPlayAudio` 上行音效类型和触发位置，服务器经 `RpcPlayAudio` 转发给观察者，拥有者由 `includeOwner = false` 排除。
+- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync` 和 `NetworkAudioPlayer`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
 项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
+
+音频事件由 `AudioTriggerManager` 记录声源对象和触发时的世界坐标。本地 `AudioPlayerManager` 立即播放一次，`NetworkAudioPlayer` 只在事件来源属于本地网络玩家且客户端已 Ready 时发送 Command。服务器收到后向其他观察者发送 ClientRpc，远端按消息坐标播放。
 
 ## 连接与玩家生成
 
@@ -97,4 +100,4 @@ AutoStartClient.StartClient
 
 ## 维护触发
 
-修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接策略、玩家生成、角色装配或相机归属时更新本文档。
+修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接策略、玩家生成、角色装配、相机归属或网络音频事件流程时更新本文档。

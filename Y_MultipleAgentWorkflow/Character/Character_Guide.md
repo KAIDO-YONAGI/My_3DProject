@@ -2,7 +2,7 @@
 
 文档 ID：`CHARACTER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-14`
+最后核验：`2026-10-16`
 
 ## 角色渲染
 
@@ -49,6 +49,7 @@ CharacterInputReader（PlayerControls.inputactions）
 ```
 
 - `CharacterInputReader` 是唯一输入入口，按需创建并启用 `PlayerControls`。
+- `AudioTriggerManager` 复用 `CharacterInputReader` 读取测试音效输入，在组件停用时释放输入资源。
 - `PlayerCharacterController` 读取输入并组织移动和表现更新。
 - `CharacterInput` 保存当前帧的移动、疾跑和跳跃输入。
 - `CharacterMotor` 根据相机水平朝向计算世界移动方向，处理加减速、重力、跳跃和 `CharacterController.Move`。

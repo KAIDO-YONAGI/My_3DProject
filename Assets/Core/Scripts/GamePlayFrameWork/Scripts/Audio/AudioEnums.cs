@@ -1,7 +1,7 @@
 namespace Core.Scripts.GamePlayFrameWork.Scripts.Audio
 {
     /// <summary>音效类型：与 AudioConfigSO 的 SFXEntry 一一对应</summary>
-    public enum SFXType
+    public enum AudioType
     {
         None,
         Walk,
