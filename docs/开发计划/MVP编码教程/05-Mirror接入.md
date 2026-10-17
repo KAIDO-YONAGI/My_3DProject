@@ -6,6 +6,21 @@
 
 教程适配环境为 Unity `2022.3.62f3c1`、工程内置 Mirror、Input System `1.14.2` 和 URP `14.0.12`。下面的 `Unity/` 是教程代码文件的分组路径，代码命名空间均为 `Mvp`。
 
+## 接上当前项目：先认识已有的网络入口
+
+打开现有 [NetworkManager.prefab](../../../Assets/Core/Prefabs/NetworkManager.prefab)，对照玩家模板、KCP Transport 与 Auto Create Player。再看 [AutoStartClient.cs](../../../Assets/Core/Scripts/Networking/Connection/AutoStartClient.cs) 怎样调用管理器连接。教程 `MvpNetwork` 继承同一个 Mirror `NetworkManager`，增加了竞技场需要的生命周期回调和消息处理。
+
+| 当前工程入口 | 教程入口 | 这一层在做什么 |
+| --- | --- | --- |
+| `AutoStartClient` 发起连接 | 第 09 章 Server、Client、Host 按钮 | 选择运行身份并启动网络 |
+| 现有 `NetworkPlayer.prefab` | 教程 `MvpBody.prefab` | 提供玩家的网络身份 |
+| `CharacterIdSync` 的 Command 与 SyncVar | `MvpInput` 与 `MvpBaseline / MvpMotion` | 请求上行、确认状态下行 |
+| `NetworkCharacterManager` 装配角色 | 第 09 章 `MvpView` 建立显示根 | 把收到的信息变成表现 |
+
+**`MvpBody.Id` 是自写世界的对象编号，`characterId` 是正式角色的外观编号。** 一个网络玩家还具有 Mirror `netId`。三者用途见 [00 导读](00-从当前项目开始.md#三种编号要分开)。
+
+先这样读：`OnStartServer` 看服务器注册哪些消息 → 输入处理器看 `conn.identity` 怎样确定玩家 → `OnServerAddPlayer` 看身份怎样创建 → 客户端回调看数据交给哪个 View。保持教程场景只运行自己的 `MvpNetwork`；场景组装按第 10 章操作。
+
 ## 数据与职责
 
 | 类型或字段 | 持有者与方向 | 本章中的具体职责 |
@@ -22,6 +37,35 @@
 `SyncVar` 解决网络对象上的字段同步。这里四个字段负责身份，位置、速度、血量和块归属走 `WorldState` 与自定义消息。`NetworkMessage` 是 Mirror 的消息接口，Mirror 负责消息外层的序列化和分发；其中 `Bytes` 的内部格式由 `Wire` 负责。自定义消息的接收函数按类型注册，服务器函数还获得发送它的 `conn`。
 
 `RegisterHandler` 默认要求连接通过 Mirror 的认证状态检查，本章再检查 `conn.isReady` 和 `conn.identity`。`MvpInput` 里没有目标玩家编号：服务器从 `conn.identity` 取出 `MvpBody.Id`，随后让 `ReceiveInput` 检查回合、输入序号和数值。客户端只能通过这条处理链表达自己连接对应玩家的意图。
+
+## 把现有联机调用融入本章
+
+先用角色选择理解两种请求入口：
+
+```text
+当前角色选择
+  按钮 → 本地 SetLocalCharacter → CommandSetCharacter
+  → 服务器校验 → characterId SyncVar → 客户端装配角色
+
+本章竞技场输入
+  MvpView.SendInput → NetworkClient.Send(MvpInput)
+  → 服务器消息处理器 → conn.identity → World.ReceiveInput
+  → 服务器推进世界 → 基线或运动消息 → Replica → MvpView
+```
+
+Command 适合把请求挂在某个网络对象上；`NetworkMessage` 适合按连接接收输入并传整批世界状态。两条链都需要服务器确认身份、检查规则、写入结果。本章统一用消息承载自写世界协议，`MvpBody` 提供网络身份与业务身份的映射。
+
+再把三类数据分开：
+
+| 数据 | 例子 | 客户端怎样取得 |
+| --- | --- | --- |
+| 持续状态 | 角色编号、对象身份、生命、块归属 | 对象初始同步，或世界完整基线与后续更新 |
+| 一次事件 | Tick 145 发生的爆炸 | 带事件编号与发生时间的可靠通知 |
+| 生命周期 | 炸弹生成、网络实体销毁 | `NetworkServer.Spawn / Destroy` 驱动网络对象回调 |
+
+对象的存在、对象当前的数据和一次表现分别处理。客户端晚加入时用完整基线恢复世界；爆炸通知进入事件队列，按播放 Tick 显示。第 09 章把这三条接收路径接到同一画面。
+
+API 的直接写法见 [Mirror 网络 API 总览](Mirror网络API总览.md)；房间名单、公共对象和状态查询的组件扩展见 [集合公共对象与消息](专项设计/集合公共对象与消息.md)；具体初始化时机见 [生命周期与开发验证](专项设计/生命周期与开发验证.md)。
 
 ## 编写顺序与编译依赖
 
