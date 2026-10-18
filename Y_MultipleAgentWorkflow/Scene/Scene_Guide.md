@@ -63,9 +63,11 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ### MinecraftClassicPlatform
 
-`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示随机混铺经典石材的圆形平台，包含独立相机、方向光和 `Platform_Circle_R25` Prefab 实例。平台使用完整方块显示与碰撞，外沿呈现方块轮廓。
+`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机、方向光和统一的 `GO` 父对象。六层平台隶属 `GO`，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
 
-平台中的 `CenterDisk` 收纳中心圆盘，`OuterDisk` 收纳全部外围方块，各 Cube 直接隶属对应圆盘并保留完整方块与不规则碎块的层级。完整方块参与运行模式的静态合批，碎块保留独立活动能力。平台资产路径、共享资源和显示状态职责见 `../Project/Project_Guide.md` 的“圆形平台资源”。
+平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。破坏时由 `BreakBlockAtHit(RaycastHit)` 根据 `CombinedCollision` 的命中点定位方块，在当前平台的 `FragmentsRuntime` 下创建对应方块的碎块，并局部更新外表面和碰撞。恢复时销毁对应碎块实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
+
+编辑用平台中的 `CenterDisk`、`OuterDisk` 保留源 Cube 层级。场景烘焙转换把独立布局保存为方块数据、合并表面与合并碰撞，清理源方块与空分组。编辑用与运行用平台资产、代码职责和破坏接口见 `../Project/Project_Guide.md` 的“圆形平台资源”。操作与破碎表现接入示例见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 
 ## 场景配置资产
 

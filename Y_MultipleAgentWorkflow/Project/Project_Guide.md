@@ -86,9 +86,21 @@ Cube_<材质名>
 
 ### 圆形平台资源
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25.prefab` 由四种 `Cube_` Prefab 随机混铺组成，方块位置和材质分布保存在资产中，网格与材质沿用共享资源。平台根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳全部外围方块，各 Cube 直接隶属对应圆盘。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 的独立层级和嵌套 Prefab 引用。
+`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 保存编辑用平台，由四种 `Cube_` Prefab 随机混铺组成。根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳外围方块。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 层级和嵌套 Prefab 引用。
 
-平台内各 `Intact` 启用 `BatchingStatic`，场景进入运行模式与构建时参与静态合批。完整显示使用 BoxCollider，`Fragments` 保持停用，碎块保留可活动的渲染器与凸 MeshCollider。破坏表现通过停用 `Intact`、启用对应 `Fragments` 切换，完整方块的合批网格与碎块网格分别承载两种显示状态。
+`Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和碎块 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。运行版根节点只保留合并视觉和合并碰撞，不保留空的 `CenterDisk`、`OuterDisk` 或 `Intact` 源方块。完整方块由轻量数据表示，碎块在破坏时创建于 `FragmentsRuntime` 下。
+
+平台代码位于 `Assets/Core/Scripts/Environment/`，采用普通类组合。`VoxelPlatformRenderer` 承担生命周期、序列化入口和公开接口；`VoxelPlatformData` 保存记录类型；`VoxelPlatformRuntime` 管理方块状态、占据索引和受影响分块；`VoxelPlatformSourceCollector` 收集编辑用源对象；`VoxelPlatformGeometry` 处理单位方块判定、邻面掩码与网格变体；`VoxelPlatformMeshBuilder` 生成视觉和碰撞并管理临时网格；`VoxelPlatformHitResolver` 解析合并碰撞命中；`VoxelPlatformFragments` 管理延迟碎块实例；`VoxelPlatformBaking` 组织编辑器内的烘焙记录生成。
+
+`Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Art/MinecraftClassic/Generated/`，启用平台时直接复用。
+
+在平台组件的菜单中执行 `Bake Platform Surface`，由编辑用 Prefab 生成运行用 Prefab。场景内编辑完成的平台使用 `My_3DProject/Platform/Bake Active Scene Surfaces` 生成独立烘焙数据，平台外层 Prefab 实例在转换时解包，各层场景布局独立保存。转换后的平台只保留方块数据、合并外表面与分块碰撞对象。
+
+`BreakBlock(Vector3 localPosition)` 与 `RestoreBlock(Vector3 localPosition)` 使用平台局部空间中的方块中心坐标。游戏逻辑通过射线命中 `CombinedCollision` 后调用 `BreakBlockAtHit(RaycastHit)`，或通过 `TryGetBlockPosition` 保存局部中心再调用破坏与恢复接口。组件根据碰撞点反查方块位置，再同步更新当前分块及邻接分块的外表面和碰撞。状态设置接口找到方块时返回成功，重复设置相同状态保持幂等。
+
+破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
+
+操作步骤、算法说明、接口示例与破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。Prefab 烘焙读取已保存的编辑用资源；场景转换保存独立烘焙数据，编辑用布局负责保留源方块。
 
 平台场景入口为 `Assets/Core/Scenes/MinecraftClassicPlatform.unity`，场景职责见 `../Scene/Scene_Guide.md`。平台范围与方块配置以 Prefab 为准。
 

@@ -44,17 +44,21 @@ Blender 源文件位于本机：
 
 ## 圆形平台
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25.prefab` 是半径 25 格、厚一格的圆形平台，共有 1,976 个方块。四种经典石材随机混铺，方块中心按半格偏移的网格分布，位置、材质选择和绕竖轴的直角旋转保存在 Prefab 中。
+`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 是编辑用圆形平台，半径 25 格、厚一格，共有 1,976 个方块。四种经典石材随机混铺，方块中心按半格偏移的网格分布，位置、材质选择和绕竖轴的直角旋转保存在 Prefab 中。
 
 半径五格内的 80 个方块位于 `CenterDisk` 下，外围 1,896 个方块位于 `OuterDisk` 下，平台根节点仅包含这两个分组。方块使用 `Cube_X_<x>_Z_<z>` 名称保存网格坐标，保留源 Cube 的嵌套 Prefab 引用，每块包含十六个不规则碎块。
 
-平台内完整方块的 `Intact` 仅启用 `BatchingStatic` 静态标志，运行模式与构建使用静态合批。完整显示保留每块的 BoxCollider，碎块默认停用。碎块保持可活动，破坏时通过完整方块与碎块的显示及碰撞状态切换释放对应方块。
+`Platform_Circle_R25.prefab` 是运行用平台，根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 保存按空间分块、按材质合并并剔除紧邻面的表面，`CombinedCollision` 保存分块 MeshCollider。网格在编辑器中生成并保存在 `Generated/`，运行时直接复用。
+
+破坏时，平台根据方块记录从源 `Cube_` Prefab 创建实例，放置于 `FragmentsRuntime` 下，关闭 `Intact` 并启用 `Fragments`，同时更新受影响分块的视觉与碰撞。恢复时销毁该碎块实例并恢复完整方块。编辑步骤、代码职责与接入示例见 [平台合批、碰撞与破碎接入](../../../docs/VoxelPlatformRenderer.md)。
 
 ## 破坏控制器的接入约定
 
 Cube 根对象表示方块容器，子块名表示容器内的稳定编号。算法侧通过显式映射关联方块编号、子块编号与 Transform，编号独立于层级遍历顺序。
 
-完整显示与碎块显示互斥，切换时同时管理渲染器和碰撞器。失去支撑的连通分量以一个刚体驱动整组子块，跨 Cube 的连通关系由算法维护。仅作表现的小碎屑使用粒子系统。
+攻击逻辑通过 `BreakBlockAtHit` 或局部方块中心调用 `BreakBlock`，由平台统一管理完整方块的表面、碰撞和碎块实例。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，在 `OnEnable` 中接管已经就位的子块，配置刚体、受力与寿命。
+
+需要整组断裂时，破坏算法维护跨 Cube 的连通关系，让失去支撑的连通分量由共同刚体驱动。仅作表现的小碎屑适合使用粒子系统。碎块实例留在平台生成的层级内时，平台恢复与停用会清理这些实例；移出该层级的碎块由破坏控制器管理。
 
 ## 粒子资源
 
@@ -66,4 +70,4 @@ Cube 根对象表示方块容器，子块名表示容器内的稳定编号。算
 
 `Assets/Core/Scenes/MinecraftClassicPreview.unity` 展示完整 Cube、展开的不规则碎块样本和五种粒子，包含独立相机、方向光与预览地面。
 
-`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示圆形平台，引用 `Platform_Circle_R25` Prefab，包含独立相机与方向光。
+`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示六层圆形平台，包含独立相机与方向光。六层平台统一位于 `GO` 下，各自保存布局数据、合并表面与分块碰撞。

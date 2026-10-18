@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8257539830674114930}
   - component: {fileID: 3109448510756384838}
   m_Layer: 0
-  m_Name: Platform_Circle_R25
+  m_Name: Platform_Circle_R25_Authoring
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,6 +46,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efa99f0d69be9a84c9d45cb64c24fc26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  surfaceRoot: {fileID: 0}
+  collisionRoot: {fileID: 0}
+  fragmentRoot: {fileID: 0}
+  bakedBlocks: []
+  bakedChunks: []
 --- !u!1 &6970371176145881544
 GameObject:
   m_ObjectHideFlags: 0
