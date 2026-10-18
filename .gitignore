@@ -49,3 +49,5 @@ scripts/push.sh
 # Temp converted log
 /MirrorExamplesPipelineConverted.txt
 
+# 编辑器备份文件
+*~

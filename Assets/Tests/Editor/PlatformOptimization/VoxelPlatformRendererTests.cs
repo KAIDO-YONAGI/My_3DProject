@@ -240,6 +240,61 @@ public sealed class VoxelPlatformRendererTests
     }
 
     [Test]
+    public void EditableRegionSurvivesBakeAndReloadWithoutEnteringMergedGeometry()
+    {
+        var included = AddCube(Vector3.zero);
+        var editable = AddEditableRegion(Vector3.right);
+        var intact = editable.GetComponentInChildren<MeshRenderer>();
+        Invoke("Rebuild");
+        Assert.That(Triangles(), Is.EqualTo(12));
+        Assert.That(intact.forceRenderingOff, Is.False);
+
+        bakedMeshes.AddRange((Mesh[])surfaceType.GetMethod("Bake").Invoke(surface, null));
+        Assert.That(BakedBlockCount(), Is.EqualTo(1));
+        Type baker = Type.GetType("VoxelPlatformRendererBaker, Assembly-CSharp-Editor");
+        baker.GetMethod("StripSourceHierarchy").Invoke(null, new object[] { surface });
+        Assert.That(included == null, Is.True);
+        Assert.That(editable, Is.Not.Null);
+        Assert.That(intact.forceRenderingOff, Is.False);
+        Assert.That(editable.GetComponentInChildren<BoxCollider>().enabled, Is.True);
+
+        // 只剩被排除的源方块时，重建仍复用外围烘焙结果。
+        Invoke("Rebuild");
+        ((Behaviour)surface).enabled = false;
+        ((Behaviour)surface).enabled = true;
+        Assert.That(Triangles(), Is.EqualTo(12));
+        Assert.That(intact.forceRenderingOff, Is.False);
+        Assert.That((int)surfaceType.GetProperty("CollisionColliderCount").GetValue(surface),
+            Is.EqualTo(1));
+        Assert.That((bool)surfaceType.GetMethod("BreakBlock").Invoke(surface,
+            new object[] { Vector3.right }), Is.False);
+    }
+
+    [Test]
+    public void InactiveEditableRegionRetainsSourcesAndStaysOutsideBakedData()
+    {
+        AddCube(Vector3.zero);
+        var editable = AddEditableRegion(Vector3.right);
+        editable.SetActive(false);
+        bakedMeshes.AddRange((Mesh[])surfaceType.GetMethod("Bake").Invoke(surface, null));
+        Assert.That(BakedBlockCount(), Is.EqualTo(1));
+        Type baker = Type.GetType("VoxelPlatformRendererBaker, Assembly-CSharp-Editor");
+        baker.GetMethod("StripSourceHierarchy").Invoke(null, new object[] { surface });
+        Assert.That(editable.GetComponentsInChildren<MeshFilter>(true).Length, Is.EqualTo(1));
+        Assert.That(editable.activeSelf, Is.False);
+    }
+
+    [Test]
+    public void PlatformWithOnlyEditableRegionsHasNoBakeSources()
+    {
+        AddEditableRegion(Vector3.zero);
+        Assert.That((bool)surfaceType.GetProperty("HasBakeSources").GetValue(surface), Is.False);
+        var exception = Assert.Throws<TargetInvocationException>(() =>
+            surfaceType.GetMethod("Bake").Invoke(surface, null));
+        Assert.That(exception.InnerException, Is.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
     public void StrippedPlatformRebuildReusesBakedGeometryAndCannotOverwriteBake()
     {
         var cube = AddCube(Vector3.zero);
@@ -482,6 +537,24 @@ public sealed class VoxelPlatformRendererTests
         node.transform.SetParent(fragments.transform, false);
         node.GetComponent<MeshRenderer>().sharedMaterial = material;
         return intact;
+    }
+
+    private GameObject AddEditableRegion(Vector3 position)
+    {
+        Type exclusionType = Type.GetType(
+            "Core.Scripts.Environment.VoxelPlatformBakeExclusion, Assembly-CSharp");
+        Assert.That(exclusionType, Is.Not.Null, "可编辑区域需要显式排除烘焙的标记。");
+        var group = new GameObject("CenterDisk");
+        group.transform.SetParent(root.transform, false);
+        group.AddComponent(exclusionType);
+        AddCube(position).transform.SetParent(group.transform, false);
+        return group;
+    }
+
+    private int BakedBlockCount()
+    {
+        return ((System.Collections.ICollection)surfaceType.GetField("bakedBlocks",
+            BindingFlags.NonPublic | BindingFlags.Instance).GetValue(surface)).Count;
     }
 
     private void Invoke(string method)

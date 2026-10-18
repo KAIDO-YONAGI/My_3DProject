@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Environment.VoxelPlatform.Collision
 {
     // 使用完整方块网格生成静态分块碰撞，与可见面剔除保持独立。
     internal sealed class VoxelPlatformCollisionBuilder

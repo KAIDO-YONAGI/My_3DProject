@@ -9,8 +9,15 @@ namespace Core.Scripts.Environment
         internal static bool HasSourceGeometry(VoxelPlatformRenderer owner)
         {
             foreach (MeshFilter filter in owner.GetComponentsInChildren<MeshFilter>(true))
-                if (filter.name == "Intact") return true;
+                if (IsBakeSource(filter)) return true;
             return false;
+        }
+
+        private static bool IsBakeSource(MeshFilter filter)
+        {
+            // 独立编辑区使用自己的 Renderer 和 Collider，外围合批不接管它的状态。
+            return filter.name == "Intact" &&
+                !filter.GetComponentInParent<VoxelPlatformBakeExclusion>(true);
         }
 
         internal static void Collect(VoxelPlatformRenderer owner, List<VoxelPlatformBlock> blocks)
@@ -18,7 +25,7 @@ namespace Core.Scripts.Environment
             Matrix4x4 worldToLocal = owner.transform.worldToLocalMatrix;
             foreach (MeshFilter filter in owner.GetComponentsInChildren<MeshFilter>(true))
             {
-                if (filter.name != "Intact" || !filter.sharedMesh || !filter.sharedMesh.isReadable)
+                if (!IsBakeSource(filter) || !filter.sharedMesh || !filter.sharedMesh.isReadable)
                     continue;
                 MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
                 // 当前合并约定是一块一个材质，烘焙光照对象交由原有渲染流程处理。

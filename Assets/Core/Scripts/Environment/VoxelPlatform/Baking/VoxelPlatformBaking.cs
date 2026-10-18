@@ -1,9 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Rendering;
+using Core.Scripts.Environment.VoxelPlatform.Runtime;
 using UnityEngine;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Environment.VoxelPlatform.Baking
 {
     // 生成可序列化的烘焙结果；AssetDatabase 持久化由编辑器 Baker 负责。
     internal static class VoxelPlatformBaking
@@ -12,7 +15,7 @@ namespace Core.Scripts.Environment
         {
             if (Application.isPlaying)
                 throw new InvalidOperationException("请在编辑模式预生成平台网格。");
-            if (!VoxelPlatformSourceCollector.HasSourceGeometry(owner))
+            if (!owner.HasBakeSources)
                 throw new InvalidOperationException("请从保留 Intact 的编辑用平台生成烘焙数据。");
 
             runtime.Clear();

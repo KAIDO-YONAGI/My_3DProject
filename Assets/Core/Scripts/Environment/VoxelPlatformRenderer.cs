@@ -31,12 +31,13 @@ namespace Core.Scripts.Environment
         public int SurfaceRendererCount => runtime?.Meshes.SurfaceRendererCount ?? 0;
         public int CollisionColliderCount => runtime?.Meshes.CollisionColliderCount ?? 0;
         public bool HasBakedSurface => surfaceRoot && bakedBlocks.Count > 0 && bakedChunks.Count > 0;
+        public bool HasBakeSources => VoxelPlatformSourceCollector.HasSourceGeometry(this);
 
         private void OnEnable()
         {
 #if UNITY_EDITOR
             // 编辑用平台保留源 Cube，避免启用组件时用烘焙结果覆盖编辑视图。
-            if (!Application.isPlaying && VoxelPlatformSourceCollector.HasSourceGeometry(this)) return;
+            if (!Application.isPlaying && HasBakeSources) return;
 #endif
             if (HasBakedSurface) UseBakedSurface();
         }

@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-SCENE`
 状态：`Active`
-维护计数：`0/5`
-最后更新：`2026-10-18`
+维护计数：`1/5`
+最后更新：`2026-10-19`
 
 ## 任务路由
 
@@ -16,6 +16,7 @@
 | MinecraftClassicPreview、经典石材预览、不规则碎块展开与粒子样本 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
 | MinecraftClassicPlatform、独立平台根对象、烘焙外表面、合并碰撞与延迟碎块 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
 | 平台场景转换、独立布局与破碎表现接入 | `Scene_Guide.md`、`../Project/Project_Guide.md`；操作示例见 `../../docs/VoxelPlatformRenderer.md` |
+| 第一层中央平台编辑、独立 Cube 与排除烘焙 | `Scene_Guide.md`、`../Project/Project_Guide.md`；操作示例见 `../../docs/VoxelPlatformRenderer.md` |
 | 角色模型与动画配置 | `../Character/Character_Guide.md` |
 | 玩家生成与网络身份 | `../Multiplayer/Multiplayer_Guide.md` |
 | Unity 版本与 Build Settings 配置 | `../Project/Project_Guide.md` |

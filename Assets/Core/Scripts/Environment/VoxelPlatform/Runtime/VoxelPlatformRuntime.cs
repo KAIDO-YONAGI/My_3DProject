@@ -1,7 +1,11 @@
 using System.Collections.Generic;
+using Core.Scripts.Environment.VoxelPlatform.Baking;
+using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Fragments;
+using Core.Scripts.Environment.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Environment.VoxelPlatform.Runtime
 {
     // 维护单个平台的方块状态，并把一次变化归并为需要重建的空间分块。
     internal sealed class VoxelPlatformRuntime
@@ -42,7 +46,7 @@ namespace Core.Scripts.Environment
 
         internal void Rebuild()
         {
-            if (owner.HasBakedSurface && !VoxelPlatformSourceCollector.HasSourceGeometry(owner))
+            if (owner.HasBakedSurface && !owner.HasBakeSources)
             {
                 UseBakedSurface();
                 return;

@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-10-18`
+最后核验：`2026-10-19`
 
 ## 场景列表
 
@@ -67,7 +67,13 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。破坏时由 `BreakBlockAtHit(RaycastHit)` 根据 `CombinedCollision` 的命中点定位方块，在当前平台的 `FragmentsRuntime` 下创建对应方块的碎块，并局部更新外表面和碰撞。恢复时销毁对应碎块实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
 
-编辑用平台中的 `CenterDisk`、`OuterDisk` 保留源 Cube 层级。场景烘焙转换把独立布局保存为方块数据、合并表面与合并碰撞，清理源方块与空分组。编辑用与运行用平台资产、代码职责和破坏接口见 `../Project/Project_Guide.md` 的“圆形平台资源”。操作与破碎表现接入示例见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
+第一层的中央平台由 `CenterDisk` 收纳独立 Cube，保留各块的源 Prefab 引用、完整网格、BoxCollider 与预切碎块层级，可在场景中直接选择、移动和重排。`CenterDisk` 上的 `VoxelPlatformBakeExclusion` 标记使其子节点保持独立编辑与交互，第一层的合并外表面与碰撞负责外围区域，其他层使用各自的完整烘焙布局。
+
+中央区域通过 Cube 根节点进行整块变换、复制和删除，保存场景即可保留编辑结果。排除范围由标记所在层级决定，方块移出原圆盘范围后仍按祖先标记保持独立。整层平台的移动与旋转作用在平台根节点上，使方块数据、合并视觉、碰撞与独立区域保持共同坐标关系。
+
+编辑用平台中的 `CenterDisk`、`OuterDisk` 保留源 Cube 层级。场景烘焙转换把参与合并的布局保存为方块数据、合并表面与合并碰撞，清理对应源方块与空分组，排除区域保留源层级。各层的完整源布局由对应编辑用资源保存，逐块修改烘焙区域时，在现有平台根节点下补齐完整合并源布局再生成结果。第一层重新生成外围时保留现有中央独立方块，其他层使用各自的完整合并源布局。每次烘焙整体替换该层合并数据，公共运行用 Prefab 与独立场景烘焙结果分别更新。
+
+编辑用与运行用平台资产、代码职责和破坏接口见 `../Project/Project_Guide.md` 的“圆形平台资源”。两种平台的编辑步骤、源布局保存、烘焙细节与破碎表现接入示例见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 
 ## 场景配置资产
 

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using Core.Scripts.Environment;
+using Core.Scripts.Environment.VoxelPlatform.Baking;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -41,9 +42,7 @@ public static class VoxelPlatformRendererBaker
         foreach (var renderer in scene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<VoxelPlatformRenderer>(true)))
         {
-            if (!renderer.GetComponentsInChildren<MeshFilter>(true)
-                .Any(filter => filter.name == "Intact"))
-                continue;
+            if (!renderer.HasBakeSources) continue;
             UnpackPlatform(renderer);
             BakeToAsset(renderer, SceneAssetPath(renderer));
             StripSourceHierarchy(renderer);
@@ -137,6 +136,8 @@ public static class VoxelPlatformRendererBaker
         foreach (MeshFilter filter in renderer.GetComponentsInChildren<MeshFilter>(true))
         {
             if (filter.name != "Intact") continue;
+            // 与收集阶段保持同一排除范围，保留场景中需要直接编辑的方块。
+            if (filter.GetComponentInParent<VoxelPlatformBakeExclusion>(true)) continue;
             Transform parent = filter.transform.parent;
             if (!parent || parent == renderer.transform)
             {

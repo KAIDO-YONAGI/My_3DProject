@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Environment.VoxelPlatform.Collision
 {
     // 合并碰撞不含每块的 GameObject，通过局部空间包围盒反查命中的启用方块。
     internal static class VoxelPlatformHitResolver
