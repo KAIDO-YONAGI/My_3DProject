@@ -1,4 +1,8 @@
 using System.Collections.Generic;
+using Core.Scripts.Environment.VoxelPlatform.Baking;
+using Core.Scripts.Environment.VoxelPlatform.Collision;
+using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Runtime;
 using UnityEngine;
 
 namespace Core.Scripts.Environment
