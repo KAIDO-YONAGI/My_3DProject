@@ -61,6 +61,12 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 纹理、材质、预切模型与粒子资源位于 `Assets/Art/MinecraftClassic/`。资源来源、Cube 层级、材质映射和 Blender 制作入口见 `../Project/Project_Guide.md` 的“经典石材与不规则预切资源”。
 
+### MinecraftClassicPlatform
+
+`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示随机混铺经典石材的圆形平台，包含独立相机、方向光和 `Platform_Circle_R25` Prefab 实例。平台使用完整方块显示与碰撞，外沿呈现方块轮廓。
+
+平台中的 `CenterDisk` 收纳中心圆盘，`OuterDisk` 收纳全部外围方块，各 Cube 直接隶属对应圆盘并保留完整方块与不规则碎块的层级。完整方块参与运行模式的静态合批，碎块保留独立活动能力。平台资产路径、共享资源和显示状态职责见 `../Project/Project_Guide.md` 的“圆形平台资源”。
+
 ## 场景配置资产
 
 `Assets/Core/SO/` 保存 `GameSceneSO` 资产，字段为 `ID`、`sceneAsset`、`sceneName`、`sceneType` 和 `initialPosition`。
@@ -77,4 +83,4 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ## 维护触发
 
-修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。经典石材预览场景的分组职责、Prefab 引用或样本显示方式变化时，同步更新本文档与 `../Project/Project_Guide.md`。
+修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。经典石材平台与预览场景的分组职责、Prefab 引用、合批设置或显示方式变化时，同步更新本文档与 `../Project/Project_Guide.md`。

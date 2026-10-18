@@ -84,6 +84,14 @@ Cube_<材质名>
 
 碎块由 Blender 官方 Cell Fracture 扩展的 Voronoi 单元算法生成，装配后共同填满原始 Cube。外表面保留完整 Cube 的 UV，切口使用石头材质。FBX 的材质槽顺序随节点变化，Prefab 材质映射按源材质名识别：`stonebrick` 对应当前方块的外表面材质，`stone` 对应切口材质。
 
+### 圆形平台资源
+
+`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25.prefab` 由四种 `Cube_` Prefab 随机混铺组成，方块位置和材质分布保存在资产中，网格与材质沿用共享资源。平台根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳全部外围方块，各 Cube 直接隶属对应圆盘。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 的独立层级和嵌套 Prefab 引用。
+
+平台内各 `Intact` 启用 `BatchingStatic`，场景进入运行模式与构建时参与静态合批。完整显示使用 BoxCollider，`Fragments` 保持停用，碎块保留可活动的渲染器与凸 MeshCollider。破坏表现通过停用 `Intact`、启用对应 `Fragments` 切换，完整方块的合批网格与碎块网格分别承载两种显示状态。
+
+平台场景入口为 `Assets/Core/Scenes/MinecraftClassicPlatform.unity`，场景职责见 `../Scene/Scene_Guide.md`。平台范围与方块配置以 Prefab 为准。
+
 ### Blender 制作入口
 
 本机 Blender 源文件为 `C:/Users/12248/.codex/tools/blender-platform-setup/MinecraftClassic.blend`，包含材质样块、装配状态的切分模板与展开的碎块预览。同目录 `build_samples.py` 调用 Cell Fracture 算法、生成网格并导出共享 FBX，切分参数与导出设置以该脚本为准。
@@ -204,4 +212,4 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
 
-经典石材来源、Blender 制作入口、预切 Cube 层级、材质映射或粒子渲染依赖变化时更新本文档；资源预览场景的引用与分组变化时，同时维护 `../Scene/Scene_Guide.md`。
+经典石材来源、Blender 制作入口、预切 Cube 层级、圆形平台分组与合批方式、材质映射或粒子渲染依赖变化时更新本文档；平台与资源预览场景的引用与分组变化时，同时维护 `../Scene/Scene_Guide.md`。
