@@ -52,7 +52,7 @@
 - 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
-- `Assets/Art/MinecraftClassic/` 保存经典石材、Blender 预切模型与粒子资源，方块 Prefab 位于 `Assets/Core/Prefabs/Environment/MinecraftClassic/`，结构见本文“经典石材与不规则预切资源”。
+- `Assets/Art/MinecraftClassic/` 保存经典石材、Blender 预切模型与粒子资源，方块 Prefab 位于 `Assets/Core/Prefabs/MinecraftClassic/`，结构见本文“经典石材与不规则预切资源”。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`，按 `Connection/`、`Sync/`、`CharacterPresentation/` 分目录。
 - 全局音频由 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Audio/` 的 `AudioPlayerManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
@@ -71,7 +71,7 @@
 
 ### Cube 层级与材质映射
 
-`Assets/Art/MinecraftClassic/Models/Cube_FractureTemplate.fbx` 是共享的不规则预切模型。`Assets/Core/Prefabs/Environment/MinecraftClassic/` 中的 `Cube_` Prefab 分别引用各石材材质，使用相同的层级职责：
+`Assets/Art/MinecraftClassic/Models/Cube_FractureTemplate.fbx` 是共享的不规则预切模型。`Assets/Core/Prefabs/MinecraftClassic/` 中的 `Cube_` Prefab 分别引用各石材材质，使用相同的层级职责：
 
 ```text
 Cube_<材质名>
@@ -86,11 +86,20 @@ Cube_<材质名>
 
 ### 圆形平台资源
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 保存编辑用平台，由四种 `Cube_` Prefab 随机混铺组成。根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳外围方块。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 层级和嵌套 Prefab 引用。
+`Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 保存编辑用平台，由四种 `Cube_` Prefab 随机混铺组成。根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳外围方块。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 层级和嵌套 Prefab 引用。
 
 `Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和碎块 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。运行版根节点只保留合并视觉和合并碰撞，不保留空的 `CenterDisk`、`OuterDisk` 或 `Intact` 源方块。完整方块由轻量数据表示，碎块在破坏时创建于 `FragmentsRuntime` 下。
 
-平台代码位于 `Assets/Core/Scripts/Environment/`，采用普通类组合。`VoxelPlatformRenderer` 承担生命周期、序列化入口和公开接口；`VoxelPlatformData` 保存记录类型；`VoxelPlatformRuntime` 管理方块状态、占据索引和受影响分块；`VoxelPlatformSourceCollector` 收集编辑用源对象；`VoxelPlatformGeometry` 处理单位方块判定、邻面掩码与网格变体；`VoxelPlatformMeshBuilder` 生成视觉和碰撞并管理临时网格；`VoxelPlatformHitResolver` 解析合并碰撞命中；`VoxelPlatformFragments` 管理延迟碎块实例；`VoxelPlatformBaking` 组织编辑器内的烘焙记录生成。
+平台入口位于 `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs`，承担生命周期、序列化入口和公开接口。协作类采用普通类组合，按功能归入 `Environment/VoxelPlatform/` 的子目录：
+
+| 子目录 | 职责 |
+|---|---|
+| `Data/` | 方块、烘焙表面、碰撞与分块记录 |
+| `Runtime/` | 方块状态、占据索引和受影响分块调度 |
+| `Rendering/` | 单位方块判定、邻面掩码、网格变体与视觉合并 |
+| `Collision/` | 分块碰撞生成、碰撞网格生命周期与命中定位 |
+| `Fragments/` | 原 Cube 引用、延迟碎块实例与容器变换 |
+| `Baking/` | 编辑布局收集、烘焙记录生成与网格结果整理 |
 
 `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Art/MinecraftClassic/Generated/`，启用平台时直接复用。
 

@@ -53,6 +53,7 @@ namespace Core.Scripts.Environment
             Runtime.Clear();
         }
 
+        /// <summary>清理当前变化并加载烘焙布局，完整表面和碰撞直接复用资产。</summary>
         public void UseBakedSurface()
         {
             Runtime.UseBakedSurface();
@@ -66,22 +67,26 @@ namespace Core.Scripts.Environment
         }
 #endif
 
+        /// <summary>源布局重新收集几何；运行资源重新加载烘焙状态。</summary>
         [ContextMenu("Rebuild Platform Surface")]
         public void Rebuild()
         {
             Runtime.Rebuild();
         }
 
+        /// <summary>破坏局部中心对应的方块，创建碎块并同步局部表面与碰撞。</summary>
         public bool BreakBlock(Vector3 localPosition)
         {
             return SetBlockActive(localPosition, false);
         }
 
+        /// <summary>恢复局部中心对应的方块，同时清理该方块的运行碎块实例。</summary>
         public bool RestoreBlock(Vector3 localPosition)
         {
             return SetBlockActive(localPosition, true);
         }
 
+        /// <summary>从本平台合并碰撞的命中取得局部方块中心，供破坏与恢复共用。</summary>
         public bool TryGetBlockPosition(RaycastHit hit, out Vector3 localPosition)
         {
             return VoxelPlatformHitResolver.TryGetBlockPosition(transform, collisionRoot,
@@ -93,6 +98,7 @@ namespace Core.Scripts.Environment
             return TryGetBlockPosition(hit, out Vector3 localPosition) && BreakBlock(localPosition);
         }
 
+        /// <summary>返回是否找到方块，重复设置相同状态也返回成功。</summary>
         public bool SetBlockActive(Vector3 localPosition, bool active)
         {
             return Runtime.SetBlockActive(localPosition, active);

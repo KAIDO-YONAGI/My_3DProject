@@ -148,7 +148,7 @@ public sealed class VoxelPlatformRendererTests
     public void RuntimePlatformPrefabUsesMergedDataAndAuthoringPrefabRetainsFragments()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25.prefab");
+            "Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25.prefab");
         Assert.That(prefab, Is.Not.Null);
         Assert.That(prefab.GetComponent(surfaceType), Is.Not.Null);
         var intact = prefab.GetComponentsInChildren<MeshFilter>(true)
@@ -162,7 +162,7 @@ public sealed class VoxelPlatformRendererTests
         Assert.That(collision.GetComponentsInChildren<MeshCollider>(true).Length, Is.GreaterThan(0));
 
         var authoring = AssetDatabase.LoadAssetAtPath<GameObject>(
-            "Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab");
+            "Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab");
         Assert.That(authoring, Is.Not.Null);
         var authoringIntact = authoring.GetComponentsInChildren<MeshFilter>(true)
             .Where(filter => filter.name == "Intact").ToArray();
@@ -260,7 +260,7 @@ public sealed class VoxelPlatformRendererTests
     public void NestedPrefabBakeReferencesOriginalCubeAssetForFragments()
     {
         const string cubePath =
-            "Assets/Core/Prefabs/Environment/MinecraftClassic/Cube_stone.prefab";
+            "Assets/Core/Prefabs/MinecraftClassic/Cube_stone.prefab";
         const string wrapperPath = "Assets/Tests/Editor/PlatformOptimization/FragmentReferenceTest.prefab";
         GameObject instance = null;
         try

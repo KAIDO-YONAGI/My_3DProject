@@ -53,7 +53,7 @@
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`
 - `Assets/Core/Prefabs/NetworkManager.prefab`
 - `Assets/Core/Prefabs/Characters/`
-- `Assets/Core/Prefabs/Environment/MinecraftClassic/`
+- `Assets/Core/Prefabs/MinecraftClassic/`
 - `Assets/Core/Scripts/Environment/`
 - `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs`
 - `Assets/Art/MinecraftClassic/`
@@ -75,7 +75,7 @@
 - `path:Assets/Core/Scripts/StateMachine`
 - `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `path:Assets/Core/Animations/Characters`
-- `path:Assets/Core/Prefabs/Environment/MinecraftClassic`
+- `path:Assets/Core/Prefabs/MinecraftClassic`
 - `path:Assets/Core/Scripts/Environment`
 - `path:Assets/Editor/PlatformOptimization`
 - `path:Assets/Art/MinecraftClassic`

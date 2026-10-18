@@ -14,7 +14,7 @@
 | 单机与联机表现切换、角色与相机收拢 | `Scene_Guide.md` |
 | 场景配置资产与初始位置 | `Scene_Guide.md`，并读取 `Assets/Core/SO/` |
 | MinecraftClassicPreview、经典石材预览、不规则碎块展开与粒子样本 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
-| MinecraftClassicPlatform、GO 平台分组、烘焙外表面、合并碰撞与延迟碎块 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
+| MinecraftClassicPlatform、独立平台根对象、烘焙外表面、合并碰撞与延迟碎块 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
 | 平台场景转换、独立布局与破碎表现接入 | `Scene_Guide.md`、`../Project/Project_Guide.md`；操作示例见 `../../docs/VoxelPlatformRenderer.md` |
 | 角色模型与动画配置 | `../Character/Character_Guide.md` |
 | 玩家生成与网络身份 | `../Multiplayer/Multiplayer_Guide.md` |

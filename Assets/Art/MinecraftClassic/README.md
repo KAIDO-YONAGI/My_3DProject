@@ -21,7 +21,7 @@
 
 ## Cube 资源
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/` 保存四个 `Cube_` 开头的 Prefab，尺寸为一个 Unity 单位。每个 Prefab 的结构为：
+`Assets/Core/Prefabs/MinecraftClassic/` 保存四个 `Cube_` 开头的 Prefab，尺寸为一个 Unity 单位。每个 Prefab 的结构为：
 
 ```text
 Cube_材质名
@@ -44,7 +44,7 @@ Blender 源文件位于本机：
 
 ## 圆形平台
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 是编辑用圆形平台，半径 25 格、厚一格，共有 1,976 个方块。四种经典石材随机混铺，方块中心按半格偏移的网格分布，位置、材质选择和绕竖轴的直角旋转保存在 Prefab 中。
+`Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 是编辑用圆形平台，半径 25 格、厚一格，共有 1,976 个方块。四种经典石材随机混铺，方块中心按半格偏移的网格分布，位置、材质选择和绕竖轴的直角旋转保存在 Prefab 中。
 
 半径五格内的 80 个方块位于 `CenterDisk` 下，外围 1,896 个方块位于 `OuterDisk` 下，平台根节点仅包含这两个分组。方块使用 `Cube_X_<x>_Z_<z>` 名称保存网格坐标，保留源 Cube 的嵌套 Prefab 引用，每块包含十六个不规则碎块。
 
@@ -70,4 +70,4 @@ Cube 根对象表示方块容器，子块名表示容器内的稳定编号。算
 
 `Assets/Core/Scenes/MinecraftClassicPreview.unity` 展示完整 Cube、展开的不规则碎块样本和五种粒子，包含独立相机、方向光与预览地面。
 
-`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示六层圆形平台，包含独立相机与方向光。六层平台统一位于 `GO` 下，各自保存布局数据、合并表面与分块碰撞。
+`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象，各自保存布局数据、合并表面与分块碰撞。

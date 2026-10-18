@@ -24,7 +24,7 @@
 
 资源路径：
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25_Authoring.prefab`
+`Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab`
 
 ```text
 Platform_Circle_R25_Authoring
@@ -49,7 +49,7 @@ Platform_Circle_R25_Authoring
 
 资源路径：
 
-`Assets/Core/Prefabs/Environment/MinecraftClassic/Platform_Circle_R25.prefab`
+`Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25.prefab`
 
 ```text
 Platform_Circle_R25
@@ -73,7 +73,7 @@ Platform_Circle_R25
 
 碎块实例中的 `Intact` 保持停用，`Fragments` 启用。每个实例保留原 Cube 的材质和碎块布局。平台恢复方块时销毁对应实例，平台停用时清理全部碎块实例。
 
-场景 `Assets/Core/Scenes/MinecraftClassicPlatform.unity` 的六层平台统一放在 `GO` 父对象下。每层平台具有独立的数据、表面、碰撞和碎块分组。对一层平台调用破坏接口，只更新这一层的运行状态。
+场景 `Assets/Core/Scenes/MinecraftClassicPlatform.unity` 的六层平台作为独立根对象保存。每层平台具有独立的数据、表面、碰撞和碎块分组。对一层平台调用破坏接口，只更新这一层的运行状态。
 
 ## 3. 合批和邻面剔除原理
 
@@ -94,7 +94,7 @@ Platform_Circle_R25
 分块键 = FloorToInt(局部中心 / ChunkSize)
 ```
 
-`VoxelPlatformGeometry` 定义位置精度和分块尺度，当前分别为 `10000` 和 `8`。负坐标使用向下取整，平台左右两侧的分块边界保持一致。
+`VoxelPlatform/Rendering/VoxelPlatformGeometry.cs` 定义位置精度和分块尺度，当前分别为 `10000` 和 `8`。负坐标使用向下取整，平台左右两侧的分块边界保持一致。
 
 占据索引只收录启用且满足遮挡条件的单位方块。位置键包含高度，所以同一水平坐标上的不同高度属于独立位置。索引通过键赋值建立，布局仍应保证每个位置只放置一个方块；同位置重复源几何会形成重叠表面。
 
@@ -138,19 +138,20 @@ Platform_Circle_R25
 
 ## 5. 代码职责
 
-运行代码位于 `Assets/Core/Scripts/Environment/`，采用普通类组合：
+组件入口保留在 `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs`，协作类按功能放在同目录的 `VoxelPlatform/` 子文件夹中，采用普通类组合：
 
 | 文件 | 职责 |
 |---|---|
 | `VoxelPlatformRenderer.cs` | Unity 生命周期、公开接口、序列化数据入口和生成根节点 |
-| `VoxelPlatformData.cs` | 运行方块、烘焙方块、表面、碰撞与分块记录 |
-| `VoxelPlatformRuntime.cs` | 方块索引、启用状态、源对象变化检查与受影响分块调度 |
-| `VoxelPlatformSourceCollector.cs` | 收集编辑用 Intact、计算变换和保存源渲染状态 |
-| `VoxelPlatformGeometry.cs` | 单位 Cube 判定、六方向邻面判定和可见面网格缓存 |
-| `VoxelPlatformMeshBuilder.cs` | 分块视觉合并、碰撞合并、烘焙对象复用及临时网格释放 |
-| `VoxelPlatformHitResolver.cs` | 从合并碰撞的射线命中反查方块中心 |
-| `VoxelPlatformFragments.cs` | 查找原 Cube Prefab、延迟创建碎块、应用容器变换与销毁实例 |
-| `VoxelPlatformBaking.cs` | 编辑器内生成烘焙记录与收集需要保存的网格 |
+| `VoxelPlatform/Data/VoxelPlatformData.cs` | 运行方块、烘焙方块、表面、碰撞与分块记录 |
+| `VoxelPlatform/Runtime/VoxelPlatformRuntime.cs` | 方块索引、启用状态、源对象变化检查与受影响分块调度 |
+| `VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs` | 收集编辑用 Intact、计算变换和保存源渲染状态 |
+| `VoxelPlatform/Rendering/VoxelPlatformGeometry.cs` | 单位 Cube 判定、六方向邻面判定和可见面网格缓存 |
+| `VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs` | 分块视觉合并、表面烘焙对象复用及临时网格释放 |
+| `VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs` | 分块碰撞合并、碰撞烘焙对象复用及碰撞网格释放 |
+| `VoxelPlatform/Collision/VoxelPlatformHitResolver.cs` | 从合并碰撞的射线命中反查方块中心 |
+| `VoxelPlatform/Fragments/VoxelPlatformFragments.cs` | 查找原 Cube Prefab、延迟创建碎块、应用容器变换与销毁实例 |
+| `VoxelPlatform/Baking/VoxelPlatformBaking.cs` | 编辑器内生成烘焙记录与收集需要保存的网格 |
 
 `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 负责编辑器菜单、烘焙资产保存、编辑版与运行版转换和源层级移除。
 
@@ -330,7 +331,7 @@ public sealed class FragmentBurstExample : MonoBehaviour
 
 场景验证关注以下行为：
 
-1. 六层平台位于 `GO` 下，正常启用时表面和碰撞同时有效。
+1. 六层平台保持独立根对象，正常启用时表面和碰撞同时有效。
 2. 破坏前由合并对象显示完整平台，破坏目标块后洞口与碰撞同步变化。
 3. 新建碎块保持原 Cube 的装配位置与材质，`Fragments` 上的表现脚本收到启用回调。
 4. 恢复同一局部中心后，完整面和碰撞恢复，对应碎块实例被清理。
