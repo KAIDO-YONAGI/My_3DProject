@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-16`
+最后核验：`2026-10-18`
 
 ## 渲染管线
 
@@ -38,6 +38,7 @@
 | 目录 | 内容 |
 |---|---|
 | `Core/` | 项目自有代码、场景、Prefab 与模型 |
+| `Art/` | 经典石材纹理、URP 材质、预切 Cube 模型与粒子资源 |
 | `Materials/` | 地形植被与地表贴图、音效与背景音乐等素材 |
 | `Plugins/` | 第三方插件 |
 | `Tests/` | EditMode 与 PlayMode 测试程序集 |
@@ -51,10 +52,49 @@
 - 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
+- `Assets/Art/MinecraftClassic/` 保存经典石材、Blender 预切模型与粒子资源，方块 Prefab 位于 `Assets/Core/Prefabs/Environment/MinecraftClassic/`，结构见本文“经典石材与不规则预切资源”。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`，按 `Connection/`、`Sync/`、`CharacterPresentation/` 分目录。
 - 全局音频由 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Audio/` 的 `AudioPlayerManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
 - 测试程序集位于 `Assets/Tests/`：`Editor/` 为 `Core.EditorTests`，`PlayMode/Camera/` 为 `Core.Camera.PlayModeTests`，`PlayMode/Networking/` 为 `Core.Networking.PlayModeTests`。移动或重命名测试脚本时必须连同 `.meta` 一起移动。
+
+## 经典石材与不规则预切资源
+
+`Assets/Art/MinecraftClassic/Textures/` 保存 Mojang 官方 Minecraft Java Edition 1.12.2 客户端中的经典石材纹理，`Materials/` 保存引用这些纹理的 URP Lit 材质。纹理来源、客户端校验信息与包内路径见 `Assets/Art/MinecraftClassic/README.md`，纹理导入设置以各 PNG 的导入器为准。
+
+| 纹理与材质名 | 方块 |
+|---|---|
+| `stone` | 石头 |
+| `stonebrick` | 石砖 |
+| `stonebrick_mossy` | 苔藓石砖 |
+| `stonebrick_cracked` | 裂纹石砖 |
+
+### Cube 层级与材质映射
+
+`Assets/Art/MinecraftClassic/Models/Cube_FractureTemplate.fbx` 是共享的不规则预切模型。`Assets/Core/Prefabs/Environment/MinecraftClassic/` 中的 `Cube_` Prefab 分别引用各石材材质，使用相同的层级职责：
+
+```text
+Cube_<材质名>
+  Intact
+  Fragments
+    Node_###
+```
+
+`Intact` 承载完整方块的网格、渲染器与 BoxCollider。`Fragments` 承载封闭的凸多面体碎块，每个 `Node_###` 有独立网格、渲染器和凸 MeshCollider。Cube 根节点保留方块容器身份，碎块名提供容器内的稳定标识，局部位置保存装配关系，碎块原点位于各自的体积质心。
+
+碎块由 Blender 官方 Cell Fracture 扩展的 Voronoi 单元算法生成，装配后共同填满原始 Cube。外表面保留完整 Cube 的 UV，切口使用石头材质。FBX 的材质槽顺序随节点变化，Prefab 材质映射按源材质名识别：`stonebrick` 对应当前方块的外表面材质，`stone` 对应切口材质。
+
+### Blender 制作入口
+
+本机 Blender 源文件为 `C:/Users/12248/.codex/tools/blender-platform-setup/MinecraftClassic.blend`，包含材质样块、装配状态的切分模板与展开的碎块预览。同目录 `build_samples.py` 调用 Cell Fracture 算法、生成网格并导出共享 FBX，切分参数与导出设置以该脚本为准。
+
+Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compatible` 键位。BlenderMCP 提供编辑器控制接口，Cell Fracture 提供不规则单元切分能力。
+
+### 粒子表现资源
+
+`Assets/Art/MinecraftClassic/Particles/Prefabs/` 保存从 `D:/Unity/Projects/GameJam2607/Assets/Prefabs/Particles/` 迁入的 `HurtParticle`、`IceParticle`、`LuoDi`、`RunParticle` 与 `ShootingParticle`。发射、颜色、形状和运动行为由各 Prefab 内的 ParticleSystem 配置承载。
+
+`Particles/Materials/` 中的 `Particle`、`Trails` 与 `Ground Particles` 使用 `Universal Render Pipeline/Particles/Unlit`。受击与拖尾材质引用 URP 默认粒子贴图，地面粒子材质使用白色贴图。预览入口及样本分组职责见 `../Scene/Scene_Guide.md` 的 `MinecraftClassicPreview`。
 
 ## 音效播放与回收
 
@@ -163,3 +203,5 @@
 ## 维护触发
 
 修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
+
+经典石材来源、Blender 制作入口、预切 Cube 层级、材质映射或粒子渲染依赖变化时更新本文档；资源预览场景的引用与分组变化时，同时维护 `../Scene/Scene_Guide.md`。

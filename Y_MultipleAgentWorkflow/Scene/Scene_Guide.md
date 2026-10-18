@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-10-16`
+最后核验：`2026-10-18`
 
 ## 场景列表
 
@@ -47,6 +47,20 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 玩法环境层，提供地形、碰撞和光照。场景中的 `Camera` 对象保持停用，运行视角来自单机角色或本地网络角色。
 
+### MinecraftClassicPreview
+
+`Assets/Core/Scenes/MinecraftClassicPreview.unity` 是经典石材、不规则预切 Cube 与粒子资源的预览入口，使用独立相机、方向光和预览地面。
+
+| 分组 | 职责 |
+|---|---|
+| `MaterialSamples` | 通过完整 Cube 展示石头、石砖、苔藓石砖与裂纹石砖 |
+| `FractureSamples` | 展开预切碎块，展示不规则形状、外表面与切口材质 |
+| `ParticleSamples` | 承载迁入的粒子 Prefab 样本 |
+
+完整方块与碎块样本均引用 `Assets/Core/Prefabs/Environment/MinecraftClassic/` 中的 Prefab。碎块展开效果通过场景实例覆盖切换 `Intact`、`Fragments` 的显示状态，并调整碎块局部位置；Prefab 资产保存装配状态。
+
+纹理、材质、预切模型与粒子资源位于 `Assets/Art/MinecraftClassic/`。资源来源、Cube 层级、材质映射和 Blender 制作入口见 `../Project/Project_Guide.md` 的“经典石材与不规则预切资源”。
+
 ## 场景配置资产
 
 `Assets/Core/SO/` 保存 `GameSceneSO` 资产，字段为 `ID`、`sceneAsset`、`sceneName`、`sceneType` 和 `initialPosition`。
@@ -63,4 +77,4 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ## 维护触发
 
-修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。
+修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。经典石材预览场景的分组职责、Prefab 引用或样本显示方式变化时，同步更新本文档与 `../Project/Project_Guide.md`。

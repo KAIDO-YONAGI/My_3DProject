@@ -56,6 +56,7 @@
 | 专用服务器启动、Headless 构建、监听和部署 | `Multiplayer/Dedicated_Server.md` |
 | 场景列表、场景职责、加载链路和表现模式切换 | `Scene/Scene_Guide.md` |
 | Unity 版本、Packages、Addressables、Player Settings 和 Prefab | `Project/Project_Guide.md` |
+| Blender、经典石材、不规则预切 Cube、粒子资源与预览 | `Project/Project_Guide.md`、`Scene/Scene_Guide.md` |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Project/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
 
