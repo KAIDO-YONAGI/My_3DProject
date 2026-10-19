@@ -1077,6 +1077,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5646400305885862943}
+  - component: {fileID: 6129470384128837101}
   m_Layer: 0
   m_Name: Fragments
   m_TagString: Untagged
@@ -1896,3 +1897,19 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -2370784152154383421, guid: a7103118e48444044867a2f4fedb7eed, type: 3}
+--- !u!114 &6129470384128837101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4978689277648668325}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f3c8a1d4b2e4f6d9a0c5e8b1d3f7a92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outwardSpeed: 2
+  upwardSpeed: 1
+  escapeTime: 0.25
+  lifetime: 6

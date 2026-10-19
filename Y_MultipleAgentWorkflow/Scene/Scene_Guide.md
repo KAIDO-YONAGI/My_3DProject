@@ -65,7 +65,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 `Assets/Core/Scenes/VoxelArena.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象保存，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
 
-平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。破坏时由 `BreakBlockAtHit(RaycastHit)` 根据 `CombinedCollision` 的命中点定位方块，在当前平台的 `FragmentsRuntime` 下创建对应方块的碎块，并局部更新外表面和碰撞。恢复时销毁对应碎块实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
+平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。破坏时由 `BreakBlockAtHit(RaycastHit)` 根据 `CombinedCollision` 的命中点定位方块，在当前平台的 `FragmentsRuntime` 下创建对应方块的碎块，并局部更新外表面和碰撞。碎块按方块记录里的碎块矩阵摆位，该矩阵退化时退回方块自身的网格矩阵。碎块由 `Fragments` 节点上的 `FragmentBurst` 驱动：节点启用时为每个预切片添加或复用刚体，暂时关闭预切片碰撞使其从原方块体积里飞出，脱离窗口结束后恢复碰撞，并在设定时长后销毁整个碎块分组。恢复时销毁对应碎块实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
 
 第一层的中央平台由 `CenterDisk` 收纳独立 Cube，保留各块的源 Prefab 引用、完整网格、BoxCollider 与预切碎块层级，可在场景中直接选择、移动和重排。`CenterDisk` 上的 `VoxelPlatformBakeExclusion` 标记使其子节点保持独立编辑与交互，第一层的合并外表面与碰撞负责外围区域，其他层使用各自的完整烘焙布局。
 

@@ -338,8 +338,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
                 }
                 currentScenes.Add(new LoadedScene(scene, loaded));
             }
-            SetPlayerPostion(targetPosition);
-            OnLoadCompleted(firstLoaded, targetFade);
+            OnLoadCompleted(firstLoaded, targetFade,targetPosition);
         }
 
         private void SetObjects(bool state)
@@ -359,7 +358,8 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
         /// </summary>
         /// <param name="loadedTarget">本次加载的场景组首个场景</param>
         /// <param name="targetFade">本次加载是否需要播放淡出动画</param>
-        private void OnLoadCompleted(GameSceneSO loadedTarget, bool targetFade)
+        /// <param name="targetPosition">加载后再设置玩家位置</param>
+        private void OnLoadCompleted(GameSceneSO loadedTarget, bool targetFade,Vector3 targetPosition)
         {
             // 不变量：currentScene 赋值必须在 sceneLoadedEvent 广播之前——
             // 订阅方（画布管理器/存档系统等）经 GetCurrentGameScene() 回读
@@ -374,6 +374,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
             AllowInput();
             TimeManager.Instance.ForceResumeGame();
             isLoading = false; // 全部完成后才解锁，允许下一次加载请求
+            SetPlayerPostion(targetPosition);
         }
 
         private void ForbidInput()

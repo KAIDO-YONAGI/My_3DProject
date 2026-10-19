@@ -32,7 +32,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             // 先挂到容器再摆位，变换计算始终在平台局部空间里进行。
             instance.transform.SetParent(owner.FragmentRoot, false);
             instance.SetActive(true);
-            ApplyLocalMatrix(instance.transform, block.FragmentMatrix);
+            ApplyLocalMatrix(instance.transform, ResolveFragmentMatrix(block));
 
             // 位置设置完成后再启用 Fragments，其 OnEnable 可安全读取碎块世界位置。
             Transform intact = FindChild(instance.transform, "Intact");
@@ -83,8 +83,24 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             Vector3 up = matrix.MultiplyVector(Vector3.up);
             Vector3 forward = matrix.MultiplyVector(Vector3.forward);
             target.localPosition = matrix.MultiplyPoint3x4(Vector3.zero);
-            target.localRotation = Quaternion.LookRotation(forward.normalized, up.normalized);
             target.localScale = new Vector3(right.magnitude, up.magnitude, forward.magnitude);
+            // 前向或上向退化时 LookRotation 会报错并退回单位旋转，此时保留实例原有朝向。
+            if (Vector3.Cross(forward, up).sqrMagnitude > 0f)
+                target.localRotation = Quaternion.LookRotation(forward, up);
+        }
+
+        // 早期烘焙结果没有写入碎块矩阵，退回方块自身矩阵，碎块仍落在方块原来的位置与朝向上。
+        private static Matrix4x4 ResolveFragmentMatrix(VoxelPlatformBlock block)
+        {
+            return IsDegenerate(block.FragmentMatrix) ? block.Matrix : block.FragmentMatrix;
+        }
+
+        // 任一基向量为零的矩阵给不出可用的位置、朝向与缩放，实例会缩到零而看不见。
+        private static bool IsDegenerate(Matrix4x4 matrix)
+        {
+            return matrix.MultiplyVector(Vector3.right).sqrMagnitude <= 0f
+                || matrix.MultiplyVector(Vector3.up).sqrMagnitude <= 0f
+                || matrix.MultiplyVector(Vector3.forward).sqrMagnitude <= 0f;
         }
 
         internal static GameObject FindPrefab(Transform intact)
