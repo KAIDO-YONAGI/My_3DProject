@@ -6,7 +6,6 @@ namespace Core.Scripts.Character.Input
     /// 相机与角色控制器共用的输入入口。
     /// 它把 Input System 的 PlayerControls 包装成只读访问器，并在这里集中维护“旧输入轴 -> Input System”的量纲换算，
     /// 使 ThirdPersonCamera 的 sensitivity、scrollSpeed 等既有数值保持改造前的手感。
-    /// 输入实例按需创建：专用服务器和远程角色走不到采集路径，因此不会创建 PlayerControls。
     /// </summary>
     public class CharacterInputReader : System.IDisposable
     {
@@ -68,6 +67,7 @@ namespace Core.Scripts.Character.Input
         /// <summary>本帧是否按下重新捕获光标键。</summary>
         public bool LockCursorPressed => Controls.Player.LockCursor.WasPressedThisFrame();
         public bool TestPressed => Controls.Player.Test.WasPressedThisFrame();
+        public bool AttackPressed => Controls.Player.Attack.WasPressedThisFrame();
 
         /// <summary>
         /// 释放输入资源。必须调用：生成的包装类在终结时会断言动作表仍处于启用状态。

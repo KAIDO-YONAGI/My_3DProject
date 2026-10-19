@@ -10,7 +10,7 @@ namespace Core.Scripts.Camera.Runtime
     /// </summary>
     public class ThirdPersonCamera : MonoBehaviour
     {
-        [Header("目标（运行时可改）")]
+        [Header("目标")]
         // target 通常是挂载 PlayerCharacterController 的角色根节点。
         [Tooltip("相机跟随的目标根节点，通常是挂载 PlayerCharacterController 的网络根。焦点会立即切到新目标、镜头位置随之跳变；切换玩家由 NetworkCharacterManager 通过 SetTarget 完成。")]
         [SerializeField] private Transform target;
@@ -19,7 +19,7 @@ namespace Core.Scripts.Camera.Runtime
         [Tooltip("观察焦点相对目标原点的偏移，例如抬高到胸口或头部。")]
         [SerializeField] private Vector3 targetOffset;
 
-        [Header("环绕（运行时可改）")]
+        [Header("环绕")]
         // distance 是用户期望距离，碰撞避让只临时缩短实际距离，不改写该值。
         [Tooltip("期望的镜头距离；碰撞避让只临时缩短实际距离，不会改写该值。")]
         [SerializeField] private float distance = 4f;
@@ -42,7 +42,7 @@ namespace Core.Scripts.Camera.Runtime
         [Tooltip("初始化及重新启用时是否锁定并隐藏光标；锁定后按 Escape 释放、点击画面重新捕获。关闭该开关不会释放已经锁定的光标，需要按 Escape 或松一次 Alt。")]
         [SerializeField] private bool lockCursor = true;
 
-        [Header("角色朝向（运行时可改）")]
+        [Header("角色朝向")]
         // 开启后，存在移动输入时让角色逐渐朝向镜头的水平朝向。
         [Tooltip("开启后，存在移动输入时让角色朝向镜头的水平朝向。")]
         [SerializeField] private bool rotateTarget = true;
@@ -55,7 +55,7 @@ namespace Core.Scripts.Camera.Runtime
         [Tooltip("纠正角色朝向的最大角速度（度/秒），与 CharacterMovementSettings.rotationSpeed 对齐；它只限制大角差时的峰值转速，过大时大角差会明显甩头。")]
         [SerializeField, Min(0f)] private float targetRotateSpeed = 360f;
 
-        [Header("避让（运行时可改）")]
+        [Header("避让")]
         // minHeightY 防止低俯角时镜头落到角色脚下。
         [Tooltip("镜头相对目标原点的期望最低高度，防止低俯角时镜头落到角色脚下；障碍避让优先，受阻时允许低于它。")]
         [SerializeField] private float minHeightY = 2f;

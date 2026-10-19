@@ -50,6 +50,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 - `CharacterInputReader` 是唯一输入入口，按需创建并启用 `PlayerControls`。
 - `AudioTriggerManager` 复用 `CharacterInputReader` 读取测试音效输入，在组件停用时释放输入资源。
+- `Attack` 同样复用 `CharacterInputReader` 读取攻击输入，以相机为准心发射射线处理方块破坏，在组件停用时释放输入资源。
 - `PlayerCharacterController` 读取输入并组织移动和表现更新。
 - `CharacterInput` 保存当前帧的移动、疾跑和跳跃输入。
 - `CharacterMotor` 根据相机水平朝向计算世界移动方向，处理加减速、重力、跳跃和 `CharacterController.Move`。
@@ -114,6 +115,8 @@ CharacterInputReader（PlayerControls.inputactions）
 
 相机保留在角色 Prefab 内，不改变网络层级。`CameraOrbitState` 独立缓存镜头世界旋转，角色父节点转向后不读取被父级带动的 `transform.rotation` 作为插值起点。角色朝向跟随输入轨道的水平 yaw。镜头旋转使用 `1 - exp(-smoothSpeed * deltaTime)` 的指数插值系数，位置使用显式帧长的 `Vector3.SmoothDamp` 平滑焦点到镜头的相对偏移。
 
+观察焦点由 `targetOffset` 抬到胸口高度。最低高度按 `minHeightY` 减去 `targetOffset.y` 施加在相对偏移上，焦点抬高后该下限降到与焦点同高，俯视时镜头整体抬高，准心落点由角色脚边移到前方数米。
+
 避让顺序为「期望轨道偏移 → 最低高度约束 → 相对偏移平滑 → 最终候选方向 SphereCast → 写回裁剪偏移」。最低高度只在期望偏移上约束，平滑结果不做二次夹取，候选向量同时是 SphereCast 的检测路径。球形检测忽略目标及其所有子碰撞体和 Trigger，命中数组填满时重查，极端密集情况使用 `SphereCastAll` 兜底。`RaycastHit.distance` 已是球心行进距离，只保留接触余量。受阻时防穿墙优先于 `minDistance` 与 `minHeightY`；裁剪不改写用户期望 `distance`，同时清空受阻的平滑速度，障碍消失后平滑退回期望轨道。未按 Alt 时每帧夹取期望缩放距离，滚轮事件只改变期望值。
 
 起始检测球与障碍重叠时，仅在焦点位于障碍包围盒外、沿分离平面外法线单调远离且最终球体完全退出时，忽略该零距离命中；其他障碍裁短路径后重新核验退出条件。焦点位于包围盒内部或无法证明安全退出时保守阻挡。检测只约束焦点至候选球心的路径，不覆盖相机整个近裁剪面。
@@ -150,9 +153,17 @@ CharacterInputReader（PlayerControls.inputactions）
 - `EventSystem` 使用 `InputSystemUIInputModule`，其 `CursorLockBehavior` 为默认的 `OutsideScreen`，操作 UI 需要先按住 `Alt` 释放光标。
 - `Assets/Plugins/Mirror/` 中的示例与部分组件使用旧输入 API，均不在构建场景引用内。
 
+## 准心交互
+
+`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。
+
+射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。射线从相机出发必定先穿过角色自身，`Transform.root` 之下的碰撞体全部排除。`Physics.RaycastNonAlloc` 的结果未排序，在其中取最近的非自身命中。
+
+命中后通过 `GetComponentInParent<VoxelPlatformRenderer>` 取得平台并调用 `BreakBlockAtHit`，方块按命中点反查。破坏改动调用侧的平台实例，平台组件是普通 `MonoBehaviour`，结果不跨客户端同步。
+
 ## 目录约定
 
-- 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。移动参数随运动代码，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
+- 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`、`Interactions/`。移动参数随运动代码，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 通用分层状态机框架归入 `Assets/Core/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`，`autoReferenced` 使其可被运行时与测试引用；角色专用的状态节点留在 `Movement/States/`，不放进框架目录。新增状态的写法和联网需同步改动的清单见该目录 `README.md`。
 - 相机位于 `Assets/Core/Scripts/Camera/Runtime/`。
 - 网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。

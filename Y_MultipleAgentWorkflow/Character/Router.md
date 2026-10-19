@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-CHARACTER`
 状态：`Active`
-维护计数：`0/5`
-最后更新：`2026-10-16`
+维护计数：`2/5`
+最后更新：`2026-10-19`
 
 ## 任务路由
 
@@ -15,6 +15,7 @@
 | Idle、Run、Sprint、Rising、Falling、状态机与状态内混合 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Movement/States/` |
 | 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Character_Guide.md`，并读取 `Assets/Core/Input/` |
+| 准心攻击、相机射线与方块破坏交互 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Interactions/` 与 `Assets/Core/Prefabs/Main Camera.prefab` |
 | 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Camera/Runtime/` 与相机回归测试 |
 | 角色模型、动画素材与相机 Prefab | `Character_Guide.md`，并读取 `Assets/Core/Prefabs/Characters/` |
 | 嘴部下移、面部蒙皮、Humanoid Jaw 与 Avatar 映射 | `Character_Guide.md`、`../Project/Project_Guide.md`，并核对模型导入配置与完整角色 Prefab |

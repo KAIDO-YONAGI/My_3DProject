@@ -1,5 +1,22 @@
 # Character 开发记录
 
+## 2026-10-19：抬高镜头观察焦点
+
+- 现象：准心落在角色脚边，前方几米的方块打不到，只能破坏脚下。
+- 根因：观察焦点取角色根节点原点，即脚底。最低高度按 `minHeightY` 减去 `targetOffset.y` 计算，焦点在脚底时该下限把镜头的相对偏移顶到 1.5，而镜头旋转仍保持向下的初始俯角。两者叠加后，约 20° 的俯角从离地 1.5 的位置向前射出，落地点只在角色前方约 0.3 米。
+- 修复：`Main Camera.prefab` 的 `targetOffset` 抬到胸口高度。焦点上移 1.5，同一俯角下镜头的世界高度随之提高 1.5，落地点从前方约 0.3 米移到约 4.1 米；相对偏移下限降到与焦点同高，平视与仰视时的镜头位置保持不变。
+- 验证：`targetOffset` 与 `minHeightY` 只在相机 Prefab 上序列化，两份完整角色 Prefab 与场景均无覆盖。落地点按 `minHeightY`、`targetOffset.y`、`distance` 与初始俯角 20.164° 直接计算。
+- 维护计数：`1/5 → 2/5`。
+
+## 2026-10-19：新增准心攻击交互
+
+- 实现：`Assets/Core/Scripts/Character/Interactions/Attack.cs` 从 `CharacterInputReader` 读取 `AttackPressed`，仅在光标锁定时发射射线。起点取相机位置、方向取相机朝向，检测距离按角色根节点到相机的距离加上 `reachDistance` 计算，相机在角色身后的那段不占用攻击范围。
+- 命中处理：排除 `Transform.root` 之下的碰撞体，在 `Physics.RaycastNonAlloc` 的未排序结果中取最近的非自身命中，再经 `GetComponentInParent<VoxelPlatformRenderer>` 取得平台并调用 `BreakBlockAtHit`，方块按命中点反查。光标未锁定时左键回落到 UI，按住 `Alt` 或按 `Escape` 期间不触发破坏。
+- 挂载：`Attack` 加入 `Assets/Core/Prefabs/Main Camera.prefab`，两份完整角色 Prefab 通过嵌套实例继承，实例上的 `m_RemovedComponents` 为空。
+- 验证：`Attack.cs` 以 Unity 2022.3.62f3c1 的 `UnityEngine.CoreModule`、`UnityEngine.PhysicsModule` 与 `Library/ScriptAssemblies/Assembly-CSharp.dll` 编译，0 错误 0 警告。相机 Prefab 的 6 个组件引用与 7 个文档锚点一一对应，`Attack` 的 GUID 与脚本 meta 一致。
+- 边界：平台组件是普通 `MonoBehaviour`，破坏结果只作用于调用侧实例。
+- 文档与计数：`Character_Guide.md` 新增准心交互一节并同步目录约定，本域 `Router.md` 增加任务路由行。Character 维护计数 `0/5 → 1/5`。
+
 ## 2026-10-13：角色动画配置迁移到编辑器资产
 
 - 共用逻辑为 `Assets/Core/Models/Resources/CharacterLocomotion.controller`，Grounded 的 Direct 混合树组合 Idle、Run、Sprint，Run 与 Sprint 使用十方向混合，`Grounded` 参数控制 Jump 的进入与退出。
