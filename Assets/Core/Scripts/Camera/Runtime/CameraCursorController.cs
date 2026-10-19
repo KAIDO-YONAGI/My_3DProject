@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera.Runtime
 {
-    internal class CameraCursorController
+    class CameraCursorController
     {
         private static CameraCursorController owner;
         private bool freeCursorHeld;

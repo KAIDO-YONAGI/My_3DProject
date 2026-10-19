@@ -1,16 +1,17 @@
 using System.Collections.Generic;
 using Core.Scripts.Environment.VoxelPlatform.Data;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace Core.Scripts.Environment.VoxelPlatform.Fragments
 {
     // 按方块延迟创建预切 Cube，只管理实例与装配位置；受力和刚体由表现脚本负责。
-    internal sealed class VoxelPlatformFragments
+    class VoxelPlatformFragments
     {
         private readonly VoxelPlatformRenderer owner;
-        private readonly Dictionary<Vector3Int, GameObject> spawned =
-            new Dictionary<Vector3Int, GameObject>();
+        private readonly Dictionary<Vector3Int, GameObject> spawned = new();
 
         internal VoxelPlatformFragments(VoxelPlatformRenderer owner)
         {
@@ -62,6 +63,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
                 Transform found = FindChild(child, name);
                 if (found) return found;
             }
+
             return null;
         }
 

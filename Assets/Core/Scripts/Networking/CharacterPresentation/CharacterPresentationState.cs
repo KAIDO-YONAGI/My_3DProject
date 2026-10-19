@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Networking.CharacterPresentation
 {
-    internal sealed class CharacterPresentationState
+    class CharacterPresentationState
     {
         public GameObject Instance;
         public int CharacterId;

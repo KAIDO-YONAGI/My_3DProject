@@ -8,13 +8,12 @@ using UnityEngine.Rendering;
 namespace Core.Scripts.Environment.VoxelPlatform.Rendering
 {
     // 按分块和材质生成可见表面，协调同一分块的碰撞刷新。
-    internal sealed class VoxelPlatformMeshBuilder
+    class VoxelPlatformMeshBuilder
     {
         private readonly VoxelPlatformRenderer owner;
         private readonly VoxelPlatformRuntime runtime;
-        private readonly VoxelPlatformGeometry geometry = new VoxelPlatformGeometry();
-        internal readonly Dictionary<Vector3Int, List<VoxelPlatformSurface>> Surfaces =
-            new Dictionary<Vector3Int, List<VoxelPlatformSurface>>();
+        private readonly VoxelPlatformGeometry geometry = new();
+        internal readonly Dictionary<Vector3Int, List<VoxelPlatformSurface>> Surfaces =new();
         internal VoxelPlatformCollisionBuilder Collisions { get; }
 #if UNITY_EDITOR
         private Queue<GameObject> bakeSurfacePool;

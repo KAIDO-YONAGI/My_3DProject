@@ -11,7 +11,7 @@ namespace Core.Scripts.Environment
     /// 平台的生命周期和调用入口。方块接口使用平台局部空间中的网格中心坐标。
     /// </summary>
     [ExecuteAlways, DisallowMultipleComponent]
-    public sealed class VoxelPlatformRenderer : MonoBehaviour
+    public class VoxelPlatformRenderer : MonoBehaviour
     {
         [SerializeField, HideInInspector] private Transform surfaceRoot;
         [SerializeField, HideInInspector] private Transform collisionRoot;

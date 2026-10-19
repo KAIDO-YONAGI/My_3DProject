@@ -1,14 +1,13 @@
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Baking;
 using Core.Scripts.Environment.VoxelPlatform.Data;
 using Core.Scripts.Environment.VoxelPlatform.Fragments;
 using Core.Scripts.Environment.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Environment.VoxelPlatform.Baking
 {
     // 从编辑布局提取 Intact，保留源状态以便退出预览时恢复。
-    internal static class VoxelPlatformSourceCollector
+    static class VoxelPlatformSourceCollector
     {
         internal static bool HasSourceGeometry(VoxelPlatformRenderer owner)
         {

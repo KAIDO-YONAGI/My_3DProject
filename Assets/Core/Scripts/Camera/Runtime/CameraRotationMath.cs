@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera.Runtime
 {
-    internal static class CameraRotationMath
+    static class CameraRotationMath
     {
         public static float ExponentialFactor(float rate, float deltaTime)
         {

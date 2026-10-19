@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Networking.CharacterPresentation
 {
-    internal sealed class CharacterPresentationService
+    class CharacterPresentationService
     {
         private readonly NetworkCharacterManager manager;
         private readonly Dictionary<CharacterIdSync, CharacterPresentationState> presentations;

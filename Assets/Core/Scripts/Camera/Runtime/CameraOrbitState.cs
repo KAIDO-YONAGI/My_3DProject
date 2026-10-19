@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera.Runtime
 {
-    internal class CameraOrbitState
+    class CameraOrbitState
     {
         public float Yaw { get; private set; }
         public float Pitch { get; private set; }

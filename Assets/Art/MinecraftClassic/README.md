@@ -68,6 +68,6 @@ Cube 根对象表示方块容器，子块名表示容器内的稳定编号。算
 
 ## 预览入口
 
-`Assets/Core/Scenes/MinecraftClassicPreview.unity` 展示完整 Cube、展开的不规则碎块样本和五种粒子，包含独立相机、方向光与预览地面。
+`Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity` 展示完整 Cube、展开的不规则碎块样本和五种粒子，包含独立相机、方向光与预览地面。
 
-`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象，各自保存布局数据、合并表面与分块碰撞。
+`Assets/Core/Scenes/VoxelArena.unity` 展示六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象，各自保存布局数据、合并表面与分块碰撞。

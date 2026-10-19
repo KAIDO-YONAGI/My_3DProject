@@ -7,12 +7,11 @@ using UnityEngine.Rendering;
 namespace Core.Scripts.Environment.VoxelPlatform.Collision
 {
     // 使用完整方块网格生成静态分块碰撞，与可见面剔除保持独立。
-    internal sealed class VoxelPlatformCollisionBuilder
+    class VoxelPlatformCollisionBuilder
     {
         private readonly VoxelPlatformRenderer owner;
         private readonly VoxelPlatformRuntime runtime;
-        internal readonly Dictionary<Vector3Int, VoxelPlatformCollisionSurface> Surfaces =
-            new Dictionary<Vector3Int, VoxelPlatformCollisionSurface>();
+        internal readonly Dictionary<Vector3Int, VoxelPlatformCollisionSurface> Surfaces = new ();
 #if UNITY_EDITOR
         private Queue<GameObject> bakePool;
 #endif

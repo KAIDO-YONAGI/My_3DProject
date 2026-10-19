@@ -1,6 +1,8 @@
 using System;
 using Core.Scripts.GamePlayFrameWork.Scripts.Core;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace Core.Scripts.GamePlayFrameWork.Scripts.SO

@@ -8,18 +8,16 @@ using UnityEngine;
 namespace Core.Scripts.Environment.VoxelPlatform.Runtime
 {
     // 维护单个平台的方块状态，并把一次变化归并为需要重建的空间分块。
-    internal sealed class VoxelPlatformRuntime
+    class VoxelPlatformRuntime
     {
         private readonly VoxelPlatformRenderer owner;
         private readonly VoxelPlatformFragments fragments;
-        private readonly HashSet<Vector3Int> dirtyChunks = new HashSet<Vector3Int>();
+        private readonly HashSet<Vector3Int> dirtyChunks = new();
         private bool hasSourceBlocks;
 
-        internal readonly List<VoxelPlatformBlock> Blocks = new List<VoxelPlatformBlock>();
-        internal readonly Dictionary<Vector3Int, VoxelPlatformBlock> Occupied =
-            new Dictionary<Vector3Int, VoxelPlatformBlock>();
-        internal readonly Dictionary<Vector3Int, List<VoxelPlatformBlock>> Chunks =
-            new Dictionary<Vector3Int, List<VoxelPlatformBlock>>();
+        internal readonly List<VoxelPlatformBlock> Blocks = new();
+        internal readonly Dictionary<Vector3Int, VoxelPlatformBlock> Occupied = new();
+        internal readonly Dictionary<Vector3Int, List<VoxelPlatformBlock>> Chunks =new();
         internal VoxelPlatformMeshBuilder Meshes { get; }
 
         internal VoxelPlatformRuntime(VoxelPlatformRenderer owner)

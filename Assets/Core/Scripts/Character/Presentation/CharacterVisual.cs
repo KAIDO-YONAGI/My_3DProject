@@ -7,7 +7,7 @@ namespace Core.Scripts.Character.Presentation
 {
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]
-    public sealed class CharacterVisual : MonoBehaviour
+    public class CharacterVisual : MonoBehaviour
     {
         [SerializeField] private Animator animator;
         [SerializeField] private UnityEngine.Camera inputCamera;

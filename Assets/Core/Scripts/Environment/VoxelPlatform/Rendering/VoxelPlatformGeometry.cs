@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Core.Scripts.Environment.VoxelPlatform.Rendering
 {
     // 只处理几何与邻接关系，缓存由同一源网格生成的六面掩码变体。
-    internal sealed class VoxelPlatformGeometry
+    class VoxelPlatformGeometry
     {
         // 位置键保留局部中心的小数部分，避免把半格布局或不同高度压进同一格。
         internal const int PositionPrecision = 10000;
@@ -17,8 +17,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Rendering
             Vector3Int.down, Vector3Int.forward, Vector3Int.back
         };
 
-        private readonly Dictionary<Mesh, Dictionary<int, Mesh>> meshVariants =
-            new Dictionary<Mesh, Dictionary<int, Mesh>>();
+        private readonly Dictionary<Mesh, Dictionary<int, Mesh>> meshVariants =new();
 
         internal static bool IsUnitCube(Mesh mesh, Matrix4x4 matrix)
         {

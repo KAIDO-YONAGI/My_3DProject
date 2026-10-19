@@ -116,7 +116,7 @@ namespace Core.Scripts.Character.Movement.States
     /// <summary>
     /// 角色运动状态节点的公共基类，复用框架的分层状态机。
     /// </summary>
-    internal abstract class CharacterMovementStateNode : HierarchicalState<CharacterMovementStateContext>
+    abstract class CharacterMovementStateNode : HierarchicalState<CharacterMovementStateContext>
     {
         protected CharacterMovementStateNode(CharacterMovementStateNode parent) : base(parent)
         {
@@ -126,7 +126,7 @@ namespace Core.Scripts.Character.Movement.States
     /// <summary>
     /// 叶子状态基类。只有叶子状态才对应一个对外的离散标识，父状态不参与网络同步。
     /// </summary>
-    internal abstract class CharacterMovementLeafState : CharacterMovementStateNode
+    abstract class CharacterMovementLeafState : CharacterMovementStateNode
     {
         protected CharacterMovementLeafState(CharacterMovementStateNode parent) : base(parent)
         {

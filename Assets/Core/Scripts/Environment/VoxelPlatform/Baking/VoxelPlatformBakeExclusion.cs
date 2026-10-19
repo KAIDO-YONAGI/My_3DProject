@@ -7,7 +7,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
     /// 标记覆盖源几何收集与烘焙清理，节点启停不改变排除范围。
     /// </summary>
     [DisallowMultipleComponent, AddComponentMenu("Environment/Voxel Platform Bake Exclusion")]
-    public sealed class VoxelPlatformBakeExclusion : MonoBehaviour
+    public class VoxelPlatformBakeExclusion : MonoBehaviour
     {
     }
 }

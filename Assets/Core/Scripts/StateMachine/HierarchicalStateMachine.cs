@@ -10,7 +10,7 @@ namespace Core.Scripts.StateMachine
     /// 不使用异步任务，转换后同一帧即可继续更新新状态，因此不占用额外帧。
     /// </summary>
     /// <typeparam name="TContext">每帧传入状态机的上下文快照。</typeparam>
-    public sealed class HierarchicalStateMachine<TContext>
+    public class HierarchicalStateMachine<TContext>
     {
         private readonly HierarchicalState<TContext> root;
 

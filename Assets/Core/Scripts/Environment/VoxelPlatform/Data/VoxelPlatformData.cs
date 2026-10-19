@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 namespace Core.Scripts.Environment.VoxelPlatform.Data
 {
     // 运行记录兼容源对象预览；从烘焙数据加载时，源组件引用保持为空。
-    internal sealed class VoxelPlatformBlock
+    class VoxelPlatformBlock
     {
         public MeshRenderer Renderer;
         public Transform Transform;
@@ -55,7 +55,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Data
 
     // 直接内联序列化到平台组件，字段名与现有烘焙资源保持一致。
     [Serializable]
-    internal sealed class VoxelPlatformBakedBlock
+    class VoxelPlatformBakedBlock
     {
         public GameObject FragmentPrefab;
         public Mesh Mesh;
@@ -100,7 +100,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Data
 
     // Baked 网格属于资产；运行中替换表面时只隐藏它，临时网格才执行销毁。
     [Serializable]
-    internal sealed class VoxelPlatformSurface
+    class VoxelPlatformSurface
     {
         public GameObject Object;
         public Mesh Mesh;
@@ -109,7 +109,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Data
     }
 
     [Serializable]
-    internal sealed class VoxelPlatformCollisionSurface
+    class VoxelPlatformCollisionSurface
     {
         public GameObject Object;
         public Mesh Mesh;
@@ -117,7 +117,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Data
     }
 
     [Serializable]
-    internal sealed class VoxelPlatformBakedChunk
+    class VoxelPlatformBakedChunk
     {
         public Vector3Int Position;
         public List<VoxelPlatformSurface> Surfaces;

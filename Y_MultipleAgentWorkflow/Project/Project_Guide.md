@@ -117,7 +117,7 @@ Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并�
 
 两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 
-平台场景入口为 `Assets/Core/Scenes/MinecraftClassicPlatform.unity`，场景职责见 `../Scene/Scene_Guide.md`。平台范围与方块配置以 Prefab 为准。
+平台场景入口为 `Assets/Core/Scenes/VoxelArena.unity`，场景职责见 `../Scene/Scene_Guide.md`。平台范围与方块配置以 Prefab 为准。
 
 ### Blender 制作入口
 

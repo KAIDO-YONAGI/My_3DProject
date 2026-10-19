@@ -470,7 +470,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7879162872813621470, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -31.27
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7879162872813621470, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1226,10 +1226,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 365092a1ba295a6b9ec685bfb062456c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialPosition: {x: -2.63, y: 3.38, z: -31.27}
+  initialPosition: {x: 0, y: 0, z: 0}
   fadeDuration: 1
   firstSceneToLoad:
-  - {fileID: 11400000, guid: d4823d6adcfd796439ed6a7ac273dbd1, type: 2}
+  - {fileID: 11400000, guid: 15f42e871332c6a49b05ad2ef4352d26, type: 2}
   player: {fileID: 438402677}
   fadeCanva: {fileID: 906009871}
   loadEventSO: {fileID: 11400000, guid: 2ebef1f8584f5716b6eab623d68a7e99, type: 2}

@@ -49,7 +49,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ### MinecraftClassicPreview
 
-`Assets/Core/Scenes/MinecraftClassicPreview.unity` 是经典石材、不规则预切 Cube 与粒子资源的预览入口，使用独立相机、方向光和预览地面。
+`Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity` 是经典石材、不规则预切 Cube 与粒子资源的预览入口，使用独立相机、方向光和预览地面。
 
 | 分组 | 职责 |
 |---|---|
@@ -63,7 +63,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ### MinecraftClassicPlatform
 
-`Assets/Core/Scenes/MinecraftClassicPlatform.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象保存，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
+`Assets/Core/Scenes/VoxelArena.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象保存，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
 
 平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。破坏时由 `BreakBlockAtHit(RaycastHit)` 根据 `CombinedCollision` 的命中点定位方块，在当前平台的 `FragmentsRuntime` 下创建对应方块的碎块，并局部更新外表面和碰撞。恢复时销毁对应碎块实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
 

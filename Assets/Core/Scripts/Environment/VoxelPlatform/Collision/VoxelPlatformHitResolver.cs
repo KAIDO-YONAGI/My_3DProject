@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Core.Scripts.Environment.VoxelPlatform.Collision
 {
     // 合并碰撞不含每块的 GameObject，通过局部空间包围盒反查命中的启用方块。
-    internal static class VoxelPlatformHitResolver
+    static class VoxelPlatformHitResolver
     {
         internal static bool TryGetBlockPosition(Transform platform, Transform collisionRoot,
             List<VoxelPlatformBlock> blocks, RaycastHit hit, out Vector3 localPosition)

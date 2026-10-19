@@ -33,8 +33,8 @@
 - `Assets/Core/Scenes/PersistentScene.unity`
 - `Assets/Core/Scenes/MultiplayerSampleScene.unity`
 - `Assets/Core/Scenes/MultiplayerSampleScene 1.unity`
-- `Assets/Core/Scenes/MinecraftClassicPreview.unity`
-- `Assets/Core/Scenes/MinecraftClassicPlatform.unity`
+- `Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity`
+- `Assets/Core/Scenes/VoxelArena.unity`
 - `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs`
 - `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`
 - `Assets/Core/SO/`

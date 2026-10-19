@@ -41,7 +41,7 @@ namespace Core.Scripts.GamePlayFrameWork.Scripts.Scene
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
         private readonly List<LoadedScene> currentScenes = new List<LoadedScene>();
 
-        private sealed class LoadedScene
+        private class LoadedScene
         {
             public readonly GameSceneSO Asset;
             public readonly UnityEngine.SceneManagement.Scene Instance;
