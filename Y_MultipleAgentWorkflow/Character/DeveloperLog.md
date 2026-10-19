@@ -1,5 +1,20 @@
 # Character 开发记录
 
+## 2026-10-19：修复碎块层索引在静态初始化中调用 Unity API
+
+- 现象：`UnityException: NameToLayer is not allowed to be called from a MonoBehaviour constructor (or instance field initializer)`，栈指向 `Attack..cctor`，随后抛出 `TypeInitializationException`，相机上的 `Attack` 不可用。
+- 根因：层索引写在 `MonoBehaviour` 的静态字段初始化里。静态构造在反序列化期间执行，该阶段禁止调用 Unity API，`LayerMask.NameToLayer` 因此抛异常；`VoxelPlatformFragments` 的同类静态字段同样把 Unity 调用放在类初始化中。
+- 修复：`VoxelPlatformRenderer` 的静态构造只写入 `-1`，`DebrisLayer` 与 `DebrisMask` 改为首次访问时解析的属性；`Attack` 与 `VoxelPlatformFragments` 直接读取该属性，不再各自持有静态字段。
+- 验证：`Assets/Core/Scripts/Environment/` 与 `Attack.cs` 按 Unity 2022.3.62f3c1 的模块与 `Library/ScriptAssemblies/Assembly-CSharp.dll` 重新编译，0 错误；碎块层索引只在 `DebrisLayer` 首次访问时调用 Unity API，`MonoBehaviour` 的静态构造只写入 `-1`。
+- 维护计数：`3/5 → 4/5`。
+
+## 2026-10-19：攻击射线排除碎块层
+
+- 命中：`Attack` 在查询掩码里去掉 `VoxelPlatformRenderer.DebrisLayerName` 对应的层，废墟中的碎块不进入命中缓冲，最近命中不会再落在碎块上让攻击静默失败。
+- 分配：命中缓冲填满时按 16 → 32 → 64 扩容后重查，`Physics.RaycastAll` 回退分支删除，命中查询不产生托管分配。
+- 验证：`Assets/Core/Scripts/Environment/` 与 `Attack.cs` 一同按 Unity 2022.3.62f3c1 的 `UnityEngine`、`UnityEditor` 模块和 `Library/ScriptAssemblies/Assembly-CSharp.dll` 编译通过，0 错误；`UNITY_EDITOR` 定义下的编辑器路径参与同一次编译。
+- 维护计数：`2/5 → 3/5`。
+
 ## 2026-10-19：抬高镜头观察焦点
 
 - 现象：准心落在角色脚边，前方几米的方块打不到，只能破坏脚下。

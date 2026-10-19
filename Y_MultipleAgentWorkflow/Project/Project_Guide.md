@@ -113,7 +113,7 @@ Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并�
 
 `BreakBlock(Vector3 localPosition)` 与 `RestoreBlock(Vector3 localPosition)` 使用平台局部空间中的方块中心坐标。游戏逻辑通过射线命中 `CombinedCollision` 后调用 `BreakBlockAtHit(RaycastHit)`，或通过 `TryGetBlockPosition` 保存局部中心再调用破坏与恢复接口。组件根据碰撞点反查方块位置，再同步更新当前分块及邻接分块的外表面和碰撞。状态设置接口找到方块时返回成功，重复设置相同状态保持幂等。
 
-破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
+破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
 
 两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 

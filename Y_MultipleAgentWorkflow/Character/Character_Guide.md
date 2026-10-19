@@ -157,9 +157,9 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。
 
-射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。射线从相机出发必定先穿过角色自身，`Transform.root` 之下的碰撞体全部排除。`Physics.RaycastNonAlloc` 的结果未排序，在其中取最近的非自身命中。
+射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。射线从相机出发必定先穿过角色自身，`Transform.root` 之下的碰撞体全部排除。碎块层的层名由 `VoxelPlatformRenderer` 提供，破坏检测在查询掩码里去掉这一层，废墟中的碎块既不占用命中缓冲，也不挡住它们后方的方块。`Physics.RaycastNonAlloc` 的结果未排序，在其中取最近的非自身命中；缓冲填满时扩容后重查，命中查询不产生托管分配。
 
-命中后通过 `GetComponentInParent<VoxelPlatformRenderer>` 取得平台并调用 `BreakBlockAtHit`，方块按命中点反查。破坏改动调用侧的平台实例，平台组件是普通 `MonoBehaviour`，结果不跨客户端同步。
+命中后通过 `GetComponentInParent<VoxelPlatformRenderer>` 取得平台，先用 `TryGetBlockPosition` 按命中点反查方块局部中心，再调用 `BreakBlock`。破坏改动调用侧的平台实例，平台组件是普通 `MonoBehaviour`，结果不跨客户端同步。
 
 ## 目录约定
 

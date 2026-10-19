@@ -11,16 +11,15 @@ namespace Core.Scripts.Character.Interactions
     [DisallowMultipleComponent]
     public class Attack : MonoBehaviour
     {
-        // 命中缓冲复用同一份数组，按下攻击不产生垃圾；填满时退回全量查询。
+        // 命中缓冲复用同一份数组，按下攻击不产生垃圾；填满时扩容重试，不退回分配版本。
         private const int HitCapacity = 16;
+        private const int MaxHitCapacity = 64;
 
         [Header("检测")]
         [Tooltip("从角色位置起算的可破坏距离，超出后不再命中方块。")]
         [SerializeField, Min(0.1f)] private float reachDistance = 5f;
         [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")]
         [SerializeField] private LayerMask hitLayers = ~0;
-        [Tooltip("在 Console 输出每次攻击的命中诊断，用于定位交互链路中断的位置。")]
-        [SerializeField] private bool logInteraction = true;
 
         private readonly CharacterInputReader input = new();
 
@@ -60,14 +59,17 @@ namespace Core.Scripts.Character.Interactions
         {
             Ray ray = new Ray(transform.position, transform.forward);
             float maxDistance = ResolveMaxDistance();
+            // 碎块层由平台模块定义，破坏检测排除这一层，废墟里瞄准不会被碎块挡住。
+            int queryLayers = hitLayers.value & ~VoxelPlatformRenderer.DebrisMask;
             int count = Physics.RaycastNonAlloc(
-                ray, hits, maxDistance, hitLayers, QueryTriggerInteraction.Ignore);
+                ray, hits, maxDistance, queryLayers, QueryTriggerInteraction.Ignore);
 
-            // 缓冲区被填满时非分配版本可能缺少最近命中，改用全量查询再筛一次。
-            if (count == hits.Length)
+            // 缓冲区被填满时结果可能缺少最近命中，扩容后重试；到上限仍填满时按现有结果处理。
+            while (count == hits.Length && hits.Length < MaxHitCapacity)
             {
-                hits = Physics.RaycastAll(ray, maxDistance, hitLayers, QueryTriggerInteraction.Ignore);
-                count = hits.Length;
+                hits = new RaycastHit[hits.Length * 2];
+                count = Physics.RaycastNonAlloc(
+                    ray, hits, maxDistance, queryLayers, QueryTriggerInteraction.Ignore);
             }
 
             if (!TryPickNearest(count, out RaycastHit nearest))

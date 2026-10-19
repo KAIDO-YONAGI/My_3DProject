@@ -29,6 +29,8 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
                 owner.FragmentRoot = owner.CreateRoot("FragmentsRuntime");
             GameObject instance = UnityEngine.Object.Instantiate(block.FragmentPrefab);
             instance.name = "Fragments_" + block.Position;
+            // 碎块整体换到专属层，废墟里瞄准时射线不会被这些碰撞体占满。
+            ApplyLayer(instance.transform, VoxelPlatformRenderer.DebrisLayer);
             // 先挂到容器再摆位，变换计算始终在平台局部空间里进行。
             instance.transform.SetParent(owner.FragmentRoot, false);
             instance.SetActive(true);
@@ -87,6 +89,14 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             // 前向或上向退化时 LookRotation 会报错并退回单位旋转，此时保留实例原有朝向。
             if (Vector3.Cross(forward, up).sqrMagnitude > 0f)
                 target.localRotation = Quaternion.LookRotation(forward, up);
+        }
+
+        // 层作用到每个预切片上，只设容器根节点不会改变带碰撞体子节点的层。
+        private static void ApplyLayer(Transform root, int layer)
+        {
+            if (layer < 0) return;
+            root.gameObject.layer = layer;
+            foreach (Transform child in root) ApplyLayer(child, layer);
         }
 
         // 早期烘焙结果没有写入碎块矩阵，退回方块自身矩阵，碎块仍落在方块原来的位置与朝向上。

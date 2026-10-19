@@ -1,5 +1,12 @@
 # Project 开发记录
 
+## 2026-10-19：新增碎块专用层
+
+- 层：`ProjectSettings/TagManager.asset` 的用户层加入 `Debris`，碎块实例在 `VoxelPlatformFragments.Spawn` 时把整棵子树切换到该层；层名由 `VoxelPlatformRenderer.DebrisLayerName` 提供，工程里找不到该层时碎块保持原有层。
+- 物理：`DynamicsManager.asset` 的层碰撞矩阵全开，碎块与角色、平台、其他碎块的碰撞关系保持不变，该层只作用于射线查询的掩码。
+- 验证：与 Character 域同一次编译通过，0 错误。
+- 维护计数：`0/5 → 1/5`。
+
 ## 2026-10-16：全局音频系统与音频触发链路
 
 - 播放：`AudioPlayerManager` 单例按 `AudioType` 从 `AudioConfigSO` 取片段，交给 `AudioPlayer` 对象池播放；背景音乐使用独立音源做淡入淡出，场景加载完成时播放加载音效。
