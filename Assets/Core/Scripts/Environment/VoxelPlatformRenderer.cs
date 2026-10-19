@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Core.Scripts.Environment.VoxelPlatform.Baking;
 using Core.Scripts.Environment.VoxelPlatform.Collision;
 using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Environment.VoxelPlatform.Destruction;
 using Core.Scripts.Environment.VoxelPlatform.Runtime;
 using UnityEngine;
 
@@ -64,6 +65,8 @@ namespace Core.Scripts.Environment
 
         private void OnEnable()
         {
+            // 平台在启用时登记到破坏服务，批量结算按登记表遍历，不必扫描场景。
+            VoxelPlatformDestruction.Register(this);
 #if UNITY_EDITOR
             // 编辑用平台保留源 Cube，避免启用组件时用烘焙结果覆盖编辑视图。
             if (!Application.isPlaying && HasBakeSources) return;
@@ -83,6 +86,7 @@ namespace Core.Scripts.Environment
 
         private void OnDisable()
         {
+            VoxelPlatformDestruction.Unregister(this);
             // 禁用后运行表面留在场景里会继续参与渲染和碰撞，必须一并清掉。
             Runtime.Clear();
         }
@@ -121,6 +125,24 @@ namespace Core.Scripts.Environment
         public bool RestoreBlock(Vector3 localPosition)
         {
             return SetBlockActive(localPosition, true);
+        }
+
+        /// <summary>
+        /// 按平台局部方块中心批量破坏，受影响分块只重建一次。
+        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
+        /// </summary>
+        public int BreakBlocks(IReadOnlyList<Vector3> localCenters, float? collisionDuration = null)
+        {
+            return Runtime.BreakBlocks(localCenters, collisionDuration);
+        }
+
+        /// <summary>
+        /// 破坏与这些世界空间体积相交的方块，受影响分块只重建一次。
+        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
+        /// </summary>
+        public int BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast> blasts, float? collisionDuration = null)
+        {
+            return Runtime.BreakBlocksIn(blasts, transform.localToWorldMatrix, collisionDuration);
         }
 
         /// <summary>从本平台合并碰撞的命中取得局部方块中心，供破坏与恢复共用。</summary>

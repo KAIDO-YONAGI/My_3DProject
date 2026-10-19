@@ -113,7 +113,13 @@ Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并�
 
 `BreakBlock(Vector3 localPosition)` 与 `RestoreBlock(Vector3 localPosition)` 使用平台局部空间中的方块中心坐标。游戏逻辑通过射线命中 `CombinedCollision` 后调用 `BreakBlockAtHit(RaycastHit)`，或通过 `TryGetBlockPosition` 保存局部中心再调用破坏与恢复接口。组件根据碰撞点反查方块位置，再同步更新当前分块及邻接分块的外表面和碰撞。状态设置接口找到方块时返回成功，重复设置相同状态保持幂等。
 
-破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
+`BreakBlocks(IReadOnlyList<Vector3>)` 按平台局部方块中心批量破坏，`BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast>)` 破坏与世界空间体积相交的方块。两者在一次调用内只重建一次受影响分块，同一方块被多份体积覆盖只处理一次。方块一侧取旋转后的世界包围盒，整数 90 度旋转时与方块本身重合；标记碰撞体取世界包围盒，球形碰撞体按缩放后的半径判定。两者都接受可选的 `collisionDuration`，指定碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
+
+`VoxelPlatformDestruction.Break(...)` 立即结算一份或一组体积，按标记碰撞体、世界盒或球形体积构造，返回实际破坏的方块数量。平台在启用时登记、停用时注销，结算按登记表遍历，不扫描场景。
+
+`VoxelPlatformBlastTrigger` 是触发器驱动的入口：挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把标记碰撞体交给 `Break`，同步完成破坏；`regions` 留空时用子物体上的碰撞体，`collisionDuration` 传给 `Break`，`oneShot` 打开时只响应第一次触发。触发器要与静态平台产生物理事件，触发器自身或进入它的物体上需要有 Rigidbody。
+
+破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
 
 两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 

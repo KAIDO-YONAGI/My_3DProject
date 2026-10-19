@@ -19,7 +19,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             this.owner = owner;
         }
 
-        internal void Spawn(VoxelPlatformBlock block)
+        internal void Spawn(VoxelPlatformBlock block, float? collisionDuration = null)
         {
             // 同一方块重复破坏只保留一个实例，避免碎块叠加。
             if (spawned.ContainsKey(block.Position) || !block.FragmentPrefab)
@@ -40,7 +40,18 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             Transform intact = FindChild(instance.transform, "Intact");
             if (intact) intact.gameObject.SetActive(false);
             Transform fragments = FindChild(instance.transform, "Fragments");
-            if (fragments) fragments.gameObject.SetActive(true);
+            if (fragments)
+            {
+                // 爆破接口可以按次指定有碰撞时长，必须在启用前写入，OnEnable 才用得到。
+                if (collisionDuration.HasValue)
+                {
+                    FragmentBurst burst = fragments.GetComponent<FragmentBurst>();
+                    if (burst) burst.OverrideCollisionDuration(collisionDuration.Value);
+                }
+
+                fragments.gameObject.SetActive(true);
+            }
+
             owner.FragmentRoot.gameObject.SetActive(true);
             spawned.Add(block.Position, instance);
         }

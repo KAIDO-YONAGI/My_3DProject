@@ -1,5 +1,16 @@
 # Project 开发记录
 
+## 2026-10-19：新增按体积批量破坏与触发器结算
+
+- 接口：`VoxelPlatformRenderer.BreakBlocks(IReadOnlyList<Vector3>)` 按平台局部中心批量破坏，`BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast>)` 破坏与世界空间体积相交的方块；两者在一次调用内只重建一次受影响分块，重复覆盖的方块只处理一次。
+- 判定：方块一侧取旋转后的世界包围盒，整数 90 度旋转时与方块本身重合；标记碰撞体取世界包围盒，`SphereCollider` 按缩放后的半径判定。
+- 有碰撞时长：`collisionDuration` 随 `BreakBlocks`、`Break` 与 `VoxelPlatformBlastTrigger` 逐层传入，指定碎块从生成起保持碰撞的时长，到期后关闭碰撞；省略时沿用 Prefab 的 `FragmentBurst.escapeTime` 无碰撞窗口，准心攻击的单块破坏路径不变。
+- 触发：`VoxelPlatformBlastTrigger` 挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把 `regions` 里的标记碰撞体交给 `VoxelPlatformDestruction.Break`，同步完成破坏，不依赖每帧轮询；`regions` 留空时使用子物体上的碰撞体，`oneShot` 只响应第一次触发。
+- 结算：`Break` 在调用栈内遍历登记的平台，每个平台只合并一次受影响分块；平台在启用时登记、停用时注销，结算不扫描场景。
+- 重构：单块破坏改为经由批量路径，`SetBlockActive` 拆出 `TryGetBlock` 与 `RestoreBlock`，原有接口与返回值语义保持不变。
+- 验证：`Assets/Core/Scripts/Environment/` 与 `Attack.cs` 按 Unity 2022.3.62f3c1 的 `UnityEngine`、`UnityEditor` 模块和 `Library/ScriptAssemblies/Assembly-CSharp.dll` 编译通过，0 错误。
+- 维护计数：`1/5 → 2/5`。
+
 ## 2026-10-19：新增碎块专用层
 
 - 层：`ProjectSettings/TagManager.asset` 的用户层加入 `Debris`，碎块实例在 `VoxelPlatformFragments.Spawn` 时把整棵子树切换到该层；层名由 `VoxelPlatformRenderer.DebrisLayerName` 提供，工程里找不到该层时碎块保持原有层。

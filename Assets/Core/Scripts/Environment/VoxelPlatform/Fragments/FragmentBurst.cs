@@ -20,6 +20,8 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
         [SerializeField, Min(0.1f)] private float lifetime = 6f;
 
         private readonly List<Collider> pieceColliders = new();
+        // 爆破接口按次指定的有碰撞时长；未指定时沿用 escapeTime 的无碰撞窗口。
+        private float collisionDuration = -1f;
 
         private void OnEnable()
         {
@@ -27,6 +29,8 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             if (!Application.isPlaying) return;
 
             pieceColliders.Clear();
+            // 指定了有碰撞时长时，碎块生成即有碰撞，到期再关；否则沿用原来的无碰撞窗口。
+            bool collideFromSpawn = collisionDuration >= 0f;
             Vector3 origin = transform.position;
             foreach (Transform node in transform)
             {
@@ -34,9 +38,8 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
                 MeshCollider pieceCollider = node.GetComponent<MeshCollider>();
                 if (!pieceCollider) continue;
 
-                // 预切片初始正好填满原方块的体积，与相邻方块零距离贴面；
-                // 先关掉碰撞，碎块才能在脱离窗口内飞出去，否则会被四周挤住。
-                pieceCollider.enabled = escapeTime <= 0f;
+                // 预切片初始正好填满原方块的体积，与相邻方块零距离贴面。
+                pieceCollider.enabled = collideFromSpawn || escapeTime <= 0f;
                 pieceColliders.Add(pieceCollider);
 
                 Rigidbody body = node.GetComponent<Rigidbody>();
@@ -50,7 +53,8 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
                 body.AddForce(outward * outwardSpeed + Vector3.up * upwardSpeed, ForceMode.VelocityChange);
             }
 
-            if (escapeTime > 0f) Invoke(nameof(EnablePieceCollisions), escapeTime);
+            if (collideFromSpawn) Invoke(nameof(DisablePieceCollisions), collisionDuration);
+            else if (escapeTime > 0f) Invoke(nameof(EnablePieceCollisions), escapeTime);
             // 碎块分组归平台管理，超时统一销毁，场景里不留下持续的刚体。
             Destroy(gameObject, lifetime);
         }
@@ -60,6 +64,19 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
         {
             foreach (Collider pieceCollider in pieceColliders)
                 if (pieceCollider) pieceCollider.enabled = true;
+        }
+
+        // 有碰撞时长到期：碎块退出物理，但仍保留到 lifetime 结束。
+        private void DisablePieceCollisions()
+        {
+            foreach (Collider pieceCollider in pieceColliders)
+                if (pieceCollider) pieceCollider.enabled = false;
+        }
+
+        /// <summary>覆盖本次实例的有碰撞时长，供爆破接口按次指定；须在碎片节点启用前调用。</summary>
+        public void OverrideCollisionDuration(float seconds)
+        {
+            collisionDuration = Mathf.Max(0f, seconds);
         }
     }
 }
