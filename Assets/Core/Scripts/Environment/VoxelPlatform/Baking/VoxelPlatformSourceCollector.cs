@@ -11,6 +11,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
     {
         internal static bool HasSourceGeometry(VoxelPlatformRenderer owner)
         {
+            // 只有保留源 Cube 的编辑布局才为真；运行资源查不到 Intact 会走烘焙分支。
             foreach (MeshFilter filter in owner.GetComponentsInChildren<MeshFilter>(true))
                 if (IsBakeSource(filter)) return true;
             return false;
@@ -28,6 +29,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
             Matrix4x4 worldToLocal = owner.transform.worldToLocalMatrix;
             foreach (MeshFilter filter in owner.GetComponentsInChildren<MeshFilter>(true))
             {
+                // 生成剔除变体要读取顶点与三角形，不可读的源网格直接跳过。
                 if (!IsBakeSource(filter) || !filter.sharedMesh || !filter.sharedMesh.isReadable)
                     continue;
                 MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
@@ -39,9 +41,11 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
 
                 Matrix4x4 matrix = worldToLocal * filter.transform.localToWorldMatrix;
                 Transform fragmentContainer = VoxelPlatformFragments.FindContainer(filter.transform);
+                // 格键取网格包围盒中心，源 Cube 的轴心不在几何中心时也能落进正确的格子。
                 Vector3 center = matrix.MultiplyPoint3x4(filter.sharedMesh.bounds.center);
                 var block = new VoxelPlatformBlock
                 {
+                    // 源对象引用只在编辑布局里有效，烘焙时会被丢掉。
                     Renderer = renderer,
                     Transform = filter.transform,
                     Object = filter.gameObject,
@@ -58,6 +62,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
                         Mathf.FloorToInt(center.y / VoxelPlatformGeometry.ChunkSize),
                         Mathf.FloorToInt(center.z / VoxelPlatformGeometry.ChunkSize)),
                     Occludes = VoxelPlatformGeometry.IsUnitCube(filter.sharedMesh, matrix),
+                    // 记下原始开关，退出预览时按原样恢复。
                     OriginalForceOff = renderer.forceRenderingOff,
                     Layer = filter.gameObject.layer,
                     ShadowCastingMode = renderer.shadowCastingMode,
@@ -67,13 +72,17 @@ namespace Core.Scripts.Environment.VoxelPlatform.Baking
                     RenderingLayerMask = renderer.renderingLayerMask,
                     AllowOcclusionWhenDynamic = renderer.allowOcclusionWhenDynamic
                 };
+                // 源组件的当前启停就是初始显示状态。
                 block.Active = IsActive(block);
                 blocks.Add(block);
+                // 源 Cube 与合并表面同时绘制会重影，收集后立即关掉源渲染。
                 renderer.forceRenderingOff = true;
+                // 清掉初始变更标记，避免下一次轮询把首次收集当成方块被移动。
                 block.Transform.hasChanged = false;
             }
         }
 
+        // 编辑期以源组件的启停作为唯一真相；原本就关闭的渲染不参与显示。
         internal static bool IsActive(VoxelPlatformBlock block)
         {
             return block.Object && block.Renderer && block.Object.activeInHierarchy &&

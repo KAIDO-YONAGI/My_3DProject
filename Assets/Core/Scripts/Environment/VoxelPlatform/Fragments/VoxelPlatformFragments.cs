@@ -11,6 +11,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
     class VoxelPlatformFragments
     {
         private readonly VoxelPlatformRenderer owner;
+        // 已破坏方块到碎块实例的映射，恢复和清空时据此回收。
         private readonly Dictionary<Vector3Int, GameObject> spawned = new();
 
         internal VoxelPlatformFragments(VoxelPlatformRenderer owner)
@@ -20,12 +21,15 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
 
         internal void Spawn(VoxelPlatformBlock block)
         {
+            // 同一方块重复破坏只保留一个实例，避免碎块叠加。
             if (spawned.ContainsKey(block.Position) || !block.FragmentPrefab)
                 return;
+            // 容器首次破坏时才创建，整片平台不破坏就不产生碎块节点。
             if (!owner.FragmentRoot)
                 owner.FragmentRoot = owner.CreateRoot("FragmentsRuntime");
             GameObject instance = UnityEngine.Object.Instantiate(block.FragmentPrefab);
             instance.name = "Fragments_" + block.Position;
+            // 先挂到容器再摆位，变换计算始终在平台局部空间里进行。
             instance.transform.SetParent(owner.FragmentRoot, false);
             instance.SetActive(true);
             ApplyLocalMatrix(instance.transform, block.FragmentMatrix);
@@ -41,20 +45,25 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
 
         internal void Remove(Vector3Int position)
         {
+            // 没有记录说明该方块没被破坏过，直接返回。
             if (!spawned.TryGetValue(position, out GameObject instance)) return;
             if (instance) VoxelPlatformRenderer.Release(instance);
             spawned.Remove(position);
+            // 实例全部收回后关闭容器，场景里不留下空的运行时节点。
             if (spawned.Count == 0 && owner.FragmentRoot)
                 owner.FragmentRoot.gameObject.SetActive(false);
         }
 
         internal void Clear()
         {
+            // 复制键集合再遍历，Remove 会在遍历过程中修改字典。
             foreach (Vector3Int position in new List<Vector3Int>(spawned.Keys))
                 Remove(position);
+            // 逐个移除后容器可能已经自动关闭，这里再确认一次。
             if (owner.FragmentRoot) owner.FragmentRoot.gameObject.SetActive(false);
         }
 
+        // 资源层级深度由素材决定，按名字递归查找，避免写死路径。
         private static Transform FindChild(Transform root, string name)
         {
             if (root.name == name) return root;
@@ -67,6 +76,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
             return null;
         }
 
+        // 矩阵无法直接写入 Transform，拆成位移、旋转和缩放；旋转由前向与上向重建。
         private static void ApplyLocalMatrix(Transform target, Matrix4x4 matrix)
         {
             Vector3 right = matrix.MultiplyVector(Vector3.right);
@@ -92,6 +102,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Fragments
 
         internal static Transform FindContainer(Transform intact)
         {
+            // 父级不挂 Fragments 子节点说明这块 Cube 不可碎，返回空让上层退回整块矩阵。
             Transform container = intact ? intact.parent : null;
             return container && container.Find("Fragments") ? container : null;
         }
