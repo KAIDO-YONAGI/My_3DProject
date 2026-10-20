@@ -1,27 +1,22 @@
 # My_3DProject 权威文档路由
 
-## 编写准则
-
-编写文档时注意
-
-- 除非特别说明，所有文字保持完全的实时性陈述。
-- 没有的东西、过时的东西不要特地说明。
-- 严禁莫名其妙的版本变更记录。
-- 严禁加上修改记录和各种莫名其妙的版本补丁。
-- 除非有文档结构要求，否则未完成、未测试等涉及过去、将来性质的过程性描述都严禁出现。
-- 避免用括号括出莫名其妙的解释，直接用正文格式解释明白。
-- 避免否定和转折句式的滥用。
-- 文档只写结构、职责与机制。资产与场景的逐字段配置、坐标、尺寸、参数取值和 GUID 不进文档，需要时说明取值位置。
-- 不记录文件行数、文件之间的逐项差异和资产命名由来。
-- 不记录光照与渲染的调参数值，也不列举未被引用的资源。
-
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
 最后核验：`2026-10-20`
 
 本目录是项目权威文档入口。项目知识按功能域拆分为 `Character`、`Multiplayer`、`Scene`、`Project`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
-权威文档不是垃圾场，新增内容一律服从本准则。
+编写准则与行为细则见 `RULES.md`。权威文档不是垃圾场，新增内容一律服从该准则。
+
+## 工作方式
+
+1. 在本文档确定功能域。
+2. 阅读 `Workflow/Concurrency_Guide.md`。
+3. 轻量只读定位完成后，在详细分析、子代理、修改或状态变更前，使用 `Workflow/Scripts/WorkingAgent.ps1` 申请精确租约。
+4. 读取被路由的权威文档和完成任务所需的实际代码或资源。
+5. 成功、失败或取消时释放租约。
+
+跨功能域任务同时读取所有受影响入口。
 
 ## 权威顺序
 
@@ -34,19 +29,15 @@
 
 文档与实现不一致时，以实现和验证结果为准，并在任务结束前更新受影响的 Guide。
 
-## 当前实现入口
+## 项目验证
 
-- 初始场景：`Assets/Core/Scenes/InitialScene.unity`。
-- 常驻场景：`Assets/Core/Scenes/PersistentScene.unity`。
-- 玩法场景：`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`、`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`。
-- 场景框架：`Assets/Core/Scripts/Scene/`。
-- 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
-- Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`Project/Mirror_KCP_Config.md`。
+`ProjectValidationMode=None`。工作流不自动推断项目级构建、启动、测试和部署命令。任务中实际完成的验证作为工程证据。
 
 ## 功能域路由
 
 | 触发词或目标 | 必读文档 |
 |---|---|
+| 回答规则、语言、文档编写、代码修改边界 | `RULES.md` |
 | 项目定位、当前架构、联机链路、实施边界 | `Project_Overview.md` |
 | 玩家输入、角色移动、状态机、动画和本地相机 | `Character/Character_Guide.md` |
 | 角色模型、动画素材与相机 Prefab | `Character/Character_Guide.md`、`Project/Project_Guide.md` |
@@ -60,8 +51,6 @@
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Project/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
 
-跨功能域任务同时读取所有受影响入口。
-
 ## 功能域导航
 
 | 功能域 | Router |
@@ -72,22 +61,20 @@
 | `Project` | `Project\Router.md` |
 | `Workflow` | `Workflow\Router.md` |
 
-## 开始步骤
+## 当前实现入口
 
-1. 通过本文档确定功能域。
-2. 阅读 `Workflow/Concurrency_Guide.md`。
-3. 轻量只读定位完成后，在详细分析、子代理、修改或状态变更前，使用 `Workflow/Scripts/WorkingAgent.ps1` 申请精确租约。
-4. 读取被路由的权威文档和完成任务所需的实际代码或资源。
-5. 成功、失败或取消时释放租约。
-
-## 项目验证
-
-`ProjectValidationMode=None`。工作流不自动推断项目级构建、启动、测试和部署命令。任务中实际完成的验证作为工程证据。
+- 初始场景：`Assets/Core/Scenes/InitialScene.unity`。
+- 常驻场景：`Assets/Core/Scenes/PersistentScene.unity`。
+- 玩法场景：`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`、`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`。
+- 场景框架：`Assets/Core/Scripts/Scene/`。
+- 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
+- Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`Project/Mirror_KCP_Config.md`。
 
 ## 文档索引
 
 | 文档 ID | 路径 | 职责 | 状态 |
 |---|---|---|---|
+| `RULES` | `RULES.md` | 回答与工作行为细则 | Active |
 | `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active |
 | `BUS-CHARACTER` | `Character/Router.md` | Character 域路由 | Active |
 | `CHARACTER-GUIDE` | `Character/Character_Guide.md` | 输入、移动、状态机、动画和本地相机 | Active |

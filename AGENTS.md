@@ -2,55 +2,17 @@
 
 每次读取到了就输出已读取AGENTS.md
 
-## 文档编写准则
+## 导航
 
-编写文档时注意
+| 目标 | 文档 |
+|---|---|
+| 回答与行为细则 | `Y_MultipleAgentWorkflow/RULES.md` |
+| 项目知识与任务路由 | `Y_MultipleAgentWorkflow/Router.md` |
 
-- 除非特别说明，所有文字保持完全的实时性陈述。
-- 没有的东西、过时的东西不要特地说明。
-- 严禁莫名其妙的版本变更记录。
-- 严禁加上修改记录和各种莫名其妙的版本补丁。
-- 除非有文档结构要求，否则未完成、未测试等涉及过去、将来性质的过程性描述都严禁出现。
-- 避免用括号括出莫名其妙的解释，直接用正文格式解释明白。
-- 避免否定和转折句式的滥用。
+## 铁律
 
-本准则对 `Y_MultipleAgentWorkflow/` 全部权威文档生效，完整声明与文档入口见 `Y_MultipleAgentWorkflow/Router.md`。
-
-## 语言
-
-- 始终使用**中文**回答用户的问题和进行所有交流。
-- 代码中的中文注释是有意为之的，**不得将其视为乱码而删除、修改或替换**。
-- 修改后遇到注释等乱码则暂停工作，优先进行恢复
-- 生成或修改代码时，保留原有的中文注释不变。
-
-## 权威文档入口
-
-- 开始项目任务时，先读取 `Y_MultipleAgentWorkflow/Router.md`，再按任务触发词进入对应文档。
-- `Y_MultipleAgentWorkflow/` 是当前项目的权威文档库；实际代码、资源、运行结果和可复现验证高于文档。
-- `docs/` 目录存放计划、草案和教学文档；作为权威事实时以 `Y_MultipleAgentWorkflow/` 为准。
-- 仅进行轻量只读定位时可以先不申请租约；详细分析、调用子代理、修改文件或执行会改变状态的工具前，必须遵循 `Y_MultipleAgentWorkflow/Workflow/Concurrency_Guide.md` 申请精确租约。
-- 权威文档统一使用中文；源码标识符、协议字面量、命令和路径保持原样。
-
-## 代码修改限制
-
-- **不要主动修改代码仓库中的任何代码文件**，除非用户明确要求你这样做。
-- 当用户提出问题或请求分析时，只进行分析和回答，不要触碰代码。
-- 如果用户明确要求修改代码，确认后再进行操作。
-
-## 项目结构
-
-本项目是物理派对游戏：Unity 客户端 + Mirror 专用服务器，按 `docs/开发计划/改造计划总览.md` 的八个阶段执行。
-
-- 联机脚本: `Assets/Core/Scripts/Networking/`
-- 单机框架: `Assets/Core/Scripts/` 的 `Scene/`、`UI/`、`SO/`、`Audio/`、`Common/`
-- 网络玩家 Prefab: `Assets/Core/Prefabs/NetworkPlayer.prefab`
-- 角色 Prefab: `Assets/Core/Prefabs/Characters/`
-- 场景: `Assets/Core/Scenes/InitialScene.unity`（初始）、`Assets/Core/Scenes/PersistentScene.unity`（常驻）、`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`（玩法）
-- 第三方插件: `Assets/Plugins/`（含 `Mirror/`、`DynamicBone/`）
-- 构建产物: `D:/Unity/Releases/3D_MultiplayerGame/`
-
-## 约定
-
-- Mirror 配置与构建的事实来源是 `Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md`。
-- 涉及多个功能域的任务，必须同时读取并维护所有受影响功能域的权威文档。
-- `DeveloperLog.md` 一律**最新记录在前**：新增条目插入文件开头，不追加到文件末尾；同一天的条目按实际完成顺序倒序，最后完成的写在最前面。
+- 用户陈述事实时默认当真。除非能指出具体反例，不要用"严格来说 / 其实不叫"开头。
+- 任何结论后跟证据位置（文件:行、命令输出）。拿不出证据就写"没查到"，不要写"疑似存在严重问题"。
+- 只处理用户点名的问题。范围外的东西最多记一行，不展开、不建议修、不主动问"要不要我修"。
+- 一句话只答一次。发现前面说错了，直接说"上句错了，实际是 X"，不要用"虽然…但是…"打补丁。
+- 没有新输入不允许自行发起第二轮探索。
