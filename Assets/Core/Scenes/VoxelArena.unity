@@ -4786,7 +4786,7 @@ Transform:
   m_GameObject: {fileID: 369981709}
   serializedVersion: 2
   m_LocalRotation: {x: -0.40305823, y: 0.27253202, z: -0.12708378, w: 0.8643611}
-  m_LocalPosition: {x: 0, y: -1.7805216, z: 2.1219435}
+  m_LocalPosition: {x: -0, y: -2, z: 2.39}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10096,7 +10096,7 @@ Transform:
   m_GameObject: {fileID: 778559624}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.17, z: 0}
+  m_LocalPosition: {x: 0, y: 1.29, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10121,8 +10121,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 2, z: 0}
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &778559627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12080,6 +12080,7 @@ GameObject:
   - component: {fileID: 987388410}
   - component: {fileID: 987388409}
   - component: {fileID: 987388408}
+  - component: {fileID: 987388411}
   m_Layer: 5
   m_Name: FloatingSignboard
   m_TagString: Untagged
@@ -12151,8 +12152,24 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 5}
-  m_SizeDelta: {x: 4, y: 1}
+  m_SizeDelta: {x: 8, y: 4}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &987388411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987388406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25630c128bdaf124380ede40ee060480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  turnSpeed: 8
+  floatAmplitude: 0.15
+  floatPeriod: 3
+  phaseOffset: 0
 --- !u!1 &990302685
 GameObject:
   m_ObjectHideFlags: 0
@@ -12868,37 +12885,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8200752223708992986, guid: 4406c7a389f94ff4d8a2da2830ce5906, type: 2}
---- !u!1 &1086405328
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1086405329}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1086405329
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1086405328}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1088153929
 GameObject:
   m_ObjectHideFlags: 0
@@ -20655,8 +20641,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.5
-  m_fontSizeBase: 0.5
+  m_fontSize: 1
+  m_fontSizeBase: 1
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -679267,6 +679253,5 @@ SceneRoots:
   - {fileID: 33830255}
   - {fileID: 1135102914}
   - {fileID: 80928441}
-  - {fileID: 1086405329}
   - {fileID: 778559625}
   - {fileID: 987388410}

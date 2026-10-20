@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera;
 using Core.Scripts.Character.Presentation;
+using Core.Scripts.GamePlayFrameWork.Scripts.Core;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,36 +12,37 @@ namespace Core.Scripts.Networking.CharacterPresentation
     /// 在 PersistentScene 中配置共用角色资源，按网络玩家身份装配客户端表现。
     /// 每个玩家的视觉实例、角色编号、来源 Prefab 和相机组件统一保存在表现状态中。
     /// </summary>
-    public class NetworkCharacterManager : MonoBehaviour
+    public class NetworkCharacterManager : YSingleton<NetworkCharacterManager>
     {
-        /// <summary>网络玩家共用的角色表现管理器。</summary>
-        public static NetworkCharacterManager Instance { get; private set; }
-
         [Header("角色资源")]
         // 下标对应角色编号，本地拥有者从这里取得模型、动画配置和本地相机。
         [Tooltip("每个编号配置一个完整角色 Prefab。单机、本地联机和远程联机共用它，运行时按身份启停组件。")]
-        [SerializeField] private GameObject[] characters = new GameObject[0];
-        [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号，对应角色资源条目下标。")]
-        [SerializeField, Min(0)] private int defaultCharacterId;
+        [SerializeField]
+        private GameObject[] characters = new GameObject[0];
 
-        [Header("场景单机角色")]
-        [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用。")]
-        [SerializeField] private GameObject standalonePlayer;
+        [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号，对应角色资源条目下标。")] [SerializeField, Min(0)]
+        private int defaultCharacterId;
 
-        [Header("场景单机相机")]
-        [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件。")]
-        [SerializeField] private UnityEngine.Camera[] standaloneCameras = new UnityEngine.Camera[0];
-        [Tooltip("需要随单机模式启停的场景 ThirdPersonCamera。")]
-        [SerializeField] private ThirdPersonCamera[] standaloneCameraControllers = new ThirdPersonCamera[0];
-        [Tooltip("需要随单机模式启停的场景 AudioListener。")]
-        [SerializeField] private AudioListener[] standaloneListeners = new AudioListener[0];
+        [Header("场景单机角色")] [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用。")] [SerializeField]
+        private GameObject standalonePlayer;
+
+        [Header("场景单机相机")] [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件。")] [SerializeField]
+        private UnityEngine.Camera[] standaloneCameras = new UnityEngine.Camera[0];
+
+        [Tooltip("需要随单机模式启停的场景 ThirdPersonCamera。")] [SerializeField]
+        private ThirdPersonCamera[] standaloneCameraControllers = new ThirdPersonCamera[0];
+
+        [Tooltip("需要随单机模式启停的场景 AudioListener。")] [SerializeField]
+        private AudioListener[] standaloneListeners = new AudioListener[0];
 
         // 当前离线模式使用的角色编号，-1 表示场景实例对应的编号尚未记录。
         private int standaloneCharacterId = -1;
 
         // 以网络玩家为键，统一查询、替换和清理其表现状态。
         private readonly Dictionary<CharacterIdSync, CharacterPresentationState> presentations = new();
+
         private CharacterPresentationService presentationService;
+
         // 缓存最近应用的表现模式；null 使首次 Update 执行场景角色和相机配置。
         private bool? networkPresentationMode;
 
@@ -54,18 +56,8 @@ namespace Core.Scripts.Networking.CharacterPresentation
         /// <summary>当前单机模式使用的角色实例，角色替换后始终指向新实例。</summary>
         public GameObject StandalonePlayer => standalonePlayer;
 
-        private void Awake()
+        protected override void OnSingletonInitialized()
         {
-            if (Instance != null && Instance != this)
-            {
-                Debug.LogError(
-                    $"场景中存在多个 {nameof(NetworkCharacterManager)}，请只在 PersistentScene 保留一个。",
-                    this);
-                enabled = false;
-                return;
-            }
-
-            Instance = this;
             presentationService = new CharacterPresentationService(this, presentations);
         }
 
@@ -87,21 +79,13 @@ namespace Core.Scripts.Networking.CharacterPresentation
             ApplyPresentationMode(networkMode);
         }
 
-        private void OnDestroy()
-        {
-            if (Instance == this)
-            {
-                Instance = null;
-            }
-        }
-
         private void Update()
         {
             // 表现模式变化时刷新场景对象，模式稳定期间沿用已配置的状态。
             bool networkMode = IsNetworkPresentationActive();
             if (networkPresentationMode == networkMode)
             {
-                return;//状态没变就不往下走
+                return; //状态没变就不往下走
             }
 
             networkPresentationMode = networkMode;
@@ -197,6 +181,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
                     this);
                 return;
             }
+
             GameObject prefab = characters[requestedCharacterId];
             CharacterVisual configuredVisual = prefab.GetComponent<CharacterVisual>();
             string issue = "Prefab 根节点缺少 CharacterVisual";

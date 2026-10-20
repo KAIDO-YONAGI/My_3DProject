@@ -22,6 +22,12 @@ namespace Core.Scripts.Scene
         [SerializeField] private float phaseOffset;
 
         private Vector3 baseLocalPosition;
+        private UnityEngine.Camera _camera;
+
+        private void Start()
+        {
+            _camera = UnityEngine.Camera.main;
+        }
 
         private void OnEnable()
         {
@@ -36,13 +42,12 @@ namespace Core.Scripts.Scene
 
         private void ApplyFacing()
         {
-            UnityEngine.Camera camera = UnityEngine.Camera.main;
-            if (camera == null)
+            if (_camera == null)
             {
                 return;
             }
 
-            Vector3 toCamera = camera.transform.position - transform.position;
+            Vector3 toCamera = _camera.transform.position - transform.position;
             toCamera.y = 0f;
             if (toCamera.sqrMagnitude <= 0.0001f)
             {

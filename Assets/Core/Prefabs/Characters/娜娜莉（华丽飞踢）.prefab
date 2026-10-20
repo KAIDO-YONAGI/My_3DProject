@@ -9774,7 +9774,7 @@ GameObject:
   - component: {fileID: 6425117525894980679}
   m_Layer: 0
   m_Name: "\u5A1C\u5A1C\u8389\uFF08\u534E\u4E3D\u98DE\u8E22\uFF09"
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -9880,7 +9880,7 @@ CharacterController:
   m_Enabled: 1
   serializedVersion: 3
   m_Height: 1.5573113
-  m_Radius: 0.3
+  m_Radius: 0.2
   m_SlopeLimit: 45
   m_StepOffset: 0.31146225
   m_SkinWidth: 0.020000001

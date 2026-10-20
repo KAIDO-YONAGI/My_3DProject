@@ -424,7 +424,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2044625464796274550, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_Radius
-      value: 0.3
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 5077051178196051588, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: m_Name
@@ -1082,7 +1082,7 @@ GameObject:
   - component: {fileID: 1737825092}
   - component: {fileID: 1737825093}
   m_Layer: 0
-  m_Name: NetworkCharacterManager
+  m_Name: CharacterManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

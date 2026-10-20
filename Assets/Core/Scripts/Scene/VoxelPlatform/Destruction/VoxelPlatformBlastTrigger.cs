@@ -25,6 +25,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!other.CompareTag("Player")) return;
             Fire();
             platform.isKinematic = false;
             fence.SetActive(true);
