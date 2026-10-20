@@ -17,7 +17,7 @@
 
 文档 ID：`ROOT-ROUTER`
 状态：`Active`
-最后核验：`2026-10-11`
+最后核验：`2026-10-20`
 
 本目录是项目权威文档入口。项目知识按功能域拆分为 `Character`、`Multiplayer`、`Scene`、`Project`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
@@ -39,7 +39,7 @@
 - 初始场景：`Assets/Core/Scenes/InitialScene.unity`。
 - 常驻场景：`Assets/Core/Scenes/PersistentScene.unity`。
 - 玩法场景：`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`、`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`。
-- 场景框架：`Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`。
+- 场景框架：`Assets/Core/Scripts/Scene/`。
 - 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
 - Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`Project/Mirror_KCP_Config.md`。
 

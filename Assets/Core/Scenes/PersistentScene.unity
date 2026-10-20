@@ -950,7 +950,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cf504e8bd455c7862346e27c6a1e18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ButtonCanvas: {fileID: 0}
+  button: {fileID: 1179169158}
   retryEventSO: {fileID: 11400000, guid: f223c4c8c8ff5932b9f5cf4000d886da, type: 2}
 --- !u!1 &1508053545
 GameObject:

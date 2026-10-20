@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Core.Scripts.GamePlayFrameWork.Scripts.SO;
+using Core.Scripts.SO;
 using UnityEngine;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Destruction

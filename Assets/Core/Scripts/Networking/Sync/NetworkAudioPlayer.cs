@@ -1,8 +1,8 @@
 using Mirror;
-using Core.Scripts.GamePlayFrameWork.Scripts.Audio;
+using Core.Scripts.Audio;
 using Core.Scripts.SO;
 using UnityEngine;
-using AudioType = Core.Scripts.GamePlayFrameWork.Scripts.Audio.AudioType;
+using AudioType = Core.Scripts.Audio.AudioType;
 
 namespace Core.Scripts.Networking.Sync
 {

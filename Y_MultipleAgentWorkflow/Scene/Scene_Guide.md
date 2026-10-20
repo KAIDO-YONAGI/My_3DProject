@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-10-19`
+最后核验：`2026-10-20`
 
 ## 场景列表
 
@@ -77,7 +77,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ## 场景配置资产
 
-`Assets/Core/SO/` 保存 `GameSceneSO` 资产，字段为 `ID`、`sceneAsset`、`sceneName`、`sceneType` 和 `initialPosition`。
+`Assets/Core/SO/Scenes/` 保存 `GameSceneSO` 资产，字段为 `ID`、`sceneAsset`、`sceneName`、`sceneType` 和 `initialPosition`。场景切换使用的事件通道资产位于 `Assets/Core/SO/Events/`。
 
 - `ID` 在字段为空时由 `OnValidate` 生成，作为序列化字段保存在 SO 资产中。切换器使用 SO 引用关联实际加载的场景实例。
 - 存档使用 `SaveKey`，编辑器下取场景文件 `.unity` 的 GUID，随资产落盘，跨会话与打包一致。`SceneDataForSave.gameScenes` 用它反查回资产。

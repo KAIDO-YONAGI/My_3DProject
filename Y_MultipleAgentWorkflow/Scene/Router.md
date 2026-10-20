@@ -2,15 +2,15 @@
 
 文档 ID：`BUS-SCENE`
 状态：`Active`
-维护计数：`4/5`
-最后更新：`2026-10-19`
+维护计数：`0/5`
+最后更新：`2026-10-20`
 
 ## 任务路由
 
 | 任务 | 权威文档 |
 |---|---|
 | 场景列表与场景职责 | `Scene_Guide.md` |
-| 场景引导、常驻层与玩法层加载链路 | `Scene_Guide.md`，并读取 `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/` |
+| 场景引导、常驻层与玩法层加载链路 | `Scene_Guide.md`，并读取 `Assets/Core/Scripts/Scene/` |
 | 单机与联机表现切换、角色与相机收拢 | `Scene_Guide.md` |
 | 场景配置资产与初始位置 | `Scene_Guide.md`，并读取 `Assets/Core/SO/` |
 | MinecraftClassicPreview、经典石材预览、不规则碎块展开与粒子样本 | `Scene_Guide.md`、`../Project/Project_Guide.md` |
@@ -36,7 +36,7 @@
 - `Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity`
 - `Assets/Core/Scenes/VoxelArena.unity`
 - `Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs`
-- `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`
+- `Assets/Core/Scripts/Scene/`
 - `Assets/Core/SO/`
 - `Assets/Core/Prefabs/Characters/`
 - `Assets/Terrain/`
@@ -47,7 +47,7 @@
 - `workflow:Scene`
 - `path:Assets/Core/Scenes`
 - `path:Assets/Core/SO`
-- `path:Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene`
+- `path:Assets/Core/Scripts/Scene`
 - `path:Assets/Terrain`
 
 ## 能力边界

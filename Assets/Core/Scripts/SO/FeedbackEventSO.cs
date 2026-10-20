@@ -1,5 +1,5 @@
 using System;
-using Core.Scripts.GamePlayFrameWork.Scripts.Audio;
+using Core.Scripts.Audio;
 using UnityEngine;
 
 namespace Core.Scripts.SO

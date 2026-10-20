@@ -7,7 +7,7 @@ using UnityEngine;
 
 public sealed class AudioPlayerTests
 {
-    private const string AudioNamespace = "Core.Scripts.GamePlayFrameWork.Scripts.Audio.";
+    private const string AudioNamespace = "Core.Scripts.Audio.";
     private const BindingFlags InstanceMembers =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private readonly List<UnityEngine.Object> objects = new List<UnityEngine.Object>();

@@ -1,5 +1,5 @@
 using Core.Scripts.Character.Input;
-using Core.Scripts.GamePlayFrameWork.Scripts.SO;
+using Core.Scripts.SO;
 using Core.Scripts.Scene.VoxelPlatform;
 using UnityEngine;
 
@@ -16,20 +16,21 @@ namespace Core.Scripts.Character.Interactions
         private const int HitCapacity = 16;
         private const int MaxHitCapacity = 64;
 
-        [Header("检测")]
-        [Tooltip("从角色位置起算的可破坏距离，超出后不再命中方块。")]
-        [SerializeField, Min(0.1f)] private float reachDistance = 5f;
-        [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")]
-        [SerializeField] private LayerMask hitLayers = ~0;
+        [Header("检测")] [Tooltip("从角色位置起算的可破坏距离，超出后不再命中方块。")] [SerializeField, Min(0.1f)]
+        private float reachDistance = 5f;
 
-        [Header("事件")]
-        [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")]
-        [SerializeField] private VoidEventSO gameStartEventSO;
+        [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")] [SerializeField]
+        private LayerMask hitLayers = ~0;
+
+        [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
+        private VoidEventSO gameStartEventSO;
+
+        [SerializeField] private VoidEventSO retryEventSO;
 
         private readonly CharacterInputReader input = new();
 
         // 开局事件到达后置位的拒绝标志：置位期间不读攻击输入，也不发射线。
-        private bool attackRejected=true;
+        private bool attackRejected = true;
 
         private RaycastHit[] hits = new RaycastHit[HitCapacity];
 
@@ -43,18 +44,14 @@ namespace Core.Scripts.Character.Interactions
 
         private void OnEnable()
         {
-            if (gameStartEventSO != null)
-            {
-                gameStartEventSO.VoidEvent += OnGameStart;
-            }
+            gameStartEventSO.VoidEvent += OnGameStart;
+            retryEventSO.VoidEvent += OnGameRetry;
         }
 
         private void OnDisable()
         {
-            if (gameStartEventSO != null)
-            {
-                gameStartEventSO.VoidEvent -= OnGameStart;
-            }
+            gameStartEventSO.VoidEvent -= OnGameStart;
+            retryEventSO.VoidEvent -= OnGameRetry;
 
             // 输入对象持有 Input System 资源，组件停用时释放，避免重复启用后产生多份输入状态。
             input.Dispose();
@@ -67,7 +64,10 @@ namespace Core.Scripts.Character.Interactions
         {
             attackRejected = false;
         }
-
+        private void OnGameRetry()
+        {
+            attackRejected = true;
+        }
         private void Update()
         {
             // 拒绝标志置位时整段攻击逻辑直接返回。
@@ -122,7 +122,6 @@ namespace Core.Scripts.Character.Interactions
 
             bool resolved = platform.TryGetBlockPosition(nearest, out Vector3 localPosition);
             bool broken = resolved && platform.BreakBlock(localPosition);
-
         }
 
         // 相机位于角色身后，检测距离从角色位置起算，reachDistance 才是玩家感知到的攻击范围。

@@ -2,7 +2,7 @@
 
 文档 ID：`PROJ-OVERVIEW`
 状态：`Active`
-最后核验：`2026-10-14`
+最后核验：`2026-10-20`
 
 ## 项目定位
 
@@ -43,28 +43,42 @@ InitialScene
 - `Assets/Core/Scripts/Networking/`：自动连接、角色编号同步和角色表现装配。
 - `Assets/Core/Scripts/Character/`：输入、移动、重力与动画数据流。
 - `Assets/Core/Scripts/Camera/`：第三人称相机轨道、光标、避让与转向数学。
-- `Assets/Core/Scripts/GamePlayFrameWork/`：场景管理、时间管理、UI 与 ScriptableObject 基础设施。
+- `Assets/Core/Scripts/Scene/`：场景加载链路、常驻场景注册、时间管理、传送与体素平台。
+- `Assets/Core/Scripts/UI/`：画布管理器、焦点栈与按钮。
+- `Assets/Core/Scripts/Audio/`：音频配置资产类型、播放器对象池与触发器。
+- `Assets/Core/Scripts/SO/`：场景数据与事件通道的 ScriptableObject 类型。
+- `Assets/Core/Scripts/Common/`：单例基类与通用枚举。
 - `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码。
 - `Assets/Plugins/DynamicBone/`：骨骼跟随（发辫等）的第三方实现。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
 
 ## 代码模块地图
 
-角色目录按功能划分：
+脚本按功能域划分：
 
 ```text
 Assets/Core/Scripts/
+├─ Audio/                  AudioPlayerManager、AudioPlayer、AudioConfigSO、AudioTriggerManager
+├─ Camera/                 ThirdPersonCamera、CameraCursorController、CameraOrbitState、CameraRotationMath、CameraCollisionResolver
 ├─ Character/
-│  ├─ Control/            PlayerCharacterController
-│  ├─ Input/              CharacterInputReader、CharacterInput
-│  ├─ Movement/           CharacterMotor、CharacterMovementSettings
-│  │  └─ States/          CharacterMovementStateMachine、CharacterMovementStates
-│  ├─ Animation/          CharacterAnimator、CharacterMotion、方向与跳跃动画配置
-│  └─ Presentation/       CharacterBoneFollower
-└─ Networking/
-   ├─ Connection/            AutoStartClient
-   ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer
-   └─ CharacterPresentation/ NetworkCharacterManager、CharacterPresentationService
+│  ├─ Control/             PlayerCharacterController
+│  ├─ Input/               CharacterInputReader、CharacterInput
+│  ├─ Movement/            CharacterMotor、CharacterMovementSettings
+│  │  └─ States/           CharacterMovementStateMachine、CharacterMovementStates
+│  ├─ Animation/           CharacterAnimator、CharacterMotion、方向与跳跃动画配置
+│  ├─ Interactions/        Attack
+│  └─ Presentation/        CharacterBoneFollower、CharacterVisual
+├─ Common/                 YSingleton、CommonEnums
+├─ Networking/
+│  ├─ Connection/            AutoStartClient
+│  ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer
+│  └─ CharacterPresentation/ NetworkCharacterManager、CharacterPresentationService
+├─ Scene/                  SceneChanger、InitialLoad、PersistentSceneRegistry、TimeManager、Teleport、FloatingSignboard
+│  └─ VoxelPlatform/       平台数据、运行时状态、烘焙、碰撞、破坏、碎块与渲染
+├─ SO/                     GameSceneSO、SceneLoadEventSO、SceneLoadedEventSO、ToggleCanvasEventSO、VoidEventSO、FeedbackEventSO
+├─ StateMachine/           HierarchicalState、HierarchicalStateMachine
+└─ UI/                     UIManager、CanvasFocusStack、ICanvasManager、CharacterSelectButton、ButtonSceneToggler、RetryButton、ESCButton
+   └─ SystemCanvasManagers/ ESCMenuManager、GameOverCanvasManager、ExitManager
 ```
 
 五个运动状态是独立类，集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`。
@@ -73,7 +87,7 @@ Assets/Core/Scripts/
 |---|---|---|
 | `Character` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、`Assets/Core/Input/`、角色 Prefab | 输入、移动、重力、动画、本地视角和骨骼表现 |
 | `Multiplayer` | `Assets/Core/Scripts/Networking/`、Mirror 组件、服务器构建 | 自动连接、玩家身份、角色编号、表现装配、同步协议和专用服务器 |
-| `Scene` | `Assets/Core/Scenes/`、`Assets/Core/SO/`、`Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/` | 场景引导、常驻层、玩法层、加载链路和表现模式切换 |
+| `Scene` | `Assets/Core/Scenes/`、`Assets/Core/SO/`、`Assets/Core/Scripts/Scene/` | 场景引导、常驻层、玩法层、加载链路和表现模式切换 |
 | `Project` | `ProjectSettings/`、`Packages/`、Prefab、Addressables 配置 | Unity 配置、包依赖、资产布局、组件序列化和构建产物 |
 | `Workflow` | `Y_MultipleAgentWorkflow/` | 权威文档路由、功能域租约和维护规则 |
 

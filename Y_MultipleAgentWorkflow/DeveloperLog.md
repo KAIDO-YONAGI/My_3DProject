@@ -2,6 +2,14 @@
 
 跨知识域结构变更和根索引维护记录在此；业务证据记录到对应知识域的 `DeveloperLog.md`。
 
+## 2026-10-20：拆解 GamePlayFrameWork 并按功能重组 Core 目录
+
+- 变动性质：跨功能域，涉及 Project 资产目录布局与 Scene 场景框架路径。
+- 目录变化：`Assets/Core/Scripts/GamePlayFrameWork/` 拆解进 `Assets/Core/Scripts/` 的 `Audio/`、`Common/`、`Scene/`、`SO/`、`UI/`，原 `Scripts/Core/` 更名 `Common/`。事件通道资产移入 `Assets/Core/SO/Events/`，`SampleInput.inputactions` 与 `UI_ESCPress.asset` 移入 `Assets/Core/Input/`，`Teleport.prefab` 移入 `Assets/Core/Prefabs/`。`Samples/` 下的三个模板场景与三个模板场景数据 SO 已删除，框架说明更新为 `Assets/Core/Scripts/README.md`。
+- 命名空间：`Core.Scripts.GamePlayFrameWork.Scripts.*` 改为 `Core.Scripts.*`，涉及框架内 26 个脚本与框架外 6 个引用文件，`AudioPlayerTests.cs` 的反射命名空间常量同步更新。
+- 验证：38 个搬运资产的 `.meta` GUID 保持不变，消失的 15 个 GUID 全部属于已删除的 6 个模板资产与 9 个空目录；`Assets/` 与 `Y_MultipleAgentWorkflow/` 下 `GamePlayFrameWork` 零命中；`Assembly-CSharp.dll` 与 `Core.EditorTests.dll` 包含全部搬移后类型，两个程序集均不含旧命名空间字符串；`Assets/Core/Scenes/PersistentScene.unity` 的三个事件资产引用与 `UI_ESCPress.asset` 的输入资产引用均可解析；改写文件无编码损坏。
+- 维护计数：`Project/Router.md` 递增为 `4/5`；`Scene/Router.md` 达到 `5/5`，复核 `Scene_Guide.md` 后重置为 `0/5`。
+
 ## 2026-10-11：工程迁移 URP 并实装三渲二着色器
 
 - 变动性质：跨功能域，涉及工程依赖与渲染管线、角色渲染、场景光照与地形。

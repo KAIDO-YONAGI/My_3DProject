@@ -130,8 +130,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 101}
   - component: {fileID: 102}
+  - component: {fileID: 101}
   m_Layer: 0
   m_Name: Bootstrapper
   m_TagString: Untagged
@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   persistentScenes:
-  - {fileID: 11400000, guid: 663ee30b5a6753cda125c680f09f3a20, type: 2}
+  - {fileID: 11400000, guid: 73f63da45011e9a40a5a62608deda707, type: 2}
 --- !u!4 &102
 Transform:
   m_ObjectHideFlags: 0

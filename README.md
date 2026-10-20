@@ -47,7 +47,11 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
 | `Assets/Rendering/` | URP 管线与 Renderer 资产 |
 | `Assets/Plugins/AddressableAssetsData/` | Addressables 分组与构建配置 |
-| `Assets/Core/Scripts/GamePlayFrameWork/` | 场景管理、时间管理、UI 与 ScriptableObject 基础设施 |
+| `Assets/Core/Scripts/Common/` | 单例基类与通用枚举 |
+| `Assets/Core/Scripts/Scene/` | 场景加载链路、时间管理与体素平台 |
+| `Assets/Core/Scripts/UI/` | 界面管理与系统画布 |
+| `Assets/Core/Scripts/SO/` | 事件与场景脚本类型 |
+| `Assets/Core/Scripts/Audio/` | 音频播放、触发与配置 |
 | `Assets/Materials/ForestMaterials/` | 地形植被与地表贴图 |
 | `Assets/Materials/SFX/` | 音效与背景音乐素材 |
 | `Assets/Core/SO/Audio/` | 音频配置资产 |

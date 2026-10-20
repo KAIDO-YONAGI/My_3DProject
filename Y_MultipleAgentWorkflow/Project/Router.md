@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`3/5`
+维护计数：`4/5`
 最后更新：`2026-10-20`
 
 ## 任务路由
@@ -44,7 +44,7 @@
 - `Packages/packages-lock.json`
 - `Assets/Core/Shaders/Toon/`
 - `Assets/ToonEditor/`
-- `Assets/Core/Scripts/GamePlayFrameWork/`
+- `Assets/Core/Scripts/Audio/`
 - `Assets/Core/Scripts/StateMachine/`
 - `Assets/Rendering/`
 - `Assets/Tests/`
@@ -73,7 +73,7 @@
 - `path:Packages/manifest.json`
 - `path:Assets/Core/Shaders`
 - `path:Assets/ToonEditor`
-- `path:Assets/Core/Scripts/GamePlayFrameWork`
+- `path:Assets/Core/Scripts/Audio`
 - `path:Assets/Core/Scripts/StateMachine`
 - `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `path:Assets/Core/Animations/Characters`
