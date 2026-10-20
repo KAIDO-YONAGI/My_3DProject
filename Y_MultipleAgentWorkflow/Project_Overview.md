@@ -34,7 +34,7 @@ InitialScene
 
 - `Assets/Core/Scenes/InitialScene.unity`：构建入口，加载常驻场景。
 - `Assets/Core/Scenes/PersistentScene.unity`：常驻管理层，包含场景切换、网络管理、角色表现管理、单机角色和两个网络出生点。
-- `Assets/Core/Scenes/MultiplayerSampleScene.unity`：玩法环境，提供地形、碰撞和光照。
+- `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`：玩法环境，提供地形、碰撞和光照。
 - `Assets/Core/Prefabs/NetworkManager.prefab`：Mirror、KCP、HUD 和自动连接配置。
 - `Assets/Core/Prefabs/NetworkPlayer.prefab`：玩家网络根，承载网络身份、同步、物理控制器和角色编号同步。
 - `Assets/Core/Prefabs/Characters/`：每个角色一份完整 Prefab，包含模型、动画、相机和角色组件。
@@ -62,10 +62,9 @@ Assets/Core/Scripts/
 │  ├─ Animation/          CharacterAnimator、CharacterMotion、方向与跳跃动画配置
 │  └─ Presentation/       CharacterBoneFollower
 └─ Networking/
-   ├─ Connection/         AutoStartClient
-   └─ Character/
-      ├─ Sync/            CharacterIdSync、CharacterMotionSync
-      └─ Presentation/    NetworkCharacterManager
+   ├─ Connection/            AutoStartClient
+   ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer
+   └─ CharacterPresentation/ NetworkCharacterManager、CharacterPresentationService
 ```
 
 五个运动状态是独立类，集中在 `CharacterMovementStates.cs`；枚举、上下文和状态机基础结构集中在 `CharacterMovementStateMachine.cs`。
@@ -74,7 +73,7 @@ Assets/Core/Scripts/
 |---|---|---|
 | `Character` | `Assets/Core/Scripts/Character/`、`Assets/Core/Scripts/Camera/`、`Assets/Core/Input/`、角色 Prefab | 输入、移动、重力、动画、本地视角和骨骼表现 |
 | `Multiplayer` | `Assets/Core/Scripts/Networking/`、Mirror 组件、服务器构建 | 自动连接、玩家身份、角色编号、表现装配、同步协议和专用服务器 |
-| `Scene` | `Assets/Core/Scenes/`、`Assets/Core/SO/`、`My_FrameWork/Scripts/Scene/` | 场景引导、常驻层、玩法层、加载链路和表现模式切换 |
+| `Scene` | `Assets/Core/Scenes/`、`Assets/Core/SO/`、`Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/` | 场景引导、常驻层、玩法层、加载链路和表现模式切换 |
 | `Project` | `ProjectSettings/`、`Packages/`、Prefab、Addressables 配置 | Unity 配置、包依赖、资产布局、组件序列化和构建产物 |
 | `Workflow` | `Y_MultipleAgentWorkflow/` | 权威文档路由、功能域租约和维护规则 |
 

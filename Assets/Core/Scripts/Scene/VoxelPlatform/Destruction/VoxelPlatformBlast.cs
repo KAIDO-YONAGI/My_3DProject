@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Destruction
+namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 {
     /// <summary>
     /// 世界空间的破坏体积。标记碰撞体按世界包围盒参与判定，球形碰撞体使用缩放后的真实半径；

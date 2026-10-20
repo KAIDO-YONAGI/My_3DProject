@@ -1,12 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Data;
-using Core.Scripts.Environment.VoxelPlatform.Rendering;
-using Core.Scripts.Environment.VoxelPlatform.Runtime;
+using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.Scene.VoxelPlatform.Rendering;
+using Core.Scripts.Scene.VoxelPlatform.Runtime;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Baking
+namespace Core.Scripts.Scene.VoxelPlatform.Baking
 {
     // 生成可序列化的烘焙结果；AssetDatabase 持久化由编辑器 Baker 负责。
     static class VoxelPlatformBaking

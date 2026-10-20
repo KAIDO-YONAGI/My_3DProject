@@ -16,7 +16,7 @@
 | 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Character_Guide.md`，并读取 `Assets/Core/Input/` |
 | 准心攻击、相机射线与方块破坏交互 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Interactions/` 与 `Assets/Core/Prefabs/Main Camera.prefab` |
-| 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Camera/Runtime/` 与相机回归测试 |
+| 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Camera/` 与相机回归测试 |
 | 角色模型、动画素材与相机 Prefab | `Character_Guide.md`，并读取 `Assets/Core/Prefabs/Characters/` |
 | 嘴部下移、面部蒙皮、Humanoid Jaw 与 Avatar 映射 | `Character_Guide.md`、`../Project/Project_Guide.md`，并核对模型导入配置与完整角色 Prefab |
 | 学园之星裙摆摆动、DynamicBone 与大腿穿模 | `Character_Guide.md`、`../Project/Project_Guide.md`，并核对完整角色 Prefab 与 `Assets/Plugins/DynamicBone/` |

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Baking;
-using Core.Scripts.Environment.VoxelPlatform.Data;
-using Core.Scripts.Environment.VoxelPlatform.Destruction;
-using Core.Scripts.Environment.VoxelPlatform.Fragments;
-using Core.Scripts.Environment.VoxelPlatform.Rendering;
+using Core.Scripts.Scene.VoxelPlatform.Baking;
+using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.Scene.VoxelPlatform.Destruction;
+using Core.Scripts.Scene.VoxelPlatform.Fragments;
+using Core.Scripts.Scene.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Runtime
+namespace Core.Scripts.Scene.VoxelPlatform.Runtime
 {
     // 维护单个平台的方块状态，并把一次变化归并为需要重建的空间分块。
     class VoxelPlatformRuntime

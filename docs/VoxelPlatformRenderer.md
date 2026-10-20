@@ -414,7 +414,7 @@ public sealed class FragmentBurstExample : MonoBehaviour
 
 ## 8. 代码职责
 
-组件入口保留在 `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs`，协作类按功能放在同目录的 `VoxelPlatform/` 子文件夹中，采用普通类组合：
+组件入口保留在 `Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs`，协作类按功能放在同级子文件夹中，采用普通类组合：
 
 | 文件 | 职责 |
 |---|---|

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Destruction
+namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 {
     /// <summary>
     /// 破坏体积的结算入口。调用方提交标记碰撞体或体积后立即结算，

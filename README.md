@@ -42,7 +42,7 @@ InitialScene                启动引导，注册并加载常驻场景
 | `Assets/Core/Models/` | 角色模型源文件与骨骼配置说明 |
 | `Assets/Terrain/` | 玩法地形数据 |
 | `Assets/Core/SO/` | 场景与事件 ScriptableObject |
-| `Assets/Core/Scripts/GamePlayFrameWork/Scripts/StateMachine/` | 通用分层状态机框架（程序集 `Core.FrameWork.StateMachine`） |
+| `Assets/Core/Scripts/StateMachine/` | 通用分层状态机框架（程序集 `Core.FrameWork.StateMachine`） |
 | `Assets/Tests/` | EditMode 与 PlayMode 测试程序集 |
 | `Assets/ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
 | `Assets/Rendering/` | URP 管线与 Renderer 资产 |
@@ -76,18 +76,16 @@ InitialScene                启动引导，注册并加载常驻场景
 
 ## 角色资源
 
-两个角色模型各自提供本地表现与远程同步两套 Prefab，`NetworkCharacterManager` 按下标成对使用。
+`NetworkCharacterManager.characters` 按编号保存完整角色 Prefab，每个角色只维护一份，单机、联机本地和远程身份共用它，身份差异由运行时组件启停处理。
 
-| 编号 | 模型 | 本地拥有者 | 远程玩家 |
-|---|---|---|---|
-| `0` | 娜娜莉（华丽飞踢） | `CharactersForLocal/娜娜莉（华丽飞踢）.prefab` | `CharactersForSync/娜娜莉（华丽飞踢）_Sync.prefab` |
-| `1` | 娜娜莉（学园之星） | `CharactersForLocal/娜娜莉（学园之星）.prefab` | `CharactersForSync/娜娜莉（学园之星）_Sync.prefab` |
+| 编号 | 模型 | 完整角色 Prefab |
+|---|---|---|
+| `0` | 娜娜莉（华丽飞踢） | `Assets/Core/Prefabs/Characters/娜娜莉（华丽飞踢）.prefab` |
+| `1` | 娜娜莉（学园之星） | `Assets/Core/Prefabs/Characters/娜娜莉（学园之星）.prefab` |
 
 默认角色编号为 `1`。两个模型的源文件、材质、贴图与动画分别位于 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/` 与 `Assets/Core/Models/异环_娜娜莉（学园之星）/`。
 
-本地 Prefab 提供 `Camera`、`AudioListener`、`ThirdPersonCamera`、`Animator`、`CharacterController`、`DynamicBone` 与 `PlayerCharacterController`，供本地拥有者获得完整视角与表现。
-
-同步 Prefab 提供 `Animator`、`CharacterController`、`DynamicBone` 与 `PlayerCharacterController`，供远程玩家显示模型与动画。
+完整角色 Prefab 提供 `Camera`、`AudioListener`、`ThirdPersonCamera`、`Animator`、`CharacterController`、`DynamicBone` 与 `PlayerCharacterController`。本地拥有者启用相机、控制器与监听器，远程玩家只保留模型与动画。
 
 角色骨骼物理由 `DynamicBone` 与 `DynamicBoneCollider` 驱动，参数含义与当前取值记录在 `Assets/Core/Models/骨骼配置须知.md`。
 

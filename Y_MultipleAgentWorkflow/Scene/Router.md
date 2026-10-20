@@ -31,11 +31,11 @@
 
 - `Assets/Core/Scenes/InitialScene.unity`
 - `Assets/Core/Scenes/PersistentScene.unity`
-- `Assets/Core/Scenes/MultiplayerSampleScene.unity`
-- `Assets/Core/Scenes/MultiplayerSampleScene 1.unity`
+- `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`
+- `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`
 - `Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity`
 - `Assets/Core/Scenes/VoxelArena.unity`
-- `Assets/Core/Scripts/Environment/VoxelPlatformRenderer.cs`
+- `Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs`
 - `Assets/Core/Scripts/GamePlayFrameWork/Scripts/Scene/`
 - `Assets/Core/SO/`
 - `Assets/Core/Prefabs/Characters/`

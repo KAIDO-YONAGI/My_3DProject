@@ -1,7 +1,7 @@
 using Core.Scripts.Character.Input;
 using UnityEngine;
 
-namespace Core.Scripts.Camera.Runtime
+namespace Core.Scripts.Camera
 {
     class CameraCursorController
     {

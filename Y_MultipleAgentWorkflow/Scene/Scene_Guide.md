@@ -10,8 +10,8 @@ Build Settings 的启用场景顺序如下：
 
 1. `Assets/Core/Scenes/InitialScene.unity`
 2. `Assets/Core/Scenes/PersistentScene.unity`
-3. `Assets/Core/Scenes/MultiplayerSampleScene.unity`
-4. `Assets/Core/Scenes/MultiplayerSampleScene 1.unity`
+3. `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`
+4. `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`
 
 后两个场景互为往返的两张玩法图，由各自的 `SceneToggler` 触发器载入对方。改名时同步 `GameSceneSO.sceneName`，编辑器下 `OnValidate` 按 `sceneAsset` 自动纠正。
 

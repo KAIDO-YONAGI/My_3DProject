@@ -1,5 +1,5 @@
 using Core.Scripts.Character.Input;
-using Core.Scripts.Environment;
+using Core.Scripts.Scene.VoxelPlatform;
 using UnityEngine;
 
 namespace Core.Scripts.Character.Interactions

@@ -1,7 +1,7 @@
 using System.IO;
 using System.Linq;
-using Core.Scripts.Environment;
-using Core.Scripts.Environment.VoxelPlatform.Baking;
+using Core.Scripts.Scene.VoxelPlatform;
+using Core.Scripts.Scene.VoxelPlatform.Baking;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

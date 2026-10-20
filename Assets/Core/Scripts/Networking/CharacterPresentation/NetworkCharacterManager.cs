@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Core.Scripts.Camera.Runtime;
+using Core.Scripts.Camera;
 using Core.Scripts.Character.Presentation;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;
@@ -80,7 +80,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
         }
 
         // 场景加载带入新的单机角色和相机，按当前表现模式统一设置其启用状态。
-        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode)
         {
             bool networkMode = IsNetworkPresentationActive();
             networkPresentationMode = networkMode;

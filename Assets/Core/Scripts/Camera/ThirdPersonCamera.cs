@@ -1,7 +1,7 @@
 using Core.Scripts.Character.Input;
 using UnityEngine;
 
-namespace Core.Scripts.Camera.Runtime
+namespace Core.Scripts.Camera
 {
     /// <summary>
     /// 独立处理第三人称镜头的环绕、缩放、角色朝向和障碍物避让。

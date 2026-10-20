@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Fragments
+namespace Core.Scripts.Scene.VoxelPlatform.Fragments
 {
     /// <summary>
     /// 破坏后的碎块表现：为每个预切片开启刚体并沿离开容器的方向抛出，超时后连同整个碎块分组一起销毁。

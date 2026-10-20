@@ -44,8 +44,8 @@
 - 联机脚本: `Assets/Core/Scripts/Networking/`
 - 单机框架: `Assets/Core/Scripts/GamePlayFrameWork/`
 - 网络玩家 Prefab: `Assets/Core/Prefabs/NetworkPlayer.prefab`
-- 角色 Prefab: `Assets/Core/Prefabs/CharactersForLocal/`、`Assets/Core/Prefabs/CharactersForSync/`
-- 场景: `Assets/Core/Scenes/InitialScene.unity`（初始）、`PersistentScene.unity`（常驻）、`MultiplayerSampleScene.unity`（玩法）
+- 角色 Prefab: `Assets/Core/Prefabs/Characters/`
+- 场景: `Assets/Core/Scenes/InitialScene.unity`（初始）、`Assets/Core/Scenes/PersistentScene.unity`（常驻）、`Assets/Core/Scenes/TestScenes/MultiplayerSampleScene.unity`（玩法）
 - 第三方插件: `Assets/Plugins/`（含 `Mirror/`、`DynamicBone/`）
 - 构建产物: `D:/Unity/Releases/3D_MultiplayerGame/`
 

@@ -1,4 +1,4 @@
-using Core.Scripts.Camera.Runtime;
+using Core.Scripts.Camera;
 using Core.Scripts.Character.Presentation;
 using UnityEngine;
 

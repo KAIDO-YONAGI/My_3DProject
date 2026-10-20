@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Data
+namespace Core.Scripts.Scene.VoxelPlatform.Data
 {
     // 运行记录兼容源对象预览；从烘焙数据加载时，源组件引用保持为空。
     class VoxelPlatformBlock

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Scripts.Camera.Runtime
+namespace Core.Scripts.Camera
 {
     static class CameraRotationMath
     {

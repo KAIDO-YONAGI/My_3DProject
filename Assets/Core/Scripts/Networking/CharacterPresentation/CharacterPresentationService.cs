@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Core.Scripts.Camera.Runtime;
+using Core.Scripts.Camera;
 using Core.Scripts.Character.Presentation;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;

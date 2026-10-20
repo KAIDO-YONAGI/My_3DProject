@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Data;
-#if UNITY_EDITOR
+using Core.Scripts.Scene.VoxelPlatform.Data;
 using UnityEditor;
-#endif
 using UnityEngine;
+#if UNITY_EDITOR
+#endif
 
-namespace Core.Scripts.Environment.VoxelPlatform.Fragments
+namespace Core.Scripts.Scene.VoxelPlatform.Fragments
 {
     // 按方块延迟创建预切 Cube，只管理实例与装配位置；受力和刚体由表现脚本负责。
     class VoxelPlatformFragments

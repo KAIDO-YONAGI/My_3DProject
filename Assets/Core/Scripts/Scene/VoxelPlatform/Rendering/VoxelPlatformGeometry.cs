@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Data;
+using Core.Scripts.Scene.VoxelPlatform.Data;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Rendering
+namespace Core.Scripts.Scene.VoxelPlatform.Rendering
 {
     // 只处理几何与邻接关系，缓存由同一源网格生成的六面掩码变体。
     class VoxelPlatformGeometry

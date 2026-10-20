@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Destruction
+namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 {
     /// <summary>
     /// 触发器驱动的破坏入口：本物体上的触发器负责开火，标记碰撞体负责划出破碎区域，
@@ -12,6 +12,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Destruction
     public sealed class VoxelPlatformBlastTrigger : MonoBehaviour
     {
         [SerializeField] private Rigidbody platform;
+        [SerializeField] private GameObject fence;
         [Tooltip("划出破碎区域的标记碰撞体，留空时使用子物体上的碰撞体。")]
         [SerializeField] private Collider[] regions = System.Array.Empty<Collider>();
         [Tooltip("碎块从生成起保持碰撞的时长，单位为秒，到期后关闭碰撞。")]
@@ -26,6 +27,7 @@ namespace Core.Scripts.Environment.VoxelPlatform.Destruction
         {
             Fire();
             platform.isKinematic = false;
+            fence.SetActive(true);
         }
 
         /// <summary>立即按区域结算一次破坏，返回实际破坏的方块数量。</summary>

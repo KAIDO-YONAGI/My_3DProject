@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Data;
-using Core.Scripts.Environment.VoxelPlatform.Fragments;
-using Core.Scripts.Environment.VoxelPlatform.Rendering;
+using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.Scene.VoxelPlatform.Fragments;
+using Core.Scripts.Scene.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Environment.VoxelPlatform.Baking
+namespace Core.Scripts.Scene.VoxelPlatform.Baking
 {
     // 从编辑布局提取 Intact，保留源状态以便退出预览时恢复。
     static class VoxelPlatformSourceCollector

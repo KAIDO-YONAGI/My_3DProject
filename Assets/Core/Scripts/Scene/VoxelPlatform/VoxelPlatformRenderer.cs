@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using Core.Scripts.Environment.VoxelPlatform.Baking;
-using Core.Scripts.Environment.VoxelPlatform.Collision;
-using Core.Scripts.Environment.VoxelPlatform.Data;
-using Core.Scripts.Environment.VoxelPlatform.Destruction;
-using Core.Scripts.Environment.VoxelPlatform.Runtime;
+using Core.Scripts.Scene.VoxelPlatform.Baking;
+using Core.Scripts.Scene.VoxelPlatform.Collision;
+using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.Scene.VoxelPlatform.Destruction;
+using Core.Scripts.Scene.VoxelPlatform.Runtime;
 using UnityEngine;
 
-namespace Core.Scripts.Environment
+namespace Core.Scripts.Scene.VoxelPlatform
 {
     /// <summary>
     /// 平台的生命周期和调用入口。方块接口使用平台局部空间中的网格中心坐标，
