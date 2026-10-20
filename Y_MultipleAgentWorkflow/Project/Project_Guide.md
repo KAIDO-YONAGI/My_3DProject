@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-19`
+最后核验：`2026-10-20`
 
 ## 渲染管线
 
@@ -118,6 +118,8 @@ Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并�
 `VoxelPlatformDestruction.Break(...)` 立即结算一份或一组体积，按标记碰撞体、世界盒或球形体积构造，返回实际破坏的方块数量。平台在启用时登记、停用时注销，结算按登记表遍历，不扫描场景。
 
 `VoxelPlatformBlastTrigger` 是触发器驱动的入口：挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把标记碰撞体交给 `Break`，同步完成破坏；`regions` 留空时用子物体上的碰撞体，`collisionDuration` 传给 `Break`，`oneShot` 打开时只响应第一次触发。触发器要与静态平台产生物理事件，触发器自身或进入它的物体上需要有 Rigidbody。
+
+同一入口在 `OnTriggerEnter` 内先广播 `gameStartEventSO`，再调用 `Fire()`，订阅方在平台状态改变前收到通知；字段留空时只做破坏结算。`Assets/Core/Scenes/VoxelArena.unity` 的 `GameStartTrigger` 引用 `Assets/Core/SO/Events/GameStartEventSO.asset`。
 
 破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
 

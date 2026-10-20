@@ -9769,8 +9769,8 @@ GameObject:
   m_Component:
   - component: {fileID: 997758567528648982}
   - component: {fileID: 4611504899103766889}
-  - component: {fileID: 1024616620392032072}
   - component: {fileID: 5919302935462843273}
+  - component: {fileID: 1024616620392032072}
   - component: {fileID: 6425117525894980679}
   m_Layer: 0
   m_Name: "\u5A1C\u5A1C\u8389\uFF08\u534E\u4E3D\u98DE\u8E22\uFF09"
@@ -9831,6 +9831,32 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!143 &5919302935462843273
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4801770471308714401}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.55
+  m_Radius: 0.2
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.020000001
+  m_MinMoveDistance: 0
+  m_Center: {x: 0, y: 0.77, z: 0}
 --- !u!114 &1024616620392032072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9860,32 +9886,6 @@ MonoBehaviour:
     localPosition: {x: 0.000000010914688, y: 0.00000007839694, z: 0.00000015274841}
     localRotation: {x: -0.000000029802052, y: 0.0000029504292, z: 0.0000006556533, w: -0.99999994}
     poseCaptured: 1
---- !u!143 &5919302935462843273
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4801770471308714401}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.5573113
-  m_Radius: 0.2
-  m_SlopeLimit: 45
-  m_StepOffset: 0.31146225
-  m_SkinWidth: 0.020000001
-  m_MinMoveDistance: 0
-  m_Center: {x: -0.00000008940697, y: 0.77865565, z: -0.13629362}
 --- !u!114 &6425117525894980679
 MonoBehaviour:
   m_ObjectHideFlags: 0

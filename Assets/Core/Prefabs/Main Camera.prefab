@@ -186,4 +186,5 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  logInteraction: 1
+  gameStartEventSO: {fileID: 11400000, guid: b0d9719209a86864aa23461eb4b0324c, type: 2}
+  rejectAttackOnGameStart: 1

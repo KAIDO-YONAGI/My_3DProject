@@ -1,4 +1,5 @@
 using Core.Scripts.Character.Input;
+using Core.Scripts.GamePlayFrameWork.Scripts.SO;
 using Core.Scripts.Scene.VoxelPlatform;
 using UnityEngine;
 
@@ -21,7 +22,14 @@ namespace Core.Scripts.Character.Interactions
         [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")]
         [SerializeField] private LayerMask hitLayers = ~0;
 
+        [Header("事件")]
+        [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")]
+        [SerializeField] private VoidEventSO gameStartEventSO;
+
         private readonly CharacterInputReader input = new();
+
+        // 开局事件到达后置位的拒绝标志：置位期间不读攻击输入，也不发射线。
+        private bool attackRejected=true;
 
         private RaycastHit[] hits = new RaycastHit[HitCapacity];
 
@@ -33,14 +41,41 @@ namespace Core.Scripts.Character.Interactions
             playerRoot = transform.root;
         }
 
+        private void OnEnable()
+        {
+            if (gameStartEventSO != null)
+            {
+                gameStartEventSO.VoidEvent += OnGameStart;
+            }
+        }
+
         private void OnDisable()
         {
+            if (gameStartEventSO != null)
+            {
+                gameStartEventSO.VoidEvent -= OnGameStart;
+            }
+
             // 输入对象持有 Input System 资源，组件停用时释放，避免重复启用后产生多份输入状态。
             input.Dispose();
         }
 
+        /// <summary>
+        /// 开局事件回调：按开关置位拒绝标志，订阅关系在 OnEnable/OnDisable 内建立与解除。
+        /// </summary>
+        private void OnGameStart()
+        {
+            attackRejected = false;
+        }
+
         private void Update()
         {
+            // 拒绝标志置位时整段攻击逻辑直接返回。
+            if (attackRejected)
+            {
+                return;
+            }
+
             if (!input.AttackPressed)
             {
                 return;

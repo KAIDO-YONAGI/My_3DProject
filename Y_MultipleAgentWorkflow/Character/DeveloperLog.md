@@ -1,5 +1,14 @@
 # Character 开发记录
 
+## 2026-10-20：开局事件接入准心攻击
+
+- 事件资产：`Assets/Core/SO/Events/GameStartEventSO.asset` 为 `VoidEventSO` 类型，与 `FeedbackEventSO.asset` 同目录。
+- 订阅：`Attack` 增加 `gameStartEventSO` 字段，`OnEnable` 订阅 `VoidEvent`，`OnDisable` 解除订阅后照旧释放输入资源。
+- 拒绝：事件回调按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读 `AttackPressed` 也不发射线；事件不带载荷，是否拒绝由接受方决定。
+- 接线：`Assets/Core/Prefabs/Main Camera.prefab` 的 `Attack` 指向该资产，两份完整角色 Prefab 经嵌套实例继承。
+- 验证：Unity 2022.3.62f3c1 编译 0 错误，强制刷新后控制台无工程错误与警告；`Main Camera.prefab` 与 `VoxelArena.unity` 中的该字段均解析到 `Assets/Core/SO/Events/GameStartEventSO.asset`。
+- 维护计数：`4/5 → 5/5`。达到 5/5 后复核 Character 域文档，核对输入、运动状态机、动画配置、相机参数、攻击链路与测试程序集的路径和标识符，结论为 `reviewed-no-change`，计数重置为 `0/5`。
+
 ## 2026-10-19：修复碎块层索引在静态初始化中调用 Unity API
 
 - 现象：`UnityException: NameToLayer is not allowed to be called from a MonoBehaviour constructor (or instance field initializer)`，栈指向 `Attack..cctor`，随后抛出 `TypeInitializationException`，相机上的 `Attack` 不可用。

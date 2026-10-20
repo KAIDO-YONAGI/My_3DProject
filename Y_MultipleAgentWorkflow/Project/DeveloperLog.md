@@ -1,5 +1,13 @@
 # Project 开发记录
 
+## 2026-10-20：触发器广播开局事件
+
+- 广播：`VoxelPlatformBlastTrigger` 增加 `gameStartEventSO` 字段，`OnTriggerEnter` 内先 `OnEventRaised()` 再调用 `Fire()`，订阅方在平台状态改变前收到通知；字段留空时只做破坏结算。
+- 场景：`Assets/Core/Scenes/VoxelArena.unity` 的 `GameStartTrigger` 引用 `Assets/Core/SO/Events/GameStartEventSO.asset`。
+- 清理：删除孤儿资产 `Assets/Core/SO/Events/BoolEventChannel.asset` 及其 `.meta`。其 `m_Script` 指向的 `BoolEventChannelSO` 脚本已不存在，删除前该资产 GUID 与脚本 GUID 在全工程只有自身引用，工程里仅剩这一处 missing script。
+- 验证：Unity 2022.3.62f3c1 编译 0 错误，强制刷新后控制台无工程错误与警告；场景内该组件字段解析到该资产。
+- 维护计数：`2/5 → 3/5`。
+
 ## 2026-10-19：新增按体积批量破坏与触发器结算
 
 - 接口：`VoxelPlatformRenderer.BreakBlocks(IReadOnlyList<Vector3>)` 按平台局部中心批量破坏，`BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast>)` 破坏与世界空间体积相交的方块；两者在一次调用内只重建一次受影响分块，重复覆盖的方块只处理一次。

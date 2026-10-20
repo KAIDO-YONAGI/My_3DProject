@@ -2,7 +2,7 @@
 
 文档 ID：`CHARACTER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-16`
+最后核验：`2026-10-20`
 
 ## 角色渲染
 
@@ -156,6 +156,8 @@ CharacterInputReader（PlayerControls.inputactions）
 ## 准心交互
 
 `Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。
+
+`Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
 射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。射线从相机出发必定先穿过角色自身，`Transform.root` 之下的碰撞体全部排除。碎块层的层名由 `VoxelPlatformRenderer` 提供，破坏检测在查询掩码里去掉这一层，废墟中的碎块既不占用命中缓冲，也不挡住它们后方的方块。`Physics.RaycastNonAlloc` 的结果未排序，在其中取最近的非自身命中；缓冲填满时扩容后重查，命中查询不产生托管分配。
 
