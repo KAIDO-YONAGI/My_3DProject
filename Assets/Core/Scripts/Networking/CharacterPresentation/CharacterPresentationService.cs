@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera;
+using Core.Scripts.Character.Control;
 using Core.Scripts.Character.Presentation;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;
@@ -106,8 +107,12 @@ namespace Core.Scripts.Networking.CharacterPresentation
             }
 
             // 先解除引用，再销毁这些引用所属的视觉实例。
-            player.PlayerController?.RebindInputSpace(null);
-            player.PlayerController?.RebindAnimator(null);
+            PlayerCharacterController controller = player.PlayerController;
+            if (controller != null)
+            {
+                controller.RebindInputSpace(null);
+                controller.RebindAnimator(null);
+            }
 
             if (presentations.TryGetValue(player, out CharacterPresentationState presentation)
                 && presentation != null

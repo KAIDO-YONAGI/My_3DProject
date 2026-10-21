@@ -135,16 +135,20 @@ namespace Core.Scripts.Character.Movement
         private Vector3 ResolveMoveDirection(Vector2 moveInput, Transform inputSpace)
         {
             Transform basis = inputSpace;
-            if (basis is null&& UnityEngine.Camera.main is not null)
+            if (basis == null)
             {
                 // 本地玩家的相机属于共用角色 Prefab；
                 // 即使相机是网络根对象的子节点，也必须用它作为前进方向基准。
-                basis = UnityEngine.Camera.main.transform;
+                UnityEngine.Camera mainCamera = UnityEngine.Camera.main;
+                if (mainCamera != null)
+                {
+                    basis = mainCamera.transform;
+                }
             }
 
             Vector3 forward;
             Vector3 right;
-            if (basis is not null)
+            if (basis != null)
             {
                 forward = Vector3.ProjectOnPlane(basis.forward, Vector3.up).normalized;
                 right = Vector3.ProjectOnPlane(basis.right, Vector3.up).normalized;

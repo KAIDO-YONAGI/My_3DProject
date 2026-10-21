@@ -89,7 +89,13 @@ namespace Core.Scripts.Networking.Sync
         // 客户端玩家停止时，回收其视觉实例、动画引用和输入参考。
         public override void OnStopClient()
         {
-            NetworkCharacterManager.Instance?.RemoveCharacter(this);
+            // 用 == null 判断：?. 不遵循 Unity 的销毁语义，管理器已销毁时仍会照常调用。
+            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
+            if (manager != null)
+            {
+                manager.RemoveCharacter(this);
+            }
+
             base.OnStopClient();
         }
 
@@ -139,7 +145,11 @@ namespace Core.Scripts.Networking.Sync
         private void ApplyCharacter()
         {
             // 下行装配入口：将当前网络玩家和已接收的编号交给管理器，由本地身份选择对应 Prefab。
-            NetworkCharacterManager.Instance?.ApplyCharacter(this, characterId);
+            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
+            if (manager != null)
+            {
+                manager.ApplyCharacter(this, characterId);
+            }
         }
     }
 }

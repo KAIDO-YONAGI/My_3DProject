@@ -204,6 +204,20 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             return new List<CanvasToToggle>(canvasOpenOrder);
         }
 
+        /// <summary>按谓词只读遍历已打开画布：命中即返回，不生成副本，供每帧查询使用。</summary>
+        public bool IsAnyOpen(Predicate<CanvasToToggle> predicate)
+        {
+            foreach (CanvasToToggle canvas in canvasOpenOrder)
+            {
+                if (predicate(canvas))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void RemoveCanvasNode(CanvasToToggle canvas)
         {
             LinkedListNode<CanvasToToggle> currentNode = canvasOpenOrder.First;

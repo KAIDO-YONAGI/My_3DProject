@@ -38,15 +38,24 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         // 外部（代码/按键）输入合并到这里
         private readonly Dictionary<CanvasToToggle, bool> inputState = new();
 
+        // 枚举全集缓存：查表与逐项复位都遍历它，避免每帧分配 Enum.GetValues 返回的新数组。
+        private static readonly CanvasToToggle[] AllCanvases =
+            (CanvasToToggle[])Enum.GetValues(typeof(CanvasToToggle));
+
+        // 传给焦点栈的阻塞判定委托，只构造一次，避免每帧生成闭包。
+        private Predicate<CanvasToToggle> blocksInputPredicate;
+
         protected override void OnSingletonInitialized()
         {
             ValidateReferences();
 
             //用枚举类初始化inputState
-            foreach (CanvasToToggle canvas in Enum.GetValues(typeof(CanvasToToggle)))
+            foreach (CanvasToToggle canvas in AllCanvases)
             {
                 inputState[canvas] = false;
             }
+
+            blocksInputPredicate = BlocksInput;
 
             // 接线：纯逻辑栈通过回调驱动 SO 事件，保持自身不依赖 ToggleCanvasEventSO。
             focusStack.OnCanvasToggleRequested = RaiseCanvasEvent;
@@ -233,15 +242,13 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         // 是否有"阻塞全局输入"的画布处于打开状态（按焦点栈开放列表推导，避免计数漂移）。
         private bool IsGlobalInputBlocked()
         {
-            foreach (CanvasToToggle openCanvas in focusStack.GetOpenCanvases())
-            {
-                if (canvasBlocksInput.TryGetValue(openCanvas, out bool blocks) && blocks)
-                {
-                    return true;
-                }
-            }
+            return focusStack.IsAnyOpen(blocksInputPredicate);
+        }
 
-            return false;
+        // 单块画布是否声明阻塞全局输入，供焦点栈只读遍历时回查。
+        private bool BlocksInput(CanvasToToggle canvas)
+        {
+            return canvasBlocksInput.TryGetValue(canvas, out bool blocks) && blocks;
         }
 
         private void ToggleCanvas()
@@ -345,7 +352,7 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             }
 
             // 外部请求不要求存在 inputBinding；按枚举顺序消费未绑定画布的第一个请求。
-            foreach (CanvasToToggle canvas in Enum.GetValues(typeof(CanvasToToggle)))
+            foreach (CanvasToToggle canvas in AllCanvases)
             {
                 if (canvas == CanvasToToggle.ESC || HasInputBinding(canvas))
                 {
@@ -377,20 +384,33 @@ namespace Core.Scripts.UI.SystemCanvasManagers
 
         private void RaiseCanvasEvent(CanvasToToggle target, bool state)
         {
-            FindToggleEvent(target)?.RaiseToggleCanvasEvent(state);
+            ToggleCanvasEventSO eventSO = FindToggleEvent(target);
+            if (eventSO == null)
+            {
+                Debug.LogError($"[{nameof(UIManager)}] {target} 未在 toggleCanvasEvents 中登记，开关请求无法广播。", this);
+                return;
+            }
+
+            eventSO.RaiseToggleCanvasEvent(state);
         }
 
         private void RaiseFocusEvent(CanvasToToggle target)
         {
-            FindToggleEvent(target)?.RaiseFocusEvent();
+            // 未登记的画布由自身 SetCanvaState 刷新层级，这里跳过属于设计允许的常态，不报错。
+            ToggleCanvasEventSO eventSO = FindToggleEvent(target);
+            if (eventSO == null)
+            {
+                return;
+            }
+
+            eventSO.RaiseFocusEvent();
         }
 
         private void ResetInputState()
         {
-            var keys = new List<CanvasToToggle>(inputState.Keys);
-            foreach (var key in keys)
+            for (int index = 0; index < AllCanvases.Length; index++)
             {
-                inputState[key] = false;
+                inputState[AllCanvases[index]] = false;
             }
         }
 
