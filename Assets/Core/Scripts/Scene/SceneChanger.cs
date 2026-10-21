@@ -94,11 +94,36 @@ namespace Core.Scripts.Scene
         }
 
         /// <summary>
-        /// 唤醒时初始化单例并设置玩家初始位置
+        /// 唤醒时校验必填引用并设置玩家初始位置
         /// </summary>
         protected override void OnSingletonInitialized()
         {
+            ValidateReferences();
             SetPlayerPostion(initialPosition);
+        }
+
+        // 必填引用在单例注册后只校验一次：缺失时按字段名报错，后续调用点直接解引用。
+        private void ValidateReferences()
+        {
+            if (fadeCanva == null)
+            {
+                Debug.LogError($"[{nameof(SceneChanger)}] fadeCanva 未指定：切换时的过渡遮罩无法播放。", this);
+            }
+
+            if (loadEventSO == null)
+            {
+                Debug.LogError($"[{nameof(SceneChanger)}] loadEventSO 未指定：场景切换请求无法广播。", this);
+            }
+
+            if (retryEventSO == null)
+            {
+                Debug.LogError($"[{nameof(SceneChanger)}] retryEventSO 未指定：重试的整组重载无法订阅。", this);
+            }
+
+            if (sceneLoadedEvent == null)
+            {
+                Debug.LogError($"[{nameof(SceneChanger)}] sceneLoadedEvent 未指定：画布与加载音效收不到场景加载完成通知。", this);
+            }
         }
 
         /// <summary>
@@ -370,7 +395,7 @@ namespace Core.Scripts.Scene
             }
 
             isInitialScene = false;
-            sceneLoadedEvent?.RaiseSceneLoadedEvent(currentScene);
+            sceneLoadedEvent.RaiseSceneLoadedEvent(currentScene);
             AllowInput();
             TimeManager.Instance.ForceResumeGame();
             isLoading = false; // 全部完成后才解锁，允许下一次加载请求

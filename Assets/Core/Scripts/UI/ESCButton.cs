@@ -13,23 +13,32 @@ namespace Core.Scripts.UI
         [Tooltip("该按钮要关闭的面板类型。显式关闭不受 Close On Escape 限制。")]
         [SerializeField] private CanvasToToggle canvasToESC;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        private void ValidateReferences()
+        {
+            if (escButton == null)
+            {
+                Debug.LogError($"[{nameof(ESCButton)}] escButton 未指定：点击不会关闭任何面板。", this);
+            }
+        }
+
         private void OnEnable()
         {
-            if (escButton != null)
-                escButton.onClick.AddListener(OnESC);
+            escButton.onClick.AddListener(OnESC);
         }
 
         private void OnDisable()
         {
-            if (escButton != null)
-                escButton.onClick.RemoveListener(OnESC);
+            escButton.onClick.RemoveListener(OnESC);
         }
 
         private void OnESC()
         {
-            if (UIManager.Instance == null)
-                return;
-
             UIManager.Instance.RequestCanvasClose(canvasToESC);
         }
     }

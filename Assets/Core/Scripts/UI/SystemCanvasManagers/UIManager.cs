@@ -40,6 +40,8 @@ namespace Core.Scripts.UI.SystemCanvasManagers
 
         protected override void OnSingletonInitialized()
         {
+            ValidateReferences();
+
             //用枚举类初始化inputState
             foreach (CanvasToToggle canvas in Enum.GetValues(typeof(CanvasToToggle)))
             {
@@ -49,6 +51,29 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             // 接线：纯逻辑栈通过回调驱动 SO 事件，保持自身不依赖 ToggleCanvasEventSO。
             focusStack.OnCanvasToggleRequested = RaiseCanvasEvent;
             focusStack.OnFocusRefreshRequested = RaiseFocusEvent;
+        }
+
+        // 必填引用在单例注册后只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        private void ValidateReferences()
+        {
+            if (loadEventSO == null)
+            {
+                Debug.LogError($"[{nameof(UIManager)}] loadEventSO 未指定：画布不会随场景切换复位。", this);
+            }
+
+            if (toggleCanvasEvents == null || toggleCanvasEvents.Count == 0)
+            {
+                Debug.LogWarning($"[{nameof(UIManager)}] toggleCanvasEvents 未配置：没有任何画布能被本组件主动开关。", this);
+                return;
+            }
+
+            for (int index = 0; index < toggleCanvasEvents.Count; index++)
+            {
+                if (toggleCanvasEvents[index] == null)
+                {
+                    Debug.LogError($"[{nameof(UIManager)}] toggleCanvasEvents[{index}] 为空：该条目不会参与开关调度。", this);
+                }
+            }
         }
 
         private void OnEnable()

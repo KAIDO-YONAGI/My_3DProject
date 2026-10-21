@@ -58,7 +58,26 @@ namespace Core.Scripts.Networking.CharacterPresentation
 
         protected override void OnSingletonInitialized()
         {
+            ValidateReferences();
             presentationService = new CharacterPresentationService(this, presentations);
+        }
+
+        // 角色资源是必填配置：缺失时按下标报错，表现装配流程直接解引用。
+        private void ValidateReferences()
+        {
+            if (characters == null || characters.Length == 0)
+            {
+                Debug.LogError($"[{nameof(NetworkCharacterManager)}] characters 未配置：角色生成与切换都不可用。", this);
+                return;
+            }
+
+            for (int index = 0; index < characters.Length; index++)
+            {
+                if (characters[index] == null)
+                {
+                    Debug.LogError($"[{nameof(NetworkCharacterManager)}] characters[{index}] 为空：该角色编号不可用。", this);
+                }
+            }
         }
 
         private void OnEnable()

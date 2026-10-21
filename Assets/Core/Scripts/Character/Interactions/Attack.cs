@@ -39,7 +39,22 @@ namespace Core.Scripts.Character.Interactions
 
         private void Awake()
         {
+            ValidateReferences();
             playerRoot = transform.root;
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        private void ValidateReferences()
+        {
+            if (gameStartEventSO == null)
+            {
+                Debug.LogError($"[{nameof(Attack)}] gameStartEventSO 未指定：攻击会一直处于拒绝状态。", this);
+            }
+
+            if (retryEventSO == null)
+            {
+                Debug.LogError($"[{nameof(Attack)}] retryEventSO 未指定：重试后不会恢复拒绝状态。", this);
+            }
         }
 
         private void OnEnable()

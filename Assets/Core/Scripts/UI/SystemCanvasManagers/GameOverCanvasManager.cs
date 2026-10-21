@@ -24,6 +24,30 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         public bool CloseOnEscape => false;
         public bool BlocksGlobalInput => true;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，订阅与开关流程直接解引用。
+        private void ValidateReferences()
+        {
+            if (gameOverGroup == null)
+            {
+                Debug.LogError($"[{nameof(GameOverCanvasManager)}] gameOverGroup 未指定：画布显隐无法生效。", this);
+            }
+
+            if (toggleGameOverEvent == null)
+            {
+                Debug.LogError($"[{nameof(GameOverCanvasManager)}] toggleGameOverEvent 未指定：收不到开关指令。", this);
+            }
+
+            if (sceneLoadedEvent == null)
+            {
+                Debug.LogError($"[{nameof(GameOverCanvasManager)}] sceneLoadedEvent 未指定：切场景时不会自动关闭。", this);
+            }
+        }
+
         private void OnEnable()
         {
             toggleGameOverEvent.toggleCanvasEvent += OnGameOver;

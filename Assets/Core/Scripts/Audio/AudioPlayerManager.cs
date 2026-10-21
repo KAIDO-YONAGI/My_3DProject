@@ -52,20 +52,33 @@ namespace Core.Scripts.Audio
         private BGMType currentBgmType;
         private Coroutine bgmFadeCoroutine;
 
-        /// <summary>在单例注册完成后创建背景音乐音源。</summary>
+        /// <summary>在单例注册完成后校验必填引用，再创建背景音乐音源。</summary>
         protected override void OnSingletonInitialized()
         {
+            ValidateReferences();
+
             bgmSource = gameObject.AddComponent<AudioSource>();
             bgmSource.playOnAwake = false;
             bgmSource.loop = true;
         }
 
+        // 必填引用只在这里校验一次：缺失时按字段名报错，后续调用点直接解引用，不再逐处判空。
+        private void ValidateReferences()
+        {
+            if (audioConfig == null)
+            {
+                Debug.LogError($"[{nameof(AudioPlayerManager)}] audioConfig 未指定：音效与 BGM 全部无法播放。", this);
+            }
+
+            if (sceneLoadedEvent == null)
+            {
+                Debug.LogError($"[{nameof(AudioPlayerManager)}] sceneLoadedEvent 未指定：场景加载音效不会播放。", this);
+            }
+        }
+
         private void OnEnable()
         {
-            if (sceneLoadedEvent != null)
-            {
-                sceneLoadedEvent.SceneLoadedEvent += OnSceneLoaded;
-            }
+            sceneLoadedEvent.SceneLoadedEvent += OnSceneLoaded;
         }
 
         private void Start()
@@ -81,10 +94,7 @@ namespace Core.Scripts.Audio
 
         private void OnDisable()
         {
-            if (sceneLoadedEvent != null)
-            {
-                sceneLoadedEvent.SceneLoadedEvent -= OnSceneLoaded;
-            }
+            sceneLoadedEvent.SceneLoadedEvent -= OnSceneLoaded;
         }
 
         /// <summary>场景加载完成时播放统一的加载音效。</summary>
@@ -98,9 +108,6 @@ namespace Core.Scripts.Audio
         /// <param name="worldPosition">传入世界坐标时在该位置播放 3D 音效，省略时播放 2D 音效。</param>
         public void PlaySfx(AudioType audioType, Vector3? worldPosition = null)
         {
-            if (audioConfig == null)
-                return;
-
             AudioClip sfxClip = audioConfig.GetSFXClip(audioType);
             if (sfxClip == null)
                 return;
@@ -124,11 +131,6 @@ namespace Core.Scripts.Audio
         /// <param name="bgmType">配置表中的背景音乐类型，当前类型正在播放时保持原曲。</param>
         public void PlayBGM(BGMType bgmType)
         {
-            if (audioConfig == null)
-            {
-                return;
-            }
-
             if (bgmType == currentBgmType && bgmSource.isPlaying)
             {
                 return;

@@ -27,6 +27,25 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         private readonly List<Collider> resolved = new();
         private bool fired;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，触发回调里直接解引用。
+        private void ValidateReferences()
+        {
+            if (platform == null)
+            {
+                Debug.LogError($"[{nameof(VoxelPlatformBlastTrigger)}] platform 未指定：触发后无法放开平台刚体。", this);
+            }
+
+            if (fence == null)
+            {
+                Debug.LogError($"[{nameof(VoxelPlatformBlastTrigger)}] fence 未指定：触发后无法开启围栏。", this);
+            }
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;

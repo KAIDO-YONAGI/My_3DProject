@@ -24,7 +24,21 @@ namespace Core.Scripts.Audio
 
         [SerializeField] private FeedbackEventSO feedbackEvent;
         private readonly CharacterInputReader input = new();
-        
+
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，运行时调用点直接解引用。
+        private void ValidateReferences()
+        {
+            if (feedbackEvent == null)
+            {
+                Debug.LogError($"[{nameof(AudioTriggerManager)}] feedbackEvent 未指定：按键反馈不会播放也不会同步。", this);
+            }
+        }
+
         private void OnDisable()
         {
             // 输入对象持有 Unity Input System 资源，组件停用时释放，避免重复启用后产生多份输入状态。
@@ -46,9 +60,9 @@ namespace Core.Scripts.Audio
 
             Vector3 worldPosition = source.transform.position;
             // 本地先播放，保证操作反馈不需要等待服务器往返。
-            AudioPlayerManager.Instance?.PlaySfx(AudioType.Hurt, worldPosition);
+            AudioPlayerManager.Instance.PlaySfx(AudioType.Hurt, worldPosition);
             // 再发布带有声源和世界坐标的反馈，由对应的 NetworkAudioPlayer 负责同步给其他客户端。
-            feedbackEvent?.OnEventRaised(new FeedbackMessage(AudioType.Hurt, source, worldPosition));
+            feedbackEvent.OnEventRaised(new FeedbackMessage(AudioType.Hurt, source, worldPosition));
         }
 
         private GameObject ResolvePlayer()

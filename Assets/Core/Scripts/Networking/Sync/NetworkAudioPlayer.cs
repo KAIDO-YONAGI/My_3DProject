@@ -11,6 +11,20 @@ namespace Core.Scripts.Networking.Sync
         [SerializeField] private FeedbackEventSO feedbackEvent;
         private bool isSubscribed;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        private void ValidateReferences()
+        {
+            if (feedbackEvent == null)
+            {
+                Debug.LogError($"[{nameof(NetworkAudioPlayer)}] feedbackEvent 未指定：该玩家不会响应任何反馈声音。", this);
+            }
+        }
+
         private void OnEnable()
         {
             SubscribeToFeedback();
@@ -36,7 +50,7 @@ namespace Core.Scripts.Networking.Sync
 
         private void SubscribeToFeedback()
         {
-            if (isSubscribed || !isLocalPlayer || feedbackEvent == null)
+            if (isSubscribed || !isLocalPlayer)
                 return;
             // 只有本地玩家订阅反馈，远程玩家对象不会收到本地反馈通知。
             // 这里订阅的价值在于唤醒将来会有的多个反馈系统（单本地玩家）
@@ -81,7 +95,7 @@ namespace Core.Scripts.Networking.Sync
         private void RpcPlayAudio(AudioType audioType, Vector3 worldPosition)
         {
             // includeOwner=false 排除发起 Command 的拥有者，避免本地即时播放和 RPC 播放重复。
-            AudioPlayerManager.Instance?.PlaySfx(audioType, worldPosition);
+            AudioPlayerManager.Instance.PlaySfx(audioType, worldPosition);
         }
     }
 }

@@ -13,8 +13,27 @@ namespace Core.Scripts.Scene
 
         private void Awake()
         {
+            ValidateReferences();
             PersistentSceneRegistry.Register(persistentScenes);
             StartCoroutine(LoadPersistentScenes());
+        }
+
+        // 常驻场景清单是必填配置：缺失时按项报错，加载流程仍按现有条目继续。
+        private void ValidateReferences()
+        {
+            if (persistentScenes == null || persistentScenes.Count == 0)
+            {
+                Debug.LogError($"[{nameof(InitialLoad)}] persistentScenes 未配置：常驻场景不会加载。", this);
+                return;
+            }
+
+            for (int index = 0; index < persistentScenes.Count; index++)
+            {
+                if (persistentScenes[index] == null)
+                {
+                    Debug.LogError($"[{nameof(InitialLoad)}] persistentScenes[{index}] 为空：该条目会被跳过。", this);
+                }
+            }
         }
 
         private IEnumerator LoadPersistentScenes()

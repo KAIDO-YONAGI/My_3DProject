@@ -13,6 +13,20 @@ namespace Core.Scripts.UI
         [SerializeField] private Vector3 newPosition;
         [SerializeField] private bool isToFade = true;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，点击流程直接解引用。
+        private void ValidateReferences()
+        {
+            if (ButtonCanvas == null)
+            {
+                Debug.LogError($"[{nameof(ButtonSceneToggler)}] ButtonCanvas 未指定：点击后按钮不会隐藏，可能被重复触发。", this);
+            }
+        }
+
         public void HandleSceneToggle()//editor内由button组件绑定
         {
             ButtonCanvas.alpha = 0;

@@ -18,6 +18,26 @@ namespace Core.Scripts.UI
         [SerializeField, Min(0)]
         private int characterId;
 
+        private void Awake()
+        {
+            // 留空时取同一 GameObject 上的 Button，与字段 Tooltip 的约定保持一致。
+            if (targetButton == null)
+            {
+                targetButton = GetComponent<Button>();
+            }
+
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        private void ValidateReferences()
+        {
+            if (targetButton == null)
+            {
+                Debug.LogError($"[{nameof(CharacterSelectButton)}] targetButton 未指定：点击不会转发角色切换。", this);
+            }
+        }
+
         private void OnEnable()
         {
             targetButton.onClick.AddListener(OnClick);

@@ -94,7 +94,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             ConfigureLocalCamera(player, presentation);
             presentations[player] = presentation;
             characterInstance.SetActive(true);
-            player.PlayerController?.RebindAnimator(visual.Animator);
+            player.PlayerController.RebindAnimator(visual.Animator);
         }
 
         /// <summary>解除网络根的动画和输入引用，销毁视觉实例并移除玩家的表现状态。</summary>
@@ -171,7 +171,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             UnityEngine.Camera localCamera = enableLocalCamera
                 ? presentation.Visual.InputCamera
                 : null;
-            player.PlayerController?.RebindInputSpace(localCamera != null ? localCamera.transform : null);
+            player.PlayerController.RebindInputSpace(localCamera != null ? localCamera.transform : null);
             presentation.CameraIsLocal = enableLocalCamera;
         }
     }
