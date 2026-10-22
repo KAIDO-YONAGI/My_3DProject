@@ -52,7 +52,7 @@
 - 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
-- `Assets/Art/MinecraftClassic/` 保存经典石材、Blender 预切模型与粒子资源，方块 Prefab 位于 `Assets/Core/Prefabs/MinecraftClassic/`，结构见本文“经典石材与不规则预切资源”。
+- `Assets/Materials/MinecraftClassic/` 保存经典石材与 Blender 预切模型，粒子资源位于 `Assets/Materials/Particles/`，方块 Prefab 位于 `Assets/Core/Prefabs/MinecraftClassic/`，结构见本文“经典石材与不规则预切资源”。
 - 角色脚本位于 `Assets/Core/Scripts/Character/` 下的 `Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`。`PlayerCharacterController` 位于 `Control/`，`CharacterMovementSettings` 位于 `Movement/`，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
 - 网络管理与同步脚本位于 `Assets/Core/Scripts/Networking/`，按 `Connection/`、`Sync/`、`CharacterPresentation/` 分目录。
 - 全局音频由 `Assets/Core/Scripts/Audio/` 的 `AudioPlayerManager`、`AudioPlayer` 与 `AudioConfigSO` 组成，配置资产位于 `Assets/Core/SO/Audio/`，音效与背景音乐素材位于 `Assets/Materials/SFX/`。
@@ -60,7 +60,7 @@
 
 ## 经典石材与不规则预切资源
 
-`Assets/Art/MinecraftClassic/Textures/` 保存 Mojang 官方 Minecraft Java Edition 1.12.2 客户端中的经典石材纹理，`Materials/` 保存引用这些纹理的 URP Lit 材质。纹理来源、客户端校验信息与包内路径见 `Assets/Art/MinecraftClassic/README.md`，纹理导入设置以各 PNG 的导入器为准。
+`Assets/Materials/MinecraftClassic/Textures/` 保存 Mojang 官方 Minecraft Java Edition 1.12.2 客户端中的经典石材纹理，`Materials/` 保存引用这些纹理的 URP Lit 材质。纹理来源、客户端校验信息与包内路径见 `Assets/Materials/MinecraftClassic/README.md`，纹理导入设置以各 PNG 的导入器为准。
 
 | 纹理与材质名 | 方块 |
 |---|---|
@@ -71,7 +71,7 @@
 
 ### Cube 层级与材质映射
 
-`Assets/Art/MinecraftClassic/Models/Cube_FractureTemplate.fbx` 是共享的不规则预切模型。`Assets/Core/Prefabs/MinecraftClassic/` 中的 `Cube_` Prefab 分别引用各石材材质，使用相同的层级职责：
+`Assets/Materials/MinecraftClassic/Models/Cube_FractureTemplate.fbx` 是共享的不规则预切模型。`Assets/Core/Prefabs/MinecraftClassic/` 中的 `Cube_` Prefab 分别引用各石材材质，使用相同的层级职责：
 
 ```text
 Cube_<材质名>
@@ -101,7 +101,7 @@ Cube_<材质名>
 | `Fragments/` | 原 Cube 引用、延迟碎块实例与容器变换 |
 | `Baking/` | 编辑布局收集、烘焙记录生成与网格结果整理 |
 
-`Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Art/MinecraftClassic/Generated/`，启用平台时直接复用。
+`Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Materials/MinecraftClassic/Generated/`，启用平台时直接复用。
 
 在平台组件的菜单中执行 `Bake Platform Surface`，由编辑用 Prefab 生成运行用 Prefab。场景内编辑完成的平台使用 `My_3DProject/Platform/Bake Active Scene Surfaces` 生成独立烘焙数据，平台外层 Prefab 实例在转换时解包，各层场景布局独立保存。参与烘焙的方块转换为方块数据、合并外表面与分块碰撞对象。
 
@@ -135,9 +135,9 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 ### 粒子表现资源
 
-`Assets/Art/MinecraftClassic/Particles/Prefabs/` 保存从 `D:/Unity/Projects/GameJam2607/Assets/Prefabs/Particles/` 迁入的 `HurtParticle`、`IceParticle`、`LuoDi`、`RunParticle` 与 `ShootingParticle`。发射、颜色、形状和运动行为由各 Prefab 内的 ParticleSystem 配置承载。
+`Assets/Materials/Particles/Prefabs/` 保存从 `D:/Unity/Projects/GameJam2607/Assets/Prefabs/Particles/` 迁入的 `HurtParticle`、`IceParticle`、`LuoDi`、`RunParticle` 与 `ShootingParticle`。发射、颜色、形状和运动行为由各 Prefab 内的 ParticleSystem 配置承载。
 
-`Particles/Materials/` 中的 `Particle`、`Trails` 与 `Ground Particles` 使用 `Universal Render Pipeline/Particles/Unlit`。受击与拖尾材质引用 URP 默认粒子贴图，地面粒子材质使用白色贴图。预览入口及样本分组职责见 `../Scene/Scene_Guide.md` 的 `MinecraftClassicPreview`。
+`Assets/Materials/Particles/Materials/` 中的 `Particle`、`Trails` 与 `Ground Particles` 使用 `Universal Render Pipeline/Particles/Unlit`。受击与拖尾材质引用 URP 默认粒子贴图，地面粒子材质使用白色贴图。预览入口及样本分组职责见 `../Scene/Scene_Guide.md` 的 `MinecraftClassicPreview`。
 
 ## 音效播放与回收
 

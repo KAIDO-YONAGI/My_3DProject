@@ -58,7 +58,8 @@
 - `Assets/Core/Prefabs/MinecraftClassic/`
 - `Assets/Core/Scripts/Scene/`
 - `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs`
-- `Assets/Art/MinecraftClassic/`
+- `Assets/Materials/MinecraftClassic/`
+- `Assets/Materials/Particles/`
 - `C:/Users/12248/.codex/tools/blender-platform-setup/`
 - `Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `Assets/Core/Animations/Characters/`
@@ -80,7 +81,8 @@
 - `path:Assets/Core/Prefabs/MinecraftClassic`
 - `path:Assets/Core/Scripts/Scene`
 - `path:Assets/Editor/PlatformOptimization`
-- `path:Assets/Art/MinecraftClassic`
+- `path:Assets/Materials/MinecraftClassic`
+- `path:Assets/Materials/Particles`
 - `path:C:/Users/12248/.codex/tools/blender-platform-setup`
 - `path:Assets/Rendering`
 - `path:Assets/Tests`

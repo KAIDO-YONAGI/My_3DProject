@@ -421,7 +421,7 @@ public sealed class VoxelPlatformRendererTests
             "Assets/Tests/Editor/PlatformOptimization/StageBake_Authoring.prefab";
         const string runtimePath = "Assets/Tests/Editor/PlatformOptimization/StageBake.prefab";
         var beforeAssets = new HashSet<string>(AssetDatabase.FindAssets("t:Mesh",
-            new[] { "Assets/Art/MinecraftClassic/Generated" }).Select(AssetDatabase.GUIDToAssetPath));
+            new[] { "Assets/Materials/MinecraftClassic/Generated" }).Select(AssetDatabase.GUIDToAssetPath));
         try
         {
             AddCube(Vector3.zero);
@@ -452,7 +452,7 @@ public sealed class VoxelPlatformRendererTests
             AssetDatabase.DeleteAsset(
                 "Assets/Tests/Editor/PlatformOptimization/StageBakeMaterial.mat");
             foreach (string path in AssetDatabase.FindAssets("t:Mesh",
-                new[] { "Assets/Art/MinecraftClassic/Generated" }).Select(AssetDatabase.GUIDToAssetPath)
+                new[] { "Assets/Materials/MinecraftClassic/Generated" }).Select(AssetDatabase.GUIDToAssetPath)
                 .Distinct().Where(path => !beforeAssets.Contains(path)).ToArray())
                 AssetDatabase.DeleteAsset(path);
         }

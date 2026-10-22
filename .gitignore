@@ -51,3 +51,6 @@ scripts/push.sh
 
 # 编辑器备份文件
 *~
+
+# Profile Analyzer 采集数据
+/ProfileAnalyzer/

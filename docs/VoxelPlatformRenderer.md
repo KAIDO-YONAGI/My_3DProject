@@ -134,7 +134,7 @@
 | 项目 | 行为 |
 |---|---|
 | 输入 | 名为 `Intact` 的 MeshFilter；网格可读、单子网格、单有效材质、未使用烘焙光照，且不在排除标记下 |
-| 保存 | 方块与分块记录写入组件，生成网格作为子资产写入 `Assets/Art/MinecraftClassic/Generated/` |
+| 保存 | 方块与分块记录写入组件，生成网格作为子资产写入 `Assets/Materials/MinecraftClassic/Generated/` |
 | 清理 | 删除参与转换的源方块及其碎块层级，清理空的圆盘分组；排除区保留 |
 | 场景入口 | 直接转换场景平台，外层平台 Prefab 实例会解包；场景批量入口跳过无源平台 |
 | `Rebuild Platform Surface` | 有源布局时重建当前表面供预览；无源的烘焙平台重新加载现有烘焙状态 |

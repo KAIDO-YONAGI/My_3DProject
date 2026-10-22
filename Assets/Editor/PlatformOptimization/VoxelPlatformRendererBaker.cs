@@ -8,7 +8,7 @@ using UnityEngine;
 
 public static class VoxelPlatformRendererBaker
 {
-    private const string OutputFolder = "Assets/Art/MinecraftClassic/Generated";
+    private const string OutputFolder = "Assets/Materials/MinecraftClassic/Generated";
     private const string AuthoringSuffix = "_Authoring";
 
     [MenuItem("CONTEXT/VoxelPlatformRenderer/Bake Platform Surface")]

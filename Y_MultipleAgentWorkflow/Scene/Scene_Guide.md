@@ -59,7 +59,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 完整方块与碎块样本均引用 `Assets/Core/Prefabs/MinecraftClassic/` 中的 Prefab。碎块展开效果通过场景实例覆盖切换 `Intact`、`Fragments` 的显示状态，并调整碎块局部位置；Prefab 资产保存装配状态。
 
-纹理、材质、预切模型与粒子资源位于 `Assets/Art/MinecraftClassic/`。资源来源、Cube 层级、材质映射和 Blender 制作入口见 `../Project/Project_Guide.md` 的“经典石材与不规则预切资源”。
+纹理、材质与预切模型位于 `Assets/Materials/MinecraftClassic/`，粒子资源位于 `Assets/Materials/Particles/`。资源来源、Cube 层级、材质映射和 Blender 制作入口见 `../Project/Project_Guide.md` 的“经典石材与不规则预切资源”。
 
 ### MinecraftClassicPlatform
 
