@@ -637,7 +637,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   newPosition: {x: 0, y: 0, z: 0}
   sceneToLoad:
-  - {fileID: 11400000, guid: eb9a42976cfd834498ec3648eeb0a4e2, type: 2}
+  - {fileID: 11400000, guid: 15f42e871332c6a49b05ad2ef4352d26, type: 2}
   isToFade: 1
 --- !u!1 &1487820479
 GameObject:

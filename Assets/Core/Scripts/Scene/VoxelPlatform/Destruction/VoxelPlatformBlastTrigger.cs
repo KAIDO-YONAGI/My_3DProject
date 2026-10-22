@@ -49,7 +49,6 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;
-            Debug.Log(gameObject.name + " collided with " + other.tag);
             // 广播先于破坏结算，订阅方在平台状态改变前收到通知。
             if (gameStartEventSO != null)
             {

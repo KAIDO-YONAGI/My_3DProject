@@ -99,7 +99,6 @@ namespace Core.Scripts.Scene
         protected override void OnSingletonInitialized()
         {
             ValidateReferences();
-            SetPlayerPostion(initialPosition);
         }
 
         // 必填引用在单例注册后只校验一次：缺失时按字段名报错，后续调用点直接解引用。

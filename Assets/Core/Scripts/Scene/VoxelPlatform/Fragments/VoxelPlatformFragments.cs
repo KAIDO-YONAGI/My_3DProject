@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Core.Scripts.Scene.VoxelPlatform.Data;
-using UnityEditor;
 using UnityEngine;
 #if UNITY_EDITOR
+using UnityEditor;
 #endif
 
 namespace Core.Scripts.Scene.VoxelPlatform.Fragments
