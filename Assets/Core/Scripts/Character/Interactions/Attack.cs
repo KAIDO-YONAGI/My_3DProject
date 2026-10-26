@@ -1,7 +1,9 @@
 using Core.Scripts.Character.Input;
+using Core.Scripts.Common;
 using Core.Scripts.Networking.Sync;
 using Core.Scripts.SO;
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
+using Mirror;
 using UnityEngine;
 
 namespace Core.Scripts.Character.Interactions
@@ -37,6 +39,10 @@ namespace Core.Scripts.Character.Interactions
         // 相机挂在角色 Prefab 内，根节点即角色边界，用来排除射线穿过的自身碰撞体。
         private Transform playerRoot;
 
+        // 以 Mirror 本地玩家身份为键缓存网络组件，玩家切换时再重新查找。
+        private NetworkIdentity cachedLocalPlayer;
+        private NetworkBlastManager networkBlastManager;
+
         /// <summary>检查事件引用并记录角色根节点，用于计算射线距离和排除自身。</summary>
         private void Awake()
         {
@@ -55,7 +61,7 @@ namespace Core.Scripts.Character.Interactions
 
             if (blastEventSO == null)
             {
-                Debug.LogError($"[{nameof(Attack)}] blastEventSO 未指定：攻击爆炸不会同步给其他客户端。", this);
+                Debug.LogError($"[{nameof(Attack)}] blastEventSO 未指定：本地攻击表现事件不会发布。", this);
             }
 
             if (retryEventSO == null)
@@ -102,11 +108,42 @@ namespace Core.Scripts.Character.Interactions
             // 光标未锁定表示正在操作 UI，此时左键属于界面交互，不触发破坏。
             if (Cursor.lockState != CursorLockMode.Locked)
                 return;
+            //本地构造射线并提交 返回的结果提供给RPC
             AttackResult result = AttackFromCrosshair();
             if (!result.ExplosionCenter.HasValue) return;
+
+            AttackRequestPack request = new AttackRequestPack(
+                AttackType.Explosion, result.ExplosionCenter.Value, 1, result.Radius);
+            SubmitNetworkAttack(request);
+
+            // 本地表现事件放在攻击回路末尾，供特效和音效订阅。
             blastEventSO.OnEventRaised(new BlastMessage(
-                playerRoot.gameObject,
-                new AttackRequestPack(result.ExplosionCenter.Value, 1, result.Radius)));
+                request.AttackType, request.Position, request.Radius));
+        }
+
+        /// <summary>按本地玩家身份刷新网络组件缓存，并在联机 Ready 后提交攻击命令。</summary>
+        private void SubmitNetworkAttack(AttackRequestPack request)
+        {
+            NetworkIdentity localPlayer = NetworkClient.localPlayer;
+            if (!NetworkClient.isConnected || localPlayer == null)
+            {
+                cachedLocalPlayer = null;
+                networkBlastManager = null;
+            }
+            else
+            {
+                // 玩家身份变化时才查找组件；保持与音频请求路径相同的缓存策略。
+                if (cachedLocalPlayer != localPlayer)
+                {
+                    cachedLocalPlayer = localPlayer;
+                    networkBlastManager = localPlayer.GetComponent<NetworkBlastManager>();
+                }
+
+                if (networkBlastManager != null && networkBlastManager.isLocalPlayer && NetworkClient.ready)
+                {
+                    networkBlastManager.CommandAttack(request);
+                }
+            }
         }
 
         /// <summary>从准心提交射线爆炸，并把爆炸中心、半径和破坏数量返回给调用方。</summary>

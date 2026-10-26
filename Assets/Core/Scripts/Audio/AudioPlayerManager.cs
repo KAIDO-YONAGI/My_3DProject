@@ -57,6 +57,10 @@ namespace Core.Scripts.Audio
         private BGMType currentBgmType;
         private Coroutine bgmFadeCoroutine;
 
+        // 缓存当前本地网络玩家及其音频转发组件，玩家身份变化时重新获取。
+        private NetworkIdentity cachedLocalPlayer;
+        private NetworkAudioPlayer cachedNetworkAudioPlayer;
+
         /// <summary>在单例注册完成后校验必填引用，再创建背景音乐音源。</summary>
         protected override void OnSingletonInitialized()
         {
@@ -115,18 +119,31 @@ namespace Core.Scripts.Audio
             // 先由统一管理器本地播放，保证反馈不等待网络往返。
             PlaySfx(request.AudioType, request.WorldPosition);
 
-            // 单机模式没有网络玩家，无需执行后续网络转发。
-            if (!NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            ForwardAudioRequestToNetworkPlayer(request);
+        }
+
+        /// <summary>按本地玩家身份刷新网络组件缓存，并将音效请求转交给网络播放器。</summary>
+        private void ForwardAudioRequestToNetworkPlayer(AudioRequest request)
+        {
+            // 单机或本地玩家尚未生成时清空缓存，不执行网络转发。
+            NetworkIdentity localPlayer = NetworkClient.localPlayer;
+            if (!NetworkClient.isConnected || localPlayer == null)
             {
+                cachedLocalPlayer = null;
+                cachedNetworkAudioPlayer = null;
                 return;
             }
 
-            // 只把请求交给本地玩家的网络组件，由组件校验 Ready 状态后发送 Command。
-            NetworkAudioPlayer networkAudioPlayer =
-                NetworkClient.localPlayer.GetComponent<NetworkAudioPlayer>();
-            if (networkAudioPlayer != null)
+            // 本地玩家变化时才查找组件；组件自身校验 Ready 状态后发送 Command。
+            if (cachedLocalPlayer != localPlayer)
             {
-                networkAudioPlayer.SendAudioRequest(request);
+                cachedLocalPlayer = localPlayer;
+                cachedNetworkAudioPlayer = localPlayer.GetComponent<NetworkAudioPlayer>();
+            }
+
+            if (cachedNetworkAudioPlayer != null)
+            {
+                cachedNetworkAudioPlayer.SendAudioRequest(request);
             }
         }
 

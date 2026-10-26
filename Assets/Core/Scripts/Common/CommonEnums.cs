@@ -1,5 +1,11 @@
 namespace Core.Scripts.Common
 {
+    /// <summary>标识攻击事件对应的攻击表现类别。</summary>
+    public enum AttackType
+    {
+        Explosion
+    }
+
     /// <summary>标识场景配置资产所代表的场景用途。</summary>
     public enum SceneType
     {
