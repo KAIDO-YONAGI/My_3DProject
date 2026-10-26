@@ -202,12 +202,12 @@ public sealed class VoxelPlatformRendererTests
         Assert.That(Triangles(), Is.EqualTo(20));
         CollectionAssert.AreEquivalent(original, group.GetComponentsInChildren<MeshFilter>()
             .Select(filter => filter.sharedMesh).ToArray());
-        Assert.That((bool)surfaceType.GetMethod("BreakBlock").Invoke(surface,
-            new object[] { new Vector3(8, 0, 0) }), Is.True);
+        Assert.That((bool)surfaceType.GetMethod("SetBlockActive").Invoke(surface,
+            new object[] { new Vector3(8, 0, 0), false }), Is.True);
         Assert.That(Triangles(), Is.EqualTo(12));
         Assert.That((int)surfaceType.GetProperty("CollisionColliderCount").GetValue(surface), Is.EqualTo(1));
-        Assert.That((bool)surfaceType.GetMethod("RestoreBlock").Invoke(surface,
-            new object[] { new Vector3(8, 0, 0) }), Is.True);
+        Assert.That((bool)surfaceType.GetMethod("SetBlockActive").Invoke(surface,
+            new object[] { new Vector3(8, 0, 0), true }), Is.True);
         Assert.That(Triangles(), Is.EqualTo(20));
         Assert.That((int)surfaceType.GetProperty("CollisionColliderCount").GetValue(surface), Is.EqualTo(2));
         ((Behaviour)surface).enabled = false;
@@ -270,8 +270,8 @@ public sealed class VoxelPlatformRendererTests
         Assert.That(intact.forceRenderingOff, Is.False);
         Assert.That((int)surfaceType.GetProperty("CollisionColliderCount").GetValue(surface),
             Is.EqualTo(1));
-        Assert.That((bool)surfaceType.GetMethod("BreakBlock").Invoke(surface,
-            new object[] { Vector3.right }), Is.False);
+        Assert.That((bool)surfaceType.GetMethod("SetBlockActive").Invoke(surface,
+            new object[] { Vector3.right, false }), Is.False);
     }
 
     [Test]
@@ -348,7 +348,7 @@ public sealed class VoxelPlatformRendererTests
     }
 
     [Test]
-    public void BreakBlockCreatesFragmentsOnlyWhenTheBlockIsBroken()
+    public void SetBlockActiveCreatesFragmentsOnlyWhenTheBlockIsBroken()
     {
         AddCubeWithFragments(Vector3.zero);
         var bake = surfaceType.GetMethod("Bake", BindingFlags.Public | BindingFlags.Instance);
@@ -356,9 +356,9 @@ public sealed class VoxelPlatformRendererTests
         Invoke("UseBakedSurface");
 
         Assert.That(root.transform.Find("FragmentsRuntime"), Is.Null);
-        var breakBlock = surfaceType.GetMethod("BreakBlock", BindingFlags.Public | BindingFlags.Instance);
-        Assert.That(breakBlock, Is.Not.Null);
-        Assert.That((bool)breakBlock.Invoke(surface, new object[] { Vector3.zero }), Is.True);
+        var setBlockActive = surfaceType.GetMethod("SetBlockActive", BindingFlags.Public | BindingFlags.Instance);
+        Assert.That(setBlockActive, Is.Not.Null);
+        Assert.That((bool)setBlockActive.Invoke(surface, new object[] { Vector3.zero, false }), Is.True);
 
         var runtimeFragments = root.transform.Find("FragmentsRuntime");
         Assert.That(runtimeFragments, Is.Not.Null);
@@ -377,8 +377,8 @@ public sealed class VoxelPlatformRendererTests
         fragments.localPosition = intact.transform.localPosition;
         Vector3 expected = fragments.GetChild(0).position;
         Invoke("Rebuild");
-        Assert.That((bool)surfaceType.GetMethod("BreakBlock").Invoke(surface,
-            new object[] { new Vector3(3, 1.5f, 2) }), Is.True);
+        Assert.That((bool)surfaceType.GetMethod("SetBlockActive").Invoke(surface,
+            new object[] { new Vector3(3, 1.5f, 2), false }), Is.True);
 
         var runtimeNode = root.transform.Find("FragmentsRuntime").GetComponentsInChildren<Transform>(true)
             .Single(child => child.name == "Node_000");
@@ -398,20 +398,22 @@ public sealed class VoxelPlatformRendererTests
         Invoke("UseBakedSurface");
         Physics.SyncTransforms();
         var ray = new Ray(root.transform.TransformPoint(center + Vector3.up * 3), -root.transform.up);
-        object result = Explode(ray, 10, ~0, null, 0.45f);
+        object result = ExplodeFromRay(ray, 10, ~0, null, 0.45f);
 
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.True);
-        Assert.That(Vector3.Distance(Result<Vector3>(result, "SurfaceHitPoint"),
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").HasValue, Is.True);
+        Assert.That(Vector3.Distance(Result<Vector3?>(result, "ExplosionCenter").Value,
             root.transform.TransformPoint(center + Vector3.up * 0.5f)), Is.LessThan(0.0001f));
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(1));
+        Assert.That(Result<float>(result, "Radius"), Is.EqualTo(0.45f));
         Assert.That(Triangles(), Is.EqualTo(0));
         Assert.That(root.transform.Find("FragmentsRuntime").gameObject.activeSelf, Is.True);
         Physics.SyncTransforms();
         Assert.That(root.transform.Find("CombinedCollision")
             .GetComponentsInChildren<MeshCollider>().Length, Is.EqualTo(0));
-        object miss = Explode(ray, 10, ~0, null, 0.45f);
-        Assert.That(Result<bool>(miss, "HasSurfaceHitPoint"), Is.False);
+        object miss = ExplodeFromRay(ray, 10, ~0, null, 0.45f);
+        Assert.That(Result<Vector3?>(miss, "ExplosionCenter").HasValue, Is.False);
         Assert.That(Result<int>(miss, "BrokenBlockCount"), Is.Zero);
+        Assert.That(Result<float>(miss, "Radius"), Is.EqualTo(0.45f));
     }
 
     [Test]
@@ -430,9 +432,9 @@ public sealed class VoxelPlatformRendererTests
             .GetValue(meshes);
         MethodInfo tryGetChunk = collisions.GetType().GetMethod("TryGetChunk", BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.That(tryGetChunk, Is.Not.Null);
-        MethodInfo tryGetBlocks = meshes.GetType().GetMethod("TryGetBlocksForCollision",
+        MethodInfo tryGetChunkBlocks = runtime.GetType().GetMethod("TryGetChunkBlocks",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        Assert.That(tryGetBlocks, Is.Not.Null);
+        Assert.That(tryGetChunkBlocks, Is.Not.Null);
 
         Physics.SyncTransforms();
         var collider = root.transform.Find("CombinedCollision")
@@ -443,8 +445,8 @@ public sealed class VoxelPlatformRendererTests
         Assert.That((bool)tryGetChunk.Invoke(collisions, arguments), Is.True);
         Assert.That((Vector3Int)arguments[1], Is.EqualTo(Vector3Int.zero));
 
-        object[] blockArguments = { collider, null };
-        Assert.That((bool)tryGetBlocks.Invoke(meshes, blockArguments), Is.True);
+        object[] blockArguments = { (Vector3Int)arguments[1], null };
+        Assert.That((bool)tryGetChunkBlocks.Invoke(runtime, blockArguments), Is.True);
         var blockList = (System.Collections.ICollection)blockArguments[1];
         Assert.That(blockList.Count, Is.EqualTo(1));
     }
@@ -480,7 +482,7 @@ public sealed class VoxelPlatformRendererTests
         Invoke("Rebuild");
 
         Vector3 worldCenter = root.transform.TransformPoint(new Vector3(-7.75f, 0, -7.75f));
-        object result = Explode(worldCenter, 1.1f);
+        object result = ExplodeAt(worldCenter, 1.1f);
 
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(3));
         Assert.That(center.activeSelf, Is.False);
@@ -503,7 +505,7 @@ public sealed class VoxelPlatformRendererTests
         var outsideCorner = AddCubeWithFragments(new Vector3(-7.5f, 0, -7.5f));
         Invoke("Rebuild");
 
-        object result = Explode(new Vector3(-8, 0, -8), 0.36f);
+        object result = ExplodeAt(new Vector3(-8, 0, -8), 0.36f);
 
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(4));
         Assert.That(blocks.All(block => !block.activeSelf), Is.True);
@@ -518,7 +520,7 @@ public sealed class VoxelPlatformRendererTests
         var farZ = AddCubeWithFragments(new Vector3(0, 0, -80));
         Invoke("Rebuild");
 
-        object result = Explode(Vector3.zero, 0.5f);
+        object result = ExplodeAt(Vector3.zero, 0.5f);
 
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(1));
         Assert.That(nearby.activeSelf, Is.False);
@@ -544,6 +546,12 @@ public sealed class VoxelPlatformRendererTests
             Is.Null);
         Assert.That(surfaceType.GetMethod("BreakBlockAtHit", BindingFlags.Public | BindingFlags.Instance),
             Is.Null);
+        Assert.That(destructionType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Static),
+            Is.Null);
+        Assert.That(destructionType.GetMethod("ExplodeAt", BindingFlags.Public | BindingFlags.Static),
+            Is.Not.Null);
+        Assert.That(destructionType.GetMethod("ExplodeFromRay", BindingFlags.Public | BindingFlags.Static),
+            Is.Not.Null);
     }
 
     [Test]
@@ -567,45 +575,19 @@ public sealed class VoxelPlatformRendererTests
     }
 
     [Test]
-    public void VectorExplosionReturnsInputCenterWithoutSurfaceHit()
+    public void VectorExplosionReturnsInputCenter()
     {
         AddCubeWithFragments(new Vector3(7.75f, 0, 0));
         AddCubeWithFragments(new Vector3(8, 24, 0));
         Invoke("Rebuild");
 
         Vector3 center = new Vector3(7.75f, 3.25f, 0);
-        object result = Explode(center, 0.45f);
+        object result = ExplodeAt(center, 0.45f);
 
-        Assert.That(Result<bool>(result, "HasExplosionCenter"), Is.True);
-        Assert.That(Result<Vector3>(result, "ExplosionCenter"), Is.EqualTo(center));
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.False);
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").HasValue, Is.True);
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").Value, Is.EqualTo(center));
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(2));
-    }
-
-    [Test]
-    public void RayExplosionReturnsSurfacePointAsExplosionCenter()
-    {
-        AddCubeWithFragments(Vector3.zero);
-        Invoke("Rebuild");
-        Physics.SyncTransforms();
-
-        var expectedCollider = root.transform.Find("CombinedCollision")
-            .GetComponentsInChildren<MeshCollider>()
-            .Single(candidate => candidate.Raycast(
-                new Ray(new Vector3(0, 3, 0), Vector3.down), out _, 10));
-        Assert.That(expectedCollider.Raycast(
-            new Ray(new Vector3(0, 3, 0), Vector3.down), out RaycastHit expectedHit, 10), Is.True);
-
-        object result = Explode(
-            new Ray(new Vector3(0, 3, 0), Vector3.down), 10, ~0, null, 0.45f);
-
-        Assert.That(Result<bool>(result, "HasExplosionCenter"), Is.True);
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.True);
-        Assert.That(Vector3.Distance(Result<Vector3>(result, "ExplosionCenter"), expectedHit.point),
-            Is.LessThan(0.0001f));
-        Assert.That(Vector3.Distance(Result<Vector3>(result, "SurfaceHitPoint"), expectedHit.point),
-            Is.LessThan(0.0001f));
-        Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(1));
+        Assert.That(Result<float>(result, "Radius"), Is.EqualTo(0.45f));
     }
 
     [Test]
@@ -614,13 +596,12 @@ public sealed class VoxelPlatformRendererTests
         var intact = AddCubeWithFragments(Vector3.zero);
         Invoke("Rebuild");
 
-        object result = Explode(
+        object result = ExplodeFromRay(
             new Ray(new Vector3(0, 3, 0), Vector3.up), 10, ~0, null, 0.45f);
 
-        Assert.That(Result<bool>(result, "HasExplosionCenter"), Is.False);
-        Assert.That(Result<Vector3>(result, "ExplosionCenter"), Is.EqualTo(Vector3.zero));
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.False);
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").HasValue, Is.False);
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.Zero);
+        Assert.That(Result<float>(result, "Radius"), Is.EqualTo(0.45f));
         Assert.That(intact.activeSelf, Is.True);
     }
 
@@ -643,11 +624,11 @@ public sealed class VoxelPlatformRendererTests
         debris.transform.position = new Vector3(0, 1.5f, 0);
         Physics.SyncTransforms();
 
-        object result = Explode(
+        object result = ExplodeFromRay(
             new Ray(new Vector3(0, 6, 0), Vector3.down), 10, ~0, player.transform, 0.45f);
 
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.True);
-        Assert.That(Result<Vector3>(result, "SurfaceHitPoint").y, Is.EqualTo(0.5f).Within(0.0001f));
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").HasValue, Is.True);
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").Value.y, Is.EqualTo(0.5f).Within(0.0001f));
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(1));
         Assert.That(intact.activeSelf, Is.False);
 
@@ -675,7 +656,7 @@ public sealed class VoxelPlatformRendererTests
         Assert.That(attackFromCrosshair, Is.Not.Null, "Attack 应返回其委托给爆炸接口的结果。");
         object result = attackFromCrosshair.Invoke(attack, null);
 
-        Assert.That(Result<bool>(result, "HasSurfaceHitPoint"), Is.True);
+        Assert.That(Result<Vector3?>(result, "ExplosionCenter").HasValue, Is.True);
         Assert.That(Result<int>(result, "BrokenBlockCount"), Is.EqualTo(1));
 
         UnityEngine.Object.DestroyImmediate(attackObject);
@@ -835,19 +816,19 @@ public sealed class VoxelPlatformRendererTests
         surfaceType.GetMethod(method, BindingFlags.Public | BindingFlags.Instance).Invoke(surface, null);
     }
 
-    private object Explode(Vector3 center, float radius)
+    private object ExplodeAt(Vector3 triggerPoint, float radius)
     {
-        MethodInfo method = destructionType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Static,
+        MethodInfo method = destructionType.GetMethod("ExplodeAt", BindingFlags.Public | BindingFlags.Static,
             null, new[] { typeof(Vector3), typeof(float) }, null);
-        Assert.That(method, Is.Not.Null, "Vector3 攻击入口应统一为 Explode。");
-        return method.Invoke(null, new object[] { center, radius });
+        Assert.That(method, Is.Not.Null, "触发点攻击入口应按位置和半径结算。");
+        return method.Invoke(null, new object[] { triggerPoint, radius });
     }
 
-    private object Explode(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)
+    private object ExplodeFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)
     {
-        MethodInfo method = destructionType.GetMethod("Explode", BindingFlags.Public | BindingFlags.Static,
+        MethodInfo method = destructionType.GetMethod("ExplodeFromRay", BindingFlags.Public | BindingFlags.Static,
             null, new[] { typeof(Ray), typeof(float), typeof(int), typeof(Transform), typeof(float) }, null);
-        Assert.That(method, Is.Not.Null, "Ray 攻击入口应统一为 Explode，并在接口内完成命中筛选。");
+        Assert.That(method, Is.Not.Null, "Ray 攻击入口应在接口内完成命中筛选。");
         return method.Invoke(null, new object[] { ray, maxDistance, layerMask, ignoredRoot, radius });
     }
 

@@ -182,6 +182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3fe841c6d8ad3b4b96f7a7e6a3f1693, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  blastEventSO: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
   reachDistance: 5
   hitLayers:
     serializedVersion: 2

@@ -22,6 +22,8 @@ namespace Core.Scripts.Character.Interactions
         [Header("爆炸")] [Tooltip("命中位置的水平爆炸半径，单位为世界单位。")] [SerializeField, Min(0f)]
         private float blastRadius = 0.45f;
 
+        [SerializeField] private BlastEventSO blastEventSO;
+
         [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
         private VoidEventSO gameStartEventSO;
 
@@ -49,6 +51,11 @@ namespace Core.Scripts.Character.Interactions
             if (gameStartEventSO == null)
             {
                 Debug.LogError($"[{nameof(Attack)}] gameStartEventSO 未指定：攻击会一直处于拒绝状态。", this);
+            }
+
+            if (blastEventSO == null)
+            {
+                Debug.LogError($"[{nameof(Attack)}] blastEventSO 未指定：攻击爆炸不会同步给其他客户端。", this);
             }
 
             if (retryEventSO == null)
@@ -89,30 +96,24 @@ namespace Core.Scripts.Character.Interactions
         {
             // 拒绝标志置位时整段攻击逻辑直接返回。
             if (attackRejected)
-            {
                 return;
-            }
-
             if (!input.AttackPressed)
-            {
                 return;
-            }
-
             // 光标未锁定表示正在操作 UI，此时左键属于界面交互，不触发破坏。
             if (Cursor.lockState != CursorLockMode.Locked)
-            {
                 return;
-            }
-
-            AttackResult result=AttackFromCrosshair();
-            NetworkBlastManager.Instance.CommandAttack(new AttackRequestPack(result.ExplosionCenter, 1, blastRadius));
+            AttackResult result = AttackFromCrosshair();
+            if (!result.ExplosionCenter.HasValue) return;
+            blastEventSO.OnEventRaised(new BlastMessage(
+                playerRoot.gameObject,
+                new AttackRequestPack(result.ExplosionCenter.Value, 1, result.Radius)));
         }
 
-        /// <summary>从准心提交射线爆炸，并把命中点与破坏数量返回给调用方。</summary>
+        /// <summary>从准心提交射线爆炸，并把爆炸中心、半径和破坏数量返回给调用方。</summary>
         public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(transform.position, transform.forward);
-            return VoxelPlatformDestruction.Explode(
+            return VoxelPlatformDestruction.ExplodeFromRay(
                 ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
         }
 

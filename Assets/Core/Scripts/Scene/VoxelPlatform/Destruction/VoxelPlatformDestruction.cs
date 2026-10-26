@@ -7,26 +7,21 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
     /// <summary>一次攻击爆炸的结算结果。</summary>
     public readonly struct AttackResult
     {
-        /// <summary>本次爆炸用于结算的世界空间中心。</summary>
-        public Vector3 ExplosionCenter { get; }
-        /// <summary>是否存在有效爆炸中心。</summary>
-        public bool HasExplosionCenter { get; }
-        /// <summary>射线命中的真实表面世界坐标。</summary>
-        public Vector3 SurfaceHitPoint { get; }
-        /// <summary>本次结果是否包含真实表面命中点。</summary>
-        public bool HasSurfaceHitPoint { get; }
+        /// <summary>本次爆炸中心；射线未命中有效平台时为空。</summary>
+        public Vector3? ExplosionCenter { get; }
+
         /// <summary>本次结算实际破坏的方块数量。</summary>
         public int BrokenBlockCount { get; }
+        /// <summary>本次爆炸使用的有效世界空间水平半径。</summary>
+        public float Radius { get; }
 
-        /// <summary>创建一次攻击结算结果并保存有效性标记。</summary>
-        internal AttackResult(Vector3 explosionCenter, bool hasExplosionCenter,
-            Vector3 surfaceHitPoint, bool hasSurfaceHitPoint, int brokenBlockCount)
+        /// <summary>创建一次攻击结算结果并保存位置、半径和破坏数量。</summary>
+        internal AttackResult(Vector3? explosionCenter,
+            int brokenBlockCount, float radius)
         {
             ExplosionCenter = explosionCenter;
-            HasExplosionCenter = hasExplosionCenter;
-            SurfaceHitPoint = surfaceHitPoint;
-            HasSurfaceHitPoint = hasSurfaceHitPoint;
             BrokenBlockCount = brokenBlockCount;
+            Radius = radius;
         }
     }
 
@@ -44,52 +39,65 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         private static RaycastHit[] rayHits = new RaycastHit[InitialRayHitCapacity];
 
         /// <summary>
-        /// 按世界位置结算水平圆柱爆炸。中心有效，但 Vector3 入口没有实际表面命中点。
+        /// 按世界触发点和水平半径结算圆柱爆炸。
         /// </summary>
-        public static AttackResult Explode(Vector3 center, float radius)
+        public static AttackResult ExplodeAt(Vector3 triggerPoint, float radius)
         {
-            if (!IsFinite(center) || !IsFinite(radius)) return default;
-            int broken = BreakActivePlatforms(center, radius);
-            return new AttackResult(center, true, default, false, broken);
+            if (!IsFinite(triggerPoint) || !IsFinite(radius)) return default;
+            float effectiveRadius = Mathf.Max(0f, radius);
+            int broken = BreakActivePlatforms(triggerPoint, effectiveRadius);
+            return new AttackResult(triggerPoint, broken, effectiveRadius);
         }
 
-        /// <summary>
-        /// 从射线最近的有效平台表面结算水平圆柱爆炸。
-        /// 自身层级、碎块层、非平台碰撞体与无法解析到方块的命中都会被跳过。
-        /// </summary>
-        public static AttackResult Explode(Ray ray, float maxDistance, int layerMask,
+        /// <summary>从射线最近的有效平台命中位置结算水平圆柱爆炸。</summary>
+        /// <param name="ray">用于查找可破坏平台的世界空间射线。</param>
+        /// <param name="maxDistance">射线检测的最大世界距离。</param>
+        /// <param name="layerMask">允许射线检测的物理层；碎块层会自动排除。</param>
+        /// <param name="ignoredRoot">射线需要忽略的对象根节点及其子层级。</param>
+        /// <param name="radius">以命中位置为中心的世界 XZ 水平爆炸半径。</param>
+        /// <returns>包含命中中心、实际半径和破坏数量；没有有效平台命中时中心为空。</returns>
+        public static AttackResult ExplodeFromRay(Ray ray, float maxDistance, int layerMask,
             Transform ignoredRoot, float radius)
         {
+            // 拒绝无效射线参数，避免无意义的物理查询或非有限坐标进入爆炸筛选。
             if (!IsFinite(ray.origin) || !IsFinite(ray.direction) || !IsFinite(maxDistance) ||
                 !IsFinite(radius) || ray.direction.sqrMagnitude <= Mathf.Epsilon || maxDistance <= 0f)
                 return default;
 
+            // 负半径按零处理，并规范方向以保证检测距离始终按世界单位计算。
+            float effectiveRadius = Mathf.Max(0f, radius);
             ray = new Ray(ray.origin, ray.direction.normalized);
+            // 碎块只用于表现，不应遮挡射线寻找可破坏的平台。
             int queryMask = layerMask & ~VoxelPlatformRenderer.DebrisMask;
-            if (queryMask == 0) return default;
 
-            float distance = maxDistance;
+            // 先用可复用缓冲收集命中，只有缓冲被填满时才扩容重查。
             int count = Physics.RaycastNonAlloc(
-                ray, rayHits, distance, queryMask, QueryTriggerInteraction.Ignore);
+                ray, rayHits, maxDistance, queryMask, QueryTriggerInteraction.Ignore);
+            // 缓冲被填满说明命中可能被截断；扩容后重查，直到命中完整或达到容量上限。
             while (count == rayHits.Length && rayHits.Length < MaxRayHitCapacity)
             {
                 Array.Resize(ref rayHits, Mathf.Min(rayHits.Length * 2, MaxRayHitCapacity));
                 count = Physics.RaycastNonAlloc(
-                    ray, rayHits, distance, queryMask, QueryTriggerInteraction.Ignore);
+                    ray, rayHits, maxDistance, queryMask, QueryTriggerInteraction.Ignore);
             }
 
             // 达到缓冲上限仍填满时，分配完整结果以免遗漏更近的有效平台命中。
-            RaycastHit[] candidates = count == rayHits.Length && rayHits.Length == MaxRayHitCapacity
-                ? Physics.RaycastAll(ray, distance, queryMask, QueryTriggerInteraction.Ignore)
-                : rayHits;
-            int candidateCount = candidates == rayHits ? count : candidates.Length;
+            RaycastHit[] candidates = rayHits;
+            int candidateCount = count;
+            if (count == rayHits.Length && rayHits.Length == MaxRayHitCapacity)
+            {
+                // 固定缓冲仍被填满时读取完整命中，确保最近的有效平台不会被截掉。
+                candidates = Physics.RaycastAll(ray, maxDistance, queryMask, QueryTriggerInteraction.Ignore);
+                candidateCount = candidates.Length;
+            }
 
             if (!TryFindNearestPlatformHit(candidates, candidateCount, ignoredRoot,
                     out VoxelPlatformRenderer platform, out RaycastHit hit))
-                return default;
+                return new AttackResult(null, 0, effectiveRadius);
 
-            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(hit.point, radius);
-            return new AttackResult(hit.point, true, hit.point, true, broken);
+            // 使用最近有效平台的实际命中坐标作为中心，并仅结算该平台。
+            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(hit.point, effectiveRadius);
+            return new AttackResult(hit.point, broken, effectiveRadius);
         }
 
         /// <summary>把一组标记碰撞体转换为区域体积，并在活动平台上批量结算。</summary>
@@ -131,7 +139,8 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             {
                 RaycastHit candidate = candidates[index];
                 Collider collider = candidate.collider;
-                if (!collider || IsIgnored(collider.transform, ignoredRoot) ||
+                if (!collider || (ignoredRoot &&
+                    (collider.transform == ignoredRoot || collider.transform.IsChildOf(ignoredRoot))) ||
                     candidate.distance >= nearestDistance)
                     continue;
 
@@ -146,12 +155,6 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             }
 
             return nearestPlatform;
-        }
-
-        /// <summary>判断命中对象是否属于调用方指定的忽略层级。</summary>
-        private static bool IsIgnored(Transform hitTransform, Transform ignoredRoot)
-        {
-            return ignoredRoot && (hitTransform == ignoredRoot || hitTransform.IsChildOf(ignoredRoot));
         }
 
         /// <summary>检查三维坐标的分量是否都是有限数值。</summary>
