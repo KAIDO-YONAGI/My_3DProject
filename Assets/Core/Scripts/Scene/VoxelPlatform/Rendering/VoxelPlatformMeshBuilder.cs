@@ -27,6 +27,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         internal int SurfaceRendererCount { get; private set; }
         internal int CollisionColliderCount => Collisions.ColliderCount;
 
+        internal bool TryGetBlocksForCollision(Collider collider, out List<VoxelPlatformBlock> blocks)
+        {
+            blocks = null;
+            // 先由碰撞体找到所属区块，再从运行时分块索引取得该区块的方块候选。
+            return Collisions.TryGetChunk(collider, out Vector3Int chunk) &&
+                   runtime.Chunks.TryGetValue(chunk, out blocks);
+        }
+
         internal VoxelPlatformMeshBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
         {
             this.owner = owner;

@@ -20,6 +20,20 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
 
         internal int ColliderCount { get; private set; }
 
+        internal bool TryGetChunk(Collider collider, out Vector3Int chunk)
+        {
+            // 碰撞表以区块为键而命中给出 Collider；这里只扫描区块表，不扫描平台内的方块。
+            foreach (KeyValuePair<Vector3Int, VoxelPlatformCollisionSurface> entry in Surfaces)
+            {
+                if (entry.Value.Object != collider.gameObject) continue;
+                chunk = entry.Key;
+                return true;
+            }
+
+            chunk = default;
+            return false;
+        }
+
         internal VoxelPlatformCollisionBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
         {
             this.owner = owner;

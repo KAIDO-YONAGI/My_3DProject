@@ -97,7 +97,7 @@
 
 批量破坏在**同一调用栈内同步完成**，没有“本帧提交、下一帧处理”的队列。一次批量调用内，重叠目标只破坏一次、每个受影响分块只重建一次；连续调用多个单块接口，仍会连续重建。
 
-当前还有全量成本：射线反查遍历平台活动方块并计算逆矩阵；占据索引更新遍历全部方块；体积破坏遍历方块与提交体积。大量破坏还会同时实例化碎块、生成网格并更新 MeshCollider，合批后的静态帧率不能代表破坏帧耗时。
+仍有全量成本的部分：占据索引更新遍历全部方块；体积破坏遍历方块与提交体积。射线反查先由命中碰撞体定位所属分块，只把该分块的方块候选交给解析器并计算逆矩阵。大量破坏还会同时实例化碎块、生成网格并更新 MeshCollider，合批后的静态帧率不能代表破坏帧耗时。
 
 代码：[命中反查](../Assets/Core/Scripts/Scene/VoxelPlatform/Collision/VoxelPlatformHitResolver.cs#L11)、[批量破坏](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L170)、[受影响分块与占据索引](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L235)。
 

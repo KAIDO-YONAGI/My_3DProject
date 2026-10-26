@@ -415,6 +415,41 @@ public sealed class VoxelPlatformRendererTests
     }
 
     [Test]
+    public void CollisionHitLooksUpOnlyBlocksFromItsChunk()
+    {
+        // 两块方块落在不同空间区块，命中原点区块时只应返回该区块的候选列表。
+        AddCube(Vector3.zero);
+        AddCube(new Vector3(16, 0, 0));
+        Invoke("Rebuild");
+
+        var runtimeField = surfaceType.GetField("runtime", BindingFlags.NonPublic | BindingFlags.Instance);
+        object runtime = runtimeField.GetValue(surface);
+        object meshes = runtime.GetType().GetProperty("Meshes", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(runtime);
+        object collisions = meshes.GetType().GetProperty("Collisions", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(meshes);
+        MethodInfo tryGetChunk = collisions.GetType().GetMethod("TryGetChunk", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(tryGetChunk, Is.Not.Null);
+        MethodInfo tryGetBlocks = meshes.GetType().GetMethod("TryGetBlocksForCollision",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(tryGetBlocks, Is.Not.Null);
+
+        Physics.SyncTransforms();
+        var collider = root.transform.Find("CombinedCollision")
+            .GetComponentsInChildren<MeshCollider>()
+            .Single(candidate => candidate.Raycast(
+                new Ray(new Vector3(0, 3, 0), Vector3.down), out _, 10));
+        object[] arguments = { collider, Vector3Int.zero };
+        Assert.That((bool)tryGetChunk.Invoke(collisions, arguments), Is.True);
+        Assert.That((Vector3Int)arguments[1], Is.EqualTo(Vector3Int.zero));
+
+        object[] blockArguments = { collider, null };
+        Assert.That((bool)tryGetBlocks.Invoke(meshes, blockArguments), Is.True);
+        var blockList = (System.Collections.ICollection)blockArguments[1];
+        Assert.That(blockList.Count, Is.EqualTo(1));
+    }
+
+    [Test]
     public void PrefabStageBakePreservesAuthoringSources()
     {
         const string authoringPath =

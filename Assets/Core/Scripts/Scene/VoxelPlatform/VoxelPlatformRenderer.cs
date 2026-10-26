@@ -148,8 +148,16 @@ namespace Core.Scripts.Scene.VoxelPlatform
         /// <summary>从本平台合并碰撞的命中取得局部方块中心，供破坏与恢复共用。</summary>
         public bool TryGetBlockPosition(RaycastHit hit, out Vector3 localPosition)
         {
+            // 只把命中区块的方块交给解析器，避免为一次命中遍历整个 Blocks 列表。
+            if (!hit.collider || !Runtime.Meshes.TryGetBlocksForCollision(hit.collider,
+                    out List<VoxelPlatformBlock> chunkBlocks))
+            {
+                localPosition = default;
+                return false;
+            }
+
             return VoxelPlatformHitResolver.TryGetBlockPosition(transform, collisionRoot,
-                Runtime.Blocks, hit, out localPosition);
+                chunkBlocks, hit, out localPosition);
         }
 
         public bool BreakBlockAtHit(RaycastHit hit)
