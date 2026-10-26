@@ -1,14 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using Core.Scripts.Common;
+using Core.Scripts.Networking.Sync;
 using Core.Scripts.SO;
+using Mirror;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Core.Scripts.Audio
 {
     /// <summary>
-    /// 全局音频管理：音效按枚举从 AudioConfigSO 取片段，交给 AudioPlayer 对象池播放；
+    /// 全局音频管理：统一响应音效请求，按枚举从 AudioConfigSO 取片段并交给 AudioPlayer 对象池播放；
     /// 背景音乐使用独立音源做淡入淡出，场景加载完成时播放加载音效。
     /// 常驻场景承载，随常驻场景长期存在。
     /// </summary>
@@ -34,6 +36,9 @@ namespace Core.Scripts.Audio
 
         [Header("场景事件")] [Tooltip("订阅场景加载完成事件，每次收到通知时播放 LoadScene 音效。")] [SerializeField]
         private SceneLoadedEventSO sceneLoadedEvent;
+
+        [Header("音效请求")] [Tooltip("接收其他模块发布的音效播放请求。")] [SerializeField]
+        private FeedbackEventSO audioRequestEvent;
 
         [Header("音量")] [Tooltip("音效开始播放时使用的音量。")] [Range(0f, 1f)]
         public float sfxVolume = 0.5f;
@@ -74,11 +79,17 @@ namespace Core.Scripts.Audio
             {
                 Debug.LogError($"[{nameof(AudioPlayerManager)}] sceneLoadedEvent 未指定：场景加载音效不会播放。", this);
             }
+
+            if (audioRequestEvent == null)
+            {
+                Debug.LogError($"[{nameof(AudioPlayerManager)}] audioRequestEvent 未指定：外部音效请求不会处理。", this);
+            }
         }
 
         private void OnEnable()
         {
             sceneLoadedEvent.SceneLoadedEvent += OnSceneLoaded;
+            audioRequestEvent.AudioRequested += OnAudioRequested;
         }
 
         private void Start()
@@ -95,6 +106,28 @@ namespace Core.Scripts.Audio
         private void OnDisable()
         {
             sceneLoadedEvent.SceneLoadedEvent -= OnSceneLoaded;
+            audioRequestEvent.AudioRequested -= OnAudioRequested;
+        }
+
+        /// <summary>播放收到的音效请求，并在联机时交由本地玩家同步给其他客户端。</summary>
+        private void OnAudioRequested(AudioRequest request)
+        {
+            // 先由统一管理器本地播放，保证反馈不等待网络往返。
+            PlaySfx(request.AudioType, request.WorldPosition);
+
+            // 单机模式没有网络玩家，无需执行后续网络转发。
+            if (!NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            {
+                return;
+            }
+
+            // 只把请求交给本地玩家的网络组件，由组件校验 Ready 状态后发送 Command。
+            NetworkAudioPlayer networkAudioPlayer =
+                NetworkClient.localPlayer.GetComponent<NetworkAudioPlayer>();
+            if (networkAudioPlayer != null)
+            {
+                networkAudioPlayer.SendAudioRequest(request);
+            }
         }
 
         /// <summary>场景加载完成时播放统一的加载音效。</summary>

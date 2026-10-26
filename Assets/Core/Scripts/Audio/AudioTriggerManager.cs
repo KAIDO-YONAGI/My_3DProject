@@ -6,19 +6,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Audio
 {
-    public struct FeedbackMessage
-    {
-        public readonly AudioType AudioType;
-        public readonly GameObject Source;
-        public readonly Vector3 WorldPosition;
-
-        public FeedbackMessage(AudioType audioType, GameObject source, Vector3 worldPosition)
-        {
-            AudioType = audioType;
-            Source = source;
-            WorldPosition = worldPosition;
-        }
-    }
+    /// <summary>读取本地测试输入并通过音频事件请求播放受击音效。</summary>
     public class AudioTriggerManager : MonoBehaviour
     {
 
@@ -58,11 +46,8 @@ namespace Core.Scripts.Audio
                 return;
             }
 
-            Vector3 worldPosition = source.transform.position;
-            // 本地先播放，保证操作反馈不需要等待服务器往返。
-            AudioPlayerManager.Instance.PlaySfx(AudioType.Hurt, worldPosition);
-            // 再发布带有声源和世界坐标的反馈，由对应的 NetworkAudioPlayer 负责同步给其他客户端。
-            feedbackEvent.OnEventRaised(new FeedbackMessage(AudioType.Hurt, source, worldPosition));
+            // 由 AudioPlayerManager 统一负责本地播放和网络转发。
+            feedbackEvent.RequestAudio(new AudioRequest(AudioType.Hurt, source.transform.position));
         }
 
         private GameObject ResolvePlayer()
