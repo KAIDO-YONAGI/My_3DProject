@@ -161,7 +161,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.ExplodeFromRay(...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
 
-射线命中最近的有效合并平台后，命中表面坐标作为爆炸中心。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 直接使用输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、保留请求半径且破坏数为零。`Update` 在取得有效爆炸中心后发布 `Assets/Core/SO/Events/BlastEventSO.asset`，载荷包含角色根节点与 `AttackRequestPack`；同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+射线命中最近的有效合并平台后，命中表面坐标作为爆炸中心。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 直接使用输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、保留请求半径且破坏数为零。`Update` 在本地爆炸结算成功后读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`，随后在攻击回路末尾发布 `Assets/Core/SO/Events/BlastEventSO.asset`。事件载荷为 `AttackType`、爆炸位置和水平半径，供粒子与音效订阅者响应；网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
 
 ## 目录约定
 

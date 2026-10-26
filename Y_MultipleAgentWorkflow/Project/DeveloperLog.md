@@ -1,5 +1,11 @@
 # Project 开发记录
 
+## 2026-10-27：保留 BlastEventSO 作为攻击表现通知
+
+- `BlastEventSO` 继续表达爆炸事件，只广播攻击类型、世界位置和水平半径，不再中转网络请求。
+- Project 维护计数达到 `5/5`；复核 Project Guide 中事件资产职责、音频请求链、NetworkPlayer 组件顺序和 Prefab 职责说明与实现一致，重置为 `0/5`。
+
+
 ## 2026-10-27：统一音效请求入口与管理器分发
 
 - `FeedbackEventSO` 作为跨模块音效请求入口，载荷 `AudioRequest` 包含音效类型和可选世界坐标。

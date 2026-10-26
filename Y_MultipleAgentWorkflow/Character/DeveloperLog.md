@@ -1,5 +1,11 @@
 # Character 开发记录
 
+## 2026-10-27：攻击网络请求直调与爆炸表现事件
+
+- `Attack` 以 `NetworkClient.localPlayer` 为键缓存本地网络玩家对象上的 `NetworkBlastManager`，本地爆炸结算成功后在该组件上直接调用 `CommandAttack`，并在攻击回路末尾发布 `BlastEventSO`。
+- `BlastMessage` 携带 `AttackType`、世界位置和水平半径，表现订阅者据此触发粒子与音效；Character 维护计数：`1/5 → 2/5`。
+
+
 ## 2026-10-20：开局事件接入准心攻击
 
 - 事件资产：`Assets/Core/SO/Events/GameStartEventSO.asset` 为 `VoidEventSO` 类型，与 `FeedbackEventSO.asset` 同目录。

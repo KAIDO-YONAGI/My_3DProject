@@ -11,7 +11,7 @@
 - `CharacterIdSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
 - `CharacterMotionSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
 - `NetworkAudioPlayer`：接收 `AudioPlayerManager` 转交的本地音效请求，仅由本地拥有者通过 Command 上行音效类型和可选位置，服务器经 ClientRpc 转发给观察者，拥有者由 `includeOwner = false` 排除。
-- `NetworkBlastManager`：本地拥有者订阅 `BlastEventSO`，校验爆炸来源和客户端 Ready 状态后通过 `CommandAttack` 上行爆炸请求，服务器用 `RpcRequestAttack` 通知其他观察者结算。
+- `NetworkBlastManager`：接收本地 `Attack` 直接调用的 `CommandAttack`，由服务器通过 `RpcRequestAttack` 通知其他观察者结算；远端结算后发布 `BlastEventSO` 表现通知。
 - `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer` 和 `NetworkBlastManager`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
@@ -20,7 +20,7 @@
 
 `FeedbackEventSO` 是跨模块的音效请求入口，载荷为 `AudioRequest`，包含音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅该事件并负责本地播放；联网且存在本地玩家时，再把请求交给该玩家的 `NetworkAudioPlayer`。网络组件只校验本地拥有者与客户端 Ready 状态，随后通过 Command 和 ClientRpc 向其他观察者转发。
 
-`Attack` 在本地完成射线爆炸结算后发布 `BlastEventSO`，载荷包含网络玩家来源和 `AttackRequestPack`。来源对象对应的本地 `NetworkBlastManager` 在客户端 Ready 后调用 `CommandAttack`；服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按相同中心和半径执行爆炸，本地拥有者不重复结算。
+`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager`；本地玩家变化时重新获取组件。本地射线爆炸结算成功后，直接调用其 `CommandAttack` 提交包含 `AttackType`、位置、伤害和半径的 `AttackRequestPack`，随后在本地攻击回路末尾发布 `BlastEventSO`。该事件只通知粒子、音效等表现订阅者，不参与网络请求转发。服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按相同中心和半径结算，并在各远端结算后发布带攻击类型、位置和半径的 `BlastEventSO`；拥有者不接收 RPC，因此本地表现只触发一次。
 
 ## 连接与玩家生成
 

@@ -147,7 +147,7 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 `FeedbackEventSO` 是跨模块的音效请求入口，`AudioRequest` 携带音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅并负责本地播放；联网时再将请求交给本地玩家的 `NetworkAudioPlayer`，由其通过 Command 和排除拥有者的 ClientRpc 转发给其他观察者。省略坐标的请求在所有客户端都按 2D 音效播放。
 
-音效请求事件资产为 `Assets/Core/SO/Events/FeedbackEventSO.asset`，常驻场景将其配置在 `AudioPlayerManager`。爆炸请求事件资产为 `Assets/Core/SO/Events/BlastEventSO.asset`，`Attack` 与 `NetworkBlastManager` 引用同一份资产，链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+音效请求事件资产为 `Assets/Core/SO/Events/FeedbackEventSO.asset`，常驻场景将其配置在 `AudioPlayerManager`。`Assets/Core/SO/Events/BlastEventSO.asset` 是攻击结算后的表现通知，由 `Attack` 在本地结算后及 `NetworkBlastManager` 在远端 RPC 结算后发布，载荷包括攻击类型、世界位置和水平半径，供粒子与音效订阅者使用；`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
 
 `Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收。
 
@@ -190,7 +190,7 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 8. `NetworkAudioPlayer`
 9. `NetworkBlastManager`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；`NetworkAudioPlayer` 和 `NetworkBlastManager` 位于网络行为末尾，分别转发音效请求和爆炸请求。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；`NetworkAudioPlayer` 和 `NetworkBlastManager` 位于网络行为末尾，分别转发音效请求和攻击爆炸请求，并在远端爆炸结算后发布表现通知。
 
 ## 角色表现资源
 

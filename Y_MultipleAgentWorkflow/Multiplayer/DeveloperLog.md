@@ -1,5 +1,12 @@
 # Multiplayer 开发记录
 
+## 2026-10-27：攻击请求与爆炸表现事件分离
+
+- `Attack` 不再通过 `BlastEventSO` 中转网络请求，改为直接调用缓存的本地 `NetworkBlastManager.CommandAttack`。
+- `NetworkBlastManager` 移除爆炸事件订阅；拥有者由本地攻击回路发布表现事件，远端客户端在 RPC 爆炸结算后发布同一 `BlastEventSO`，载荷包含 `AttackType`、位置和半径。
+- Multiplayer 维护计数：`2/5 → 3/5`。
+
+
 ## 2026-10-27：由音频管理器统一分发音效请求
 
 - `FeedbackEventSO` 保留为模块间音效请求入口，载荷改为 `AudioRequest`，包含音效类型和可选世界位置。

@@ -47,7 +47,7 @@ InitialScene
 - `Assets/Core/Scripts/UI/`：画布管理器、焦点栈与按钮。
 - `Assets/Core/Scripts/Audio/`：音频配置资产类型、播放器对象池与触发器。
 - `Assets/Core/Scripts/SO/`：场景数据与事件通道的 ScriptableObject 类型。
-- `Assets/Core/Scripts/Common/`：单例基类与通用枚举。
+- `Assets/Core/Scripts/Common/`：单例基类与通用枚举，包括攻击表现类型。
 - `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码。
 - `Assets/Plugins/DynamicBone/`：骨骼跟随（发辫等）的第三方实现。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
@@ -68,10 +68,10 @@ Assets/Core/Scripts/
 │  ├─ Animation/           CharacterAnimator、CharacterMotion、方向与跳跃动画配置
 │  ├─ Interactions/        Attack
 │  └─ Presentation/        CharacterBoneFollower、CharacterVisual
-├─ Common/                 YSingleton、CommonEnums
+├─ Common/                 YSingleton、CommonEnums（含 AttackType）
 ├─ Networking/
 │  ├─ Connection/            AutoStartClient
-│  ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer
+│  ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer、NetworkBlastManager
 │  └─ CharacterPresentation/ NetworkCharacterManager、CharacterPresentationService
 ├─ Scene/                  SceneChanger、InitialLoad、PersistentSceneRegistry、TimeManager、Teleport、FloatingSignboard
 │  └─ VoxelPlatform/       平台数据、运行时状态、烘焙、碰撞、破坏、碎块与渲染

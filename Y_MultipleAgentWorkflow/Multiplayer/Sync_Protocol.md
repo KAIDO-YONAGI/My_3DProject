@@ -94,20 +94,20 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 ### 爆炸事件
 
-`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心后，发布 `BlastEventSO`。`BlastMessage` 携带来源网络玩家对象与 `AttackRequestPack`，后者序列化爆炸中心、伤害值和水平半径。
+`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心后，直接调用缓存的 `NetworkBlastManager.CommandAttack` 提交网络请求。`AttackRequestPack` 序列化攻击类型、爆炸中心、伤害值和水平半径。网络命令与表现事件分离，`BlastEventSO` 只通知攻击已在当前客户端完成结算；`BlastMessage` 携带攻击类型、世界位置和水平半径，供粒子和音效订阅者使用。
 
 ```text
 本地攻击
   → 本地 VoxelPlatformDestruction 立即结算
-  → BlastEventSO
-  → 来源对象对应的本地拥有者 NetworkBlastManager
-  → CommandAttack
+  → 本地 Attack 直接调用缓存的 NetworkBlastManager.CommandAttack
+  → 本地 Attack 在回路末尾发布 BlastEventSO
   → 服务器
   → RpcRequestAttack(includeOwner = false)
   → 其他观察者按中心与半径结算
+  → 各远端 NetworkBlastManager 发布 BlastEventSO
 ```
 
-`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点，只由 `isLocalPlayer` 实例订阅；事件来源必须等于该网络玩家对象，客户端未 Ready 时忽略。ClientRpc 排除拥有者，避免本地即时结算被执行两次。
+`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求位置与半径完成爆炸，再发布 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
 
 ## 兼容性规则
 
