@@ -155,13 +155,13 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 准心交互
 
-`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。
+`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含有效标记、世界爆炸中心、表面命中点和破坏数量；射线未命中平台时返回空结果。
 
 `Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
-射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。射线从相机出发必定先穿过角色自身，`Transform.root` 之下的碰撞体全部排除。碎块层的层名由 `VoxelPlatformRenderer` 提供，破坏检测在查询掩码里去掉这一层，废墟中的碎块既不占用命中缓冲，也不挡住它们后方的方块。`Physics.RaycastNonAlloc` 的结果未排序，在其中取最近的非自身命中；缓冲填满时扩容后重查，命中查询不产生托管分配。
+射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.Explode(Ray, ...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
 
-命中后通过 `GetComponentInParent<VoxelPlatformRenderer>` 取得平台，先用 `TryGetBlockPosition` 按命中点反查方块局部中心，再以该中心调用 `BreakBlocksAroundPosition` 结算一次水平爆炸：半径取组件上的 `blastRadius`，按世界单位生效，垂直范围限定在命中方块自身的高度区间，同一爆炸不会带走相邻层的方块。破坏改动调用侧的平台实例，平台组件是普通 `MonoBehaviour`，结果不跨客户端同步。
+射线命中最近的有效合并平台后，命中表面点同时作为爆炸中心与返回的 `SurfaceHitPoint`。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。Vector3 入口直接使用输入中心，不标记表面命中点；射线没有有效平台命中时返回无效中心与零破坏数。破坏结果由 `AttackResult` 返回调用方，供后续网络消息与本地特效定位使用。
 
 ## 目录约定
 

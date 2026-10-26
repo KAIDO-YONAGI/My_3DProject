@@ -76,18 +76,18 @@
 
 位置键是 `RoundToInt(局部中心 × PositionPrecision)`；分块键是各轴分别计算 `FloorToInt(局部中心 / ChunkSize)`。前者把小数中心量化为整数键，后者确定重建范围，尺寸单位属于平台局部空间。常量取值见 [VoxelPlatformGeometry.cs](../Assets/Core/Scripts/Scene/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L11)。
 
-这些键都是 `Vector3Int`，与 GameObject 名称无关。烘焙方块没有逐块对象引用，通过位置键找到的是方块记录；分块级的视觉和碰撞对象由烘焙分块记录引用。按中心查询先查 `Occupied`，未命中再扫描 `Blocks`，以覆盖已破坏或不参与遮挡的方块。
+这些键都是 `Vector3Int`，与 GameObject 名称无关。烘焙方块没有逐块对象引用，通过位置键找到的是方块记录；分块级的视觉和碰撞对象由烘焙分块记录引用。按中心查询先查 `Occupied`，未命中再检查所属局部 chunk 的方块记录，以覆盖已破坏或不参与遮挡的方块。攻击另有世界 XZ chunk 列索引，按爆炸中心邻接扩展候选。
 
 代码：[采集矩阵和键](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L42)、[运行表与查找](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L24)。
 
-### 一次破坏的完整调用
+### 命中解析与局部重建
 
 ```text
 射线命中 CombinedCollision 下的 MeshCollider
-  → VoxelPlatformRenderer.TryGetBlockPosition
+  → VoxelPlatformDestruction 内部定位平台与碰撞分块
   → HitResolver：命中点转平台局部，再转每块的网格局部，比较包围盒距离
   → 返回命中方块的局部中心
-  → BreakBlock / BreakBlocks：方块 Active=false，按需生成碎块
+  → 区域触发器的内部批量接口：方块 Active=false，按需生成碎块
   → 更新 Occupied
   → 收集自身分块和六向邻块所在分块，用 HashSet 去重
   → MeshBuilder.RebuildChunk：重新剔面、按材质合并视觉、重新合并碰撞
@@ -97,7 +97,7 @@
 
 批量破坏在**同一调用栈内同步完成**，没有“本帧提交、下一帧处理”的队列。一次批量调用内，重叠目标只破坏一次、每个受影响分块只重建一次；连续调用多个单块接口，仍会连续重建。
 
-仍有全量成本的部分：占据索引更新遍历全部方块。射线反查先由命中碰撞体定位所属分块，只把该分块的方块候选交给解析器并计算逆矩阵；体积破坏先把体积合并成世界包围盒、按最大方块半尺寸扩张后映射到分块，只扫描范围内的分块。大量破坏还会同时实例化碎块、生成网格并更新 MeshCollider，合批后的静态帧率不能代表破坏帧耗时。
+攻击查询只检查水平爆炸圆相交的世界 chunk 列及其中方块中心；爆炸后的占据索引只更新状态变化方块，受影响分块的重建仍需要遍历该分块内活动方块。区域触发器按世界体积映射到局部 chunk 范围。大量破坏还会同时实例化碎块、生成网格并更新 MeshCollider，合批后的静态帧率不能代表破坏帧耗时。
 
 代码：[命中反查](../Assets/Core/Scripts/Scene/VoxelPlatform/Collision/VoxelPlatformHitResolver.cs#L11)、[批量破坏](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L170)、[受影响分块与占据索引](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L235)。
 
@@ -146,38 +146,41 @@
 
 ## 5. 接入破坏与碎片表现
 
-### 游戏逻辑调用
+### 攻击爆炸接口
 
-单块攻击先从合并碰撞的命中取得平台和局部中心。保存这两个值，后续可调用 `platform.RestoreBlock(localCenter)` 恢复：
+攻击服务提供 Vector3 与 Ray 两个爆炸入口，均返回 `AttackResult`。Vector3 入口按输入世界坐标结算；Ray 入口在服务内部完成射线过滤、最近有效平台选择和命中方块解析，命中表面点同时作为爆炸中心及结果中的表面命中点。半径是世界空间 XZ 水平半径，不设高度上限；候选从中心所在的世界 chunk 列向相邻列扩展，再按方块中心的水平距离精确筛选。
 
 ```csharp
-using Core.Scripts.Scene.VoxelPlatform;
+using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using UnityEngine;
 
-// 放在已有射线命中处理函数中，hit 为有效的 RaycastHit。
-var platform = hit.collider.GetComponentInParent<VoxelPlatformRenderer>();
-if (platform && platform.TryGetBlockPosition(hit, out Vector3 localCenter))
+AttackResult atPosition = VoxelPlatformDestruction.Explode(worldCenter, blastRadius);
+AttackResult fromRay = VoxelPlatformDestruction.Explode(
+    ray, maxDistance, hitLayers, playerRoot, blastRadius);
+if (fromRay.HasSurfaceHitPoint)
 {
-    platform.BreakBlock(localCenter);
+    Vector3 hitPoint = fromRay.SurfaceHitPoint;
 }
 ```
 
-只需要立即破坏时可用 `BreakBlockAtHit(hit)`。已知多个局部中心时，用一次 `platform.BreakBlocks(localCenters)`；已知世界空间体积时，用 `platform.BreakBlocksIn(blasts)`。
+Vector3 入口返回输入中心且不提供表面命中点。Ray 未命中有效平台时两个有效标记均为 false，破坏数量为零。`Attack.AttackFromCrosshair()` 将结果直接返回调用方。
 
-跨平台的区域破坏交给 `VoxelPlatformDestruction`，将所有标记碰撞体一次传入：
+### 区域触发器调用
+
+独立区域触发器将所有标记碰撞体一次传入 `BreakRegions`：
 
 ```csharp
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
 
 // regions 为 Collider 数组；collisionDuration 为本次碎块保持碰撞的时长。
-int broken = VoxelPlatformDestruction.Break(regions, collisionDuration);
+int broken = VoxelPlatformDestruction.BreakRegions(regions, collisionDuration);
 ```
 
-该入口遍历已登记的启用平台，返回实际破坏数，也支持世界 `Bounds`、球或 `VoxelPlatformBlast` 列表。体积判定使用方块的世界轴对齐包围盒；球形标记使用缩放后的半径，其他标记取世界包围盒。
+区域入口按标记 Collider 的世界包围盒或球形范围结算已登记平台，返回实际破坏数；它与两个攻击爆炸入口分开。
 
 `VoxelPlatformBlastTrigger` 将触发事件接到同一入口；区域字段留空时收集子碰撞体，再退到自身碰撞体。它还承接开局事件、平台刚体与围栏行为，使用时应按当前组件职责配置引用。
 
-代码：[公开平台接口](../Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs#L118)、[跨平台破坏](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformDestruction.cs#L21)、[触发器](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformBlastTrigger.cs#L49)。
+代码：[平台局部方块接口](../Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs#L118)、[爆炸与区域结算](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformDestruction.cs#L21)、[触发器](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformBlastTrigger.cs#L49)。
 
 ### 碎块脚本挂在哪里
 

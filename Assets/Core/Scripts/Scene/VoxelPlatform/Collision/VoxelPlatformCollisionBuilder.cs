@@ -13,6 +13,8 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
         private readonly VoxelPlatformRuntime runtime;
         // 分块到碰撞对象的映射，与表面表分开维护，两边生命周期互不依赖。
         internal readonly Dictionary<Vector3Int, VoxelPlatformCollisionSurface> Surfaces = new ();
+        // 射线命中后按 Collider 直接取得所属 chunk，避免扫描整张碰撞分块表。
+        private readonly Dictionary<Collider, Vector3Int> colliderChunks = new();
 #if UNITY_EDITOR
         // 只在烘焙期间存在，用于复用上一轮烘焙的碰撞对象。
         private Queue<GameObject> bakePool;
@@ -20,26 +22,22 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
 
         internal int ColliderCount { get; private set; }
 
+        /// <summary>根据合并碰撞体索引取得所属 chunk。</summary>
         internal bool TryGetChunk(Collider collider, out Vector3Int chunk)
         {
-            // 碰撞表以区块为键而命中给出 Collider；这里只扫描区块表，不扫描平台内的方块。
-            foreach (KeyValuePair<Vector3Int, VoxelPlatformCollisionSurface> entry in Surfaces)
-            {
-                if (entry.Value.Object != collider.gameObject) continue;
-                chunk = entry.Key;
-                return true;
-            }
-
+            if (collider && colliderChunks.TryGetValue(collider, out chunk)) return true;
             chunk = default;
             return false;
         }
 
+        /// <summary>绑定平台与运行状态，创建碰撞构建器。</summary>
         internal VoxelPlatformCollisionBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
         {
             this.owner = owner;
             this.runtime = runtime;
         }
 
+        /// <summary>创建并启用承载合并碰撞体的根节点。</summary>
         internal void ActivateRoot()
         {
             // 碰撞根与表面根一样按需创建，平台之间互不干扰。
@@ -47,6 +45,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             owner.CollisionRoot.gameObject.SetActive(true);
         }
 
+        /// <summary>登记烘焙碰撞体，并为缺少碰撞资产的平台重建碰撞。</summary>
         internal void UseBakedChunks(List<VoxelPlatformBakedChunk> bakedChunks)
         {
             foreach (VoxelPlatformBakedChunk chunk in bakedChunks)
@@ -55,6 +54,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
                 if (chunk.Collision == null || !chunk.Collision.Object) continue;
                 chunk.Collision.Baked = true;
                 Surfaces[chunk.Position] = chunk.Collision;
+                RegisterCollider(chunk.Position, chunk.Collision.Object);
                 chunk.Collision.Object.SetActive(true);
                 ColliderCount++;
             }
@@ -63,6 +63,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             if (Surfaces.Count == 0) runtime.ForEachChunk(RebuildChunk);
         }
 
+        /// <summary>重建一个 chunk 的完整方块网格碰撞体。</summary>
         internal void RebuildChunk(Vector3Int chunk)
         {
             ClearChunk(chunk);
@@ -107,11 +108,21 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             // 清空后重新赋值，使复用的碰撞对象采用本次生成的网格。
             collider.sharedMesh = null;
             collider.sharedMesh = mesh;
-            Surfaces[chunk] = new VoxelPlatformCollisionSurface { Object = child, Mesh = mesh };
+            VoxelPlatformCollisionSurface surface = new() { Object = child, Mesh = mesh };
+            Surfaces[chunk] = surface;
+            colliderChunks[collider] = chunk;
             ColliderCount++;
         }
 
+        /// <summary>登记烘焙碰撞对象的 Collider 与所属 chunk。</summary>
+        private void RegisterCollider(Vector3Int chunk, GameObject collisionObject)
+        {
+            Collider collider = collisionObject.GetComponent<Collider>();
+            if (collider) colliderChunks[collider] = chunk;
+        }
+
         // 烘焙时复用旧碰撞对象，避免每轮烘焙都新建一批子对象。
+        /// <summary>从烘焙复用池取碰撞对象，池空时新建对象。</summary>
         private GameObject TakeObject(string name)
         {
 #if UNITY_EDITOR
@@ -120,10 +131,13 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             return new GameObject(name);
         }
 
+        /// <summary>移除单个 chunk 的碰撞映射并释放非烘焙对象。</summary>
         private void ClearChunk(Vector3Int chunk)
         {
             // 该分块从没生成过碰撞，没有可清理的对象。
             if (!Surfaces.TryGetValue(chunk, out VoxelPlatformCollisionSurface collision)) return;
+            if (collision.Object && collision.Object.TryGetComponent(out Collider collider))
+                colliderChunks.Remove(collider);
             // 先关闭再销毁，销毁要等到帧末才生效，这一帧不能再挡路。
             if (collision.Object) collision.Object.SetActive(false);
             ColliderCount--;
@@ -136,16 +150,19 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             Surfaces.Remove(chunk);
         }
 
+        /// <summary>清理所有碰撞 chunk 并关闭碰撞根节点。</summary>
         internal void Clear()
         {
             // 复制键集合再遍历，ClearChunk 会从字典里移除当前项。
             foreach (Vector3Int chunk in new List<Vector3Int>(Surfaces.Keys)) ClearChunk(chunk);
+            colliderChunks.Clear();
             ColliderCount = 0;
             // 根节点关闭，场景层级里不留空容器。
             if (owner.CollisionRoot) owner.CollisionRoot.gameObject.SetActive(false);
         }
 
 #if UNITY_EDITOR
+        /// <summary>收集本轮烘焙可复用的旧碰撞对象。</summary>
         internal void BeginBake(List<VoxelPlatformBakedChunk> bakedChunks)
         {
             // 先收回旧碰撞对象供重建复用，平台内的碰撞引用因此保持不变。
@@ -155,6 +172,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
                     bakePool.Enqueue(chunk.Collision.Object);
         }
 
+        /// <summary>销毁未复用的旧对象并结束碰撞对象复用。</summary>
         internal void EndBake()
         {
             // 池里剩余的旧对象这次没有被复用，烘焙结束后统一销毁。

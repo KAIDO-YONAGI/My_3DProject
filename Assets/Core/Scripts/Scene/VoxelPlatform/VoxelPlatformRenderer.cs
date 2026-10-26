@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Core.Scripts.Scene.VoxelPlatform.Baking;
-using Core.Scripts.Scene.VoxelPlatform.Collision;
 using Core.Scripts.Scene.VoxelPlatform.Data;
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using Core.Scripts.Scene.VoxelPlatform.Runtime;
@@ -9,8 +8,7 @@ using UnityEngine;
 namespace Core.Scripts.Scene.VoxelPlatform
 {
     /// <summary>
-    /// 平台的生命周期和调用入口。方块接口使用平台局部空间中的网格中心坐标，
-    /// 破坏、恢复与命中反查成员公开给游戏逻辑调用。
+    /// 平台的生命周期和局部方块状态入口。世界爆炸由 VoxelPlatformDestruction 统一结算。
     /// </summary>
     // ExecuteAlways 让编辑视图同样维护合并表面，界面上的启停与破坏操作直接作用在运行组件上。
     [ExecuteAlways, DisallowMultipleComponent]
@@ -46,8 +44,9 @@ namespace Core.Scripts.Scene.VoxelPlatform
 
         private VoxelPlatformRuntime runtime;
         private float nextRefresh;
-        // 运行资源按需创建，从未启用的平台不承担构造开销。
-        private VoxelPlatformRuntime Runtime => runtime ??= new VoxelPlatformRuntime(this);
+        // 运行资源按需创建；破坏服务在同一程序集内直接使用该运行状态，不经过转发 API。
+        /// <summary>按需创建并返回此平台唯一的运行状态对象。</summary>
+        internal VoxelPlatformRuntime Runtime => runtime ??= new VoxelPlatformRuntime(this);
 
         internal Transform SurfaceRoot { get => surfaceRoot; set => surfaceRoot = value; }
         internal Transform CollisionRoot { get => collisionRoot; set => collisionRoot = value; }
@@ -63,6 +62,7 @@ namespace Core.Scripts.Scene.VoxelPlatform
         public bool HasBakedSurface => surfaceRoot && bakedBlocks.Count > 0 && bakedChunks.Count > 0;
         public bool HasBakeSources => VoxelPlatformSourceCollector.HasSourceGeometry(this);
 
+        /// <summary>登记活动平台，并在适用时加载烘焙表面。</summary>
         private void OnEnable()
         {
             // 平台在启用时登记到破坏服务，批量结算按登记表遍历，不必扫描场景。
@@ -75,6 +75,7 @@ namespace Core.Scripts.Scene.VoxelPlatform
             if (HasBakedSurface) UseBakedSurface();
         }
 
+        /// <summary>按固定间隔检查源方块变化并刷新运行状态。</summary>
         private void LateUpdate()
         {
             // 编辑模式的源 Cube 由 OnEnable 直接显示，改布局时用菜单重建这个组件。
@@ -84,6 +85,7 @@ namespace Core.Scripts.Scene.VoxelPlatform
             RefreshChangedBlocks();
         }
 
+        /// <summary>注销活动平台并清理生成的运行资源。</summary>
         private void OnDisable()
         {
             VoxelPlatformDestruction.Unregister(this);
@@ -100,6 +102,7 @@ namespace Core.Scripts.Scene.VoxelPlatform
         }
 
 #if UNITY_EDITOR
+        /// <summary>在编辑器中把当前源布局烘焙为表面和分块碰撞网格。</summary>
         public Mesh[] Bake()
         {
             // 只在编辑器暴露：烘焙要写资产和序列化字段，运行时代码不参与。
@@ -115,67 +118,6 @@ namespace Core.Scripts.Scene.VoxelPlatform
             Runtime.Rebuild();
         }
 
-        /// <summary>破坏局部中心对应的方块，创建碎块并同步局部表面与碰撞。</summary>
-        public bool BreakBlock(Vector3 localPosition)
-        {
-            return SetBlockActive(localPosition, false);
-        }
-
-        /// <summary>恢复局部中心对应的方块，同时清理该方块的运行碎块实例。</summary>
-        public bool RestoreBlock(Vector3 localPosition)
-        {
-            return SetBlockActive(localPosition, true);
-        }
-
-        /// <summary>
-        /// 按平台局部方块中心批量破坏，受影响分块只重建一次。
-        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
-        /// </summary>
-        public int BreakBlocks(IReadOnlyList<Vector3> localCenters, float? collisionDuration = null)
-        {
-            return Runtime.BreakBlocks(localCenters, collisionDuration);
-        }
-
-        /// <summary>
-        /// 破坏与这些世界空间体积相交的方块，受影响分块只重建一次。
-        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
-        /// </summary>
-        public int BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast> blasts, float? collisionDuration = null)
-        {
-            return Runtime.BreakBlocksIn(blasts, transform.localToWorldMatrix, collisionDuration);
-        }
-
-        /// <summary>
-        /// 以命中方块中心结算一次水平爆炸，半径按世界单位生效，只破坏本平台内相交的方块。
-        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
-        /// </summary>
-        internal int BreakBlocksAroundPosition(Vector3 localPosition, float worldRadius,
-            float? collisionDuration = null)
-        {
-            return Runtime.BreakBlocksAroundPosition(localPosition, worldRadius, collisionDuration);
-        }
-
-        /// <summary>从本平台合并碰撞的命中取得局部方块中心，供破坏与恢复共用。</summary>
-        public bool TryGetBlockPosition(RaycastHit hit, out Vector3 localPosition)
-        {
-            // 只把命中区块的方块交给解析器，避免为一次命中遍历整个 Blocks 列表。
-            if (!hit.collider || !Runtime.Meshes.TryGetBlocksForCollision(hit.collider,
-                    out List<VoxelPlatformBlock> chunkBlocks))
-            {
-                localPosition = default;
-                return false;
-            }
-
-            return VoxelPlatformHitResolver.TryGetBlockPosition(transform, collisionRoot,
-                chunkBlocks, hit, out localPosition);
-        }
-
-        public bool BreakBlockAtHit(RaycastHit hit)
-        {
-            // 反查失败说明点到别的碰撞体，或落点没有对应方块，直接返回 false。
-            return TryGetBlockPosition(hit, out Vector3 localPosition) && BreakBlock(localPosition);
-        }
-
         /// <summary>返回是否找到方块，重复设置相同状态也返回成功。</summary>
         public bool SetBlockActive(Vector3 localPosition, bool active)
         {
@@ -183,12 +125,13 @@ namespace Core.Scripts.Scene.VoxelPlatform
             return Runtime.SetBlockActive(localPosition, active);
         }
 
-        // 破坏逻辑切换 Intact 后可立即调用；定时检查也兼容 Inspector 中的启停和移动。
+        /// <summary>同步源方块的启停与移动，并局部刷新平台外观和碰撞。</summary>
         public void RefreshChangedBlocks()
         {
             Runtime.RefreshChangedBlocks();
         }
 
+        /// <summary>创建归属此平台且初始关闭的运行对象根节点。</summary>
         internal Transform CreateRoot(string name)
         {
             // 运行生成物由平台管理；烘焙时再将需要持久化的对象改为可保存。
@@ -200,6 +143,7 @@ namespace Core.Scripts.Scene.VoxelPlatform
             return group.transform;
         }
 
+        /// <summary>按播放状态选择延迟销毁或立即销毁 Unity 运行对象。</summary>
         internal static void Release(Object value)
         {
             if (!value) return;

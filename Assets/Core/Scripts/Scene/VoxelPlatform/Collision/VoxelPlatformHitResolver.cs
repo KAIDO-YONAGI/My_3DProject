@@ -8,6 +8,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
     // 合并碰撞不含每块的 GameObject，通过局部空间包围盒反查命中的启用方块。
     static class VoxelPlatformHitResolver
     {
+        /// <summary>仅在命中指定碰撞根时，将命中点解析为最近的活动方块局部中心。</summary>
         internal static bool TryGetBlockPosition(Transform platform, Transform collisionRoot,
             List<VoxelPlatformBlock> blocks, RaycastHit hit, out Vector3 localPosition)
         {

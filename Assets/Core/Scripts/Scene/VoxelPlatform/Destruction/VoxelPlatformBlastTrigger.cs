@@ -27,12 +27,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         private readonly List<Collider> resolved = new();
         private bool fired;
 
+        /// <summary>检查平台刚体和围栏引用是否配置。</summary>
         private void Awake()
         {
             ValidateReferences();
         }
 
         // 必填引用只校验一次：缺失时按字段名报错，触发回调里直接解引用。
+        /// <summary>报告触发流程所需但未配置的平台刚体或围栏引用。</summary>
         private void ValidateReferences()
         {
             if (platform == null)
@@ -46,6 +48,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             }
         }
 
+        /// <summary>玩家进入时广播开局事件、结算区域破坏并切换平台状态。</summary>
         private void OnTriggerEnter(Collider other)
         {
             if (!other.CompareTag("Player")) return;
@@ -66,10 +69,11 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             if (oneShot && fired) return 0;
             fired = true;
             CollectRegions(resolved);
-            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.Break(resolved, collisionDuration);
+            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.BreakRegions(resolved, collisionDuration);
         }
 
         // 留空时退到子物体上的碰撞体；仍然找不到就把触发器自己当成区域。
+        /// <summary>按显式数组、子碰撞体、自身碰撞体的顺序收集破坏区域。</summary>
         private void CollectRegions(List<Collider> results)
         {
             results.Clear();

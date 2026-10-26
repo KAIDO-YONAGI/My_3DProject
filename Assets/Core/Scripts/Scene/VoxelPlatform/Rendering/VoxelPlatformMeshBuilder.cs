@@ -27,14 +27,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         internal int SurfaceRendererCount { get; private set; }
         internal int CollisionColliderCount => Collisions.ColliderCount;
 
-        internal bool TryGetBlocksForCollision(Collider collider, out List<VoxelPlatformBlock> blocks)
-        {
-            blocks = null;
-            // 先由碰撞体找到所属区块，再由运行索引取得该区块的方块候选。
-            return Collisions.TryGetChunk(collider, out Vector3Int chunk) &&
-                   runtime.TryGetChunkBlocks(chunk, out blocks);
-        }
-
+        /// <summary>绑定平台运行状态并创建对应的碰撞构建器。</summary>
         internal VoxelPlatformMeshBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
         {
             this.owner = owner;
@@ -42,6 +35,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             Collisions = new VoxelPlatformCollisionBuilder(owner, runtime);
         }
 
+        /// <summary>创建并启用表面与碰撞根节点。</summary>
         internal void ActivateRoots()
         {
             // 根节点首次使用时才创建，平台之间不共享同一批子对象。
@@ -51,6 +45,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             Collisions.ActivateRoot();
         }
 
+        /// <summary>登记烘焙表面并加载对应 chunk 的碰撞。</summary>
         internal void UseBakedChunks(List<VoxelPlatformBakedChunk> bakedChunks)
         {
             // 烘焙表面已经合并完成，直接登记引用；标记 Baked 让后续替换只隐藏，不销毁属于资产的网格。
@@ -79,6 +74,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             Collisions.UseBakedChunks(bakedChunks);
         }
 
+        /// <summary>按材质重建一个 chunk 的可见表面和完整碰撞。</summary>
         internal void RebuildChunk(Vector3Int chunk)
         {
             // 先清掉旧表面再生成，否则同一分块会残留上一次的渲染对象。
@@ -163,6 +159,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         }
 
         // 烘焙时复用旧表面对象，避免每轮烘焙都新建一批子对象。
+        /// <summary>从烘焙复用池取表面对象，池空时创建对象。</summary>
         private GameObject TakeSurfaceObject(string name)
         {
 #if UNITY_EDITOR
@@ -172,6 +169,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             return new GameObject(name);
         }
 
+        /// <summary>停用并清理一个 chunk 的旧表面与计数。</summary>
         private void ClearChunk(Vector3Int chunk)
         {
             // 该分块从没生成过表面，没有可清理的对象。
@@ -192,6 +190,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             Surfaces.Remove(chunk);
         }
 
+        /// <summary>释放所有表面、碰撞和网格变体并关闭根节点。</summary>
         internal void Clear()
         {
             // 复制键集合再遍历，ClearChunk 会从字典里移除当前项。
@@ -208,6 +207,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         }
 
 #if UNITY_EDITOR
+        /// <summary>收集本轮烘焙可复用的旧表面对象并启动碰撞复用。</summary>
         internal void BeginBake(List<VoxelPlatformBakedChunk> bakedChunks)
         {
             // 烘焙会重建同一分块的表面，先收回旧对象供重建复用，平台内的序列化引用因此保持不变。
@@ -220,6 +220,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             Collisions.BeginBake(bakedChunks);
         }
 
+        /// <summary>销毁未复用的旧表面对象并结束表面与碰撞复用。</summary>
         internal void EndBake()
         {
             // 池里剩余的旧对象这次没有被复用，烘焙结束后统一销毁。

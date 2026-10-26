@@ -1,28 +1,25 @@
 using Core.Scripts.Character.Input;
+using Core.Scripts.Networking.Sync;
 using Core.Scripts.SO;
-using Core.Scripts.Scene.VoxelPlatform;
+using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using UnityEngine;
 
 namespace Core.Scripts.Character.Interactions
 {
     /// <summary>
-    /// 准心交互入口：读取攻击输入，沿相机朝向发射射线，命中方块平台后破坏对应方块。
+    /// 准心交互入口：读取攻击输入，沿相机朝向提交射线爆炸并返回命中结果。
     /// 光标锁定时鼠标坐标恒定在屏幕中心，射线方向因此取相机朝向。
     /// </summary>
     [DisallowMultipleComponent]
     public class Attack : MonoBehaviour
     {
-        // 命中缓冲复用同一份数组，按下攻击不产生垃圾；填满时扩容重试，不退回分配版本。
-        private const int HitCapacity = 16;
-        private const int MaxHitCapacity = 64;
-
         [Header("检测")] [Tooltip("从角色位置起算的可破坏距离，超出后不再命中方块。")] [SerializeField, Min(0.1f)]
         private float reachDistance = 5f;
 
         [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")] [SerializeField]
         private LayerMask hitLayers = ~0;
 
-        [Header("爆炸")] [Tooltip("命中方块后以该方块中心结算的水平爆炸半径，单位为世界单位。")] [SerializeField, Min(0f)]
+        [Header("爆炸")] [Tooltip("命中位置的水平爆炸半径，单位为世界单位。")] [SerializeField, Min(0f)]
         private float blastRadius = 0.45f;
 
         [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
@@ -35,11 +32,10 @@ namespace Core.Scripts.Character.Interactions
         // 开局事件到达后置位的拒绝标志：置位期间不读攻击输入，也不发射线。
         private bool attackRejected = true;
 
-        private RaycastHit[] hits = new RaycastHit[HitCapacity];
-
         // 相机挂在角色 Prefab 内，根节点即角色边界，用来排除射线穿过的自身碰撞体。
         private Transform playerRoot;
 
+        /// <summary>检查事件引用并记录角色根节点，用于计算射线距离和排除自身。</summary>
         private void Awake()
         {
             ValidateReferences();
@@ -47,6 +43,7 @@ namespace Core.Scripts.Character.Interactions
         }
 
         // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        /// <summary>报告缺失的游戏开始或重试事件引用。</summary>
         private void ValidateReferences()
         {
             if (gameStartEventSO == null)
@@ -60,12 +57,14 @@ namespace Core.Scripts.Character.Interactions
             }
         }
 
+        /// <summary>启用时订阅攻击状态所需的开始与重试事件。</summary>
         private void OnEnable()
         {
             gameStartEventSO.VoidEvent += OnGameStart;
             retryEventSO.VoidEvent += OnGameRetry;
         }
 
+        /// <summary>停用时解除事件订阅并释放输入资源。</summary>
         private void OnDisable()
         {
             gameStartEventSO.VoidEvent -= OnGameStart;
@@ -75,17 +74,17 @@ namespace Core.Scripts.Character.Interactions
             input.Dispose();
         }
 
-        /// <summary>
-        /// 开局事件回调：按开关置位拒绝标志，订阅关系在 OnEnable/OnDisable 内建立与解除。
-        /// </summary>
+        /// <summary>收到开局事件后允许玩家攻击。</summary>
         private void OnGameStart()
         {
             attackRejected = false;
         }
+        /// <summary>接收重试事件并暂时拒绝攻击。</summary>
         private void OnGameRetry()
         {
             attackRejected = true;
         }
+        /// <summary>检查攻击状态、输入和光标归属，满足条件时执行一次准心爆炸。</summary>
         private void Update()
         {
             // 拒绝标志置位时整段攻击逻辑直接返回。
@@ -105,45 +104,20 @@ namespace Core.Scripts.Character.Interactions
                 return;
             }
 
-            BreakBlockUnderCrosshair();
+            AttackResult result=AttackFromCrosshair();
+            NetworkBlastManager.Instance.CommandAttack(new AttackRequestPack(result.ExplosionCenter, 1, blastRadius));
         }
 
-        private void BreakBlockUnderCrosshair()
+        /// <summary>从准心提交射线爆炸，并把命中点与破坏数量返回给调用方。</summary>
+        public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(transform.position, transform.forward);
-            float maxDistance = ResolveMaxDistance();
-            // 碎块层由平台模块定义，破坏检测排除这一层，废墟里瞄准不会被碎块挡住。
-            int queryLayers = hitLayers.value & ~VoxelPlatformRenderer.DebrisMask;
-            int count = Physics.RaycastNonAlloc(
-                ray, hits, maxDistance, queryLayers, QueryTriggerInteraction.Ignore);
-
-            // 缓冲区被填满时结果可能缺少最近命中，扩容后重试；到上限仍填满时按现有结果处理。
-            while (count == hits.Length && hits.Length < MaxHitCapacity)
-            {
-                hits = new RaycastHit[hits.Length * 2];
-                count = Physics.RaycastNonAlloc(
-                    ray, hits, maxDistance, queryLayers, QueryTriggerInteraction.Ignore);
-            }
-
-            if (!TryPickNearest(count, out RaycastHit nearest))
-            {
-                //未命中可破坏目标
-                return;
-            }
-
-            // 平台把方块合成一份碰撞，命中后由平台按命中点反查具体方块。
-            VoxelPlatformRenderer platform = nearest.collider.GetComponentInParent<VoxelPlatformRenderer>();
-            if (platform == null)
-            {
-                return;
-            }
-
-            bool resolved = platform.TryGetBlockPosition(nearest, out Vector3 localPosition);
-            // 命中点反查到的方块中心就是爆炸中心，离开方块表面的部分同样参与结算。
-            bool broken = resolved && platform.BreakBlocksAroundPosition(localPosition, blastRadius) > 0;
+            return VoxelPlatformDestruction.Explode(
+                ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
         }
 
         // 相机位于角色身后，检测距离从角色位置起算，reachDistance 才是玩家感知到的攻击范围。
+        /// <summary>补回相机位于角色身后的距离，使可感知攻击距离从角色位置起算。</summary>
         private float ResolveMaxDistance()
         {
             float originDistance = playerRoot != null
@@ -152,32 +126,5 @@ namespace Core.Scripts.Character.Interactions
             return originDistance + reachDistance;
         }
 
-        // NonAlloc 的结果未排序，只在前 count 个元素里取最近的非自身碰撞体。
-        private bool TryPickNearest(int count, out RaycastHit nearest)
-        {
-            nearest = default;
-            float nearestDistance = float.MaxValue;
-            bool found = false;
-            for (int index = 0; index < count; index++)
-            {
-                RaycastHit hit = hits[index];
-                if (hit.collider == null || IsPlayerCollider(hit.collider.transform) || hit.distance >= nearestDistance)
-                {
-                    continue;
-                }
-
-                nearestDistance = hit.distance;
-                nearest = hit;
-                found = true;
-            }
-
-            return found;
-        }
-
-        // 射线从相机出发，穿过角色自身后才到达场景，整条角色层级都不参与破坏检测。
-        private bool IsPlayerCollider(Transform hitTransform)
-        {
-            return playerRoot != null && (hitTransform == playerRoot || hitTransform.IsChildOf(playerRoot));
-        }
     }
 }
