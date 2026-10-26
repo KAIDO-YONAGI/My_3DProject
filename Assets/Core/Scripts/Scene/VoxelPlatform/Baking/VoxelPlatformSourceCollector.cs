@@ -43,6 +43,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Baking
                 Transform fragmentContainer = VoxelPlatformFragments.FindContainer(filter.transform);
                 // 格键取网格包围盒中心，源 Cube 的轴心不在几何中心时也能落进正确的格子。
                 Vector3 center = matrix.MultiplyPoint3x4(filter.sharedMesh.bounds.center);
+                Vector3Int position = VoxelPlatformGeometry.PositionKeyOf(center);
                 var block = new VoxelPlatformBlock
                 {
                     // 源对象引用只在编辑布局里有效，烘焙时会被丢掉。
@@ -57,10 +58,8 @@ namespace Core.Scripts.Scene.VoxelPlatform.Baking
                     FragmentMatrix = fragmentContainer
                         ? worldToLocal * fragmentContainer.localToWorldMatrix
                         : matrix,
-                    Position = Vector3Int.RoundToInt(center * VoxelPlatformGeometry.PositionPrecision),
-                    Chunk = new Vector3Int(Mathf.FloorToInt(center.x / VoxelPlatformGeometry.ChunkSize),
-                        Mathf.FloorToInt(center.y / VoxelPlatformGeometry.ChunkSize),
-                        Mathf.FloorToInt(center.z / VoxelPlatformGeometry.ChunkSize)),
+                    Position = position,
+                    Chunk = VoxelPlatformGeometry.ChunkOfPosition(position),
                     Occludes = VoxelPlatformGeometry.IsUnitCube(filter.sharedMesh, matrix),
                     // 记下原始开关，退出预览时按原样恢复。
                     OriginalForceOff = renderer.forceRenderingOff,

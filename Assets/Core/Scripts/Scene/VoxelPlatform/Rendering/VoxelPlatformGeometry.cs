@@ -22,6 +22,44 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         // 变体按源网格加掩码缓存，同一素材的所有方块共用一份剔除后的网格。
         private readonly Dictionary<Mesh, Dictionary<int, Mesh>> meshVariants =new();
 
+        // 局部中心按位置精度取整成方块键，收集与查找共用同一套落格规则。
+        internal static Vector3Int PositionKeyOf(Vector3 localPosition)
+        {
+            return Vector3Int.RoundToInt(localPosition * PositionPrecision);
+        }
+
+        // 方块键换算区块坐标；整数除法对负坐标向下取整，与局部中心的取整结果一致。
+        internal static Vector3Int ChunkOfPosition(Vector3Int position)
+        {
+            const int length = PositionPrecision * ChunkSize;
+            return new Vector3Int(FloorDiv(position.x, length),
+                FloorDiv(position.y, length), FloorDiv(position.z, length));
+        }
+
+        // 局部中心先取方块键再换算区块，负坐标与边界值都只有一种解释。
+        internal static Vector3Int ChunkOf(Vector3 localCenter)
+        {
+            return ChunkOfPosition(PositionKeyOf(localCenter));
+        }
+
+        // 方块在平台局部空间中的包围盒半尺寸，用于把世界爆炸范围保守扩张到方块覆盖范围。
+        internal static Vector3 LocalHalfSize(VoxelPlatformBlock block)
+        {
+            Vector3 extents = block.Mesh.bounds.extents;
+            Matrix4x4 matrix = block.Matrix;
+            return new Vector3(
+                Mathf.Abs(matrix.m00) * extents.x + Mathf.Abs(matrix.m01) * extents.y + Mathf.Abs(matrix.m02) * extents.z,
+                Mathf.Abs(matrix.m10) * extents.x + Mathf.Abs(matrix.m11) * extents.y + Mathf.Abs(matrix.m12) * extents.z,
+                Mathf.Abs(matrix.m20) * extents.x + Mathf.Abs(matrix.m21) * extents.y + Mathf.Abs(matrix.m22) * extents.z);
+        }
+
+        private static int FloorDiv(int value, int divisor)
+        {
+            // C# 的整数除法向零取整，负余数要再减一才等于向下取整。
+            int quotient = value / divisor;
+            return value < 0 && quotient * divisor != value ? quotient - 1 : quotient;
+        }
+
         internal static bool IsUnitCube(Mesh mesh, Matrix4x4 matrix)
         {
             // 接触面剔除依赖标准单位 Cube；缩放、斜转与镜像几何保留完整表面。

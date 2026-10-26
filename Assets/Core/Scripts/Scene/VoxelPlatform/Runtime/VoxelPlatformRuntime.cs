@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Core.Scripts.Scene.VoxelPlatform.Baking;
 using Core.Scripts.Scene.VoxelPlatform.Data;
@@ -18,13 +19,18 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
         // 批量破坏的收集缓冲，避免每次破坏都分配临时列表。
         private readonly List<VoxelPlatformBlock> brokenBlocks = new();
         private readonly List<VoxelPlatformBlock> pendingTargets = new();
+        // 源布局收集与爆炸结算共用的缓冲，重建和攻击都不再分配临时列表。
+        private readonly List<VoxelPlatformBlock> collected = new();
+        private readonly List<VoxelPlatformBlast> volumes = new();
         // 只有带源组件的编辑布局才需要轮询，运行资源不必承担这段开销。
         private bool hasSourceBlocks;
+        // 方块在平台局部空间中的最大包围盒半尺寸，世界爆炸范围按它扩张后再映射区块。
+        private Vector3 maxBlockHalfSize;
 
-        // 三张表各负责一件事：顺序遍历用列表，接触面查询用占据索引，空间重建用分块表。
-        internal readonly List<VoxelPlatformBlock> Blocks = new();
+        // 运行时唯一的方块集合按区块登记，位置查找与分块重建都从所属区块起步。
+        private readonly Dictionary<Vector3Int, List<VoxelPlatformBlock>> chunks = new();
+        // 遮挡索引只登记启用且能挡住邻居的方块，供接触面剔除与邻块查询使用。
         internal readonly Dictionary<Vector3Int, VoxelPlatformBlock> Occupied = new();
-        internal readonly Dictionary<Vector3Int, List<VoxelPlatformBlock>> Chunks =new();
         internal VoxelPlatformMeshBuilder Meshes { get; }
 
         internal VoxelPlatformRuntime(VoxelPlatformRenderer owner)
@@ -39,13 +45,8 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             // 启用运行资源只恢复数据索引和已保存的网格，不重新收集源 Cube。
             Clear();
             if (!owner.HasBakedSurface) return;
-            foreach (VoxelPlatformBakedBlock saved in owner.BakedBlocks)
-            {
-                // 烘焙记录已不含源对象引用，只还原落格、矩阵和渲染配置。
-                VoxelPlatformBlock block = saved.ToRuntimeBlock();
-                Blocks.Add(block);
-                AddToChunk(block);
-            }
+            List<VoxelPlatformBakedBlock> saved = owner.BakedBlocks;
+            for (int index = 0; index < saved.Count; index++) IndexBlock(saved[index].ToRuntimeBlock());
             UpdateOccupancy();
             Meshes.UseBakedChunks(owner.BakedChunks);
         }
@@ -63,13 +64,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             // 根节点平时是关闭的，重建前先启用，新生成的子对象才会显示。
             Meshes.ActivateRoots();
             // 从保留源组件的编辑布局重新收集方块记录。
-            VoxelPlatformSourceCollector.Collect(owner, Blocks);
-            hasSourceBlocks = Blocks.Count > 0;
-            foreach (VoxelPlatformBlock block in Blocks) AddToChunk(block);
+            collected.Clear();
+            VoxelPlatformSourceCollector.Collect(owner, collected);
+            hasSourceBlocks = collected.Count > 0;
+            for (int index = 0; index < collected.Count; index++) IndexBlock(collected[index]);
+            collected.Clear();
             // 占据关系必须先建好，逐分块重建时才能正确剔除接触面。
             UpdateOccupancy();
-            foreach (Vector3Int chunk in new List<Vector3Int>(Chunks.Keys))
-                Meshes.RebuildChunk(chunk);
+            ForEachChunk(Meshes.RebuildChunk);
         }
 
         internal bool SetBlockActive(Vector3 localPosition, bool active)
@@ -93,18 +95,45 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
         // 入参按方块键的同一精度取整，调用方给近似中心即可命中。
         internal bool TryGetBlock(Vector3 localPosition, out VoxelPlatformBlock block)
         {
-            Vector3Int position = Vector3Int.RoundToInt(localPosition * VoxelPlatformGeometry.PositionPrecision);
-            // 占据索引只登记遮挡方块，非遮挡方块要退回线性查找。
+            Vector3Int position = VoxelPlatformGeometry.PositionKeyOf(localPosition);
+            // 占据索引只登记启用方块，先查它能让常见命中早日结束；其余方块退回所属区块。
             if (Occupied.TryGetValue(position, out block)) return true;
-            foreach (VoxelPlatformBlock candidate in Blocks)
+            if (!chunks.TryGetValue(VoxelPlatformGeometry.ChunkOfPosition(position),
+                    out List<VoxelPlatformBlock> candidates))
             {
-                if (candidate.Position != position) continue;
-                block = candidate;
+                block = null;
+                return false;
+            }
+
+            for (int index = 0; index < candidates.Count; index++)
+            {
+                if (candidates[index].Position != position) continue;
+                block = candidates[index];
                 return true;
             }
 
             block = null;
             return false;
+        }
+
+        // 按区块取得候选方块；没有登记的分块返回 false，调用方不必再判空。
+        internal bool TryGetChunkBlocks(Vector3Int chunk, out List<VoxelPlatformBlock> blocks)
+        {
+            return chunks.TryGetValue(chunk, out blocks);
+        }
+
+        // 按区块遍历运行索引；回调不得增删区块，重建与遍历互不影响。
+        internal void ForEachChunk(Action<Vector3Int> visitor)
+        {
+            foreach (Vector3Int chunk in chunks.Keys) visitor(chunk);
+        }
+
+        // 烘焙遍历由运行索引提供，调用方只拿到要保存的记录。
+        internal void CollectBakedBlocks(List<VoxelPlatformBakedBlock> results)
+        {
+            foreach (List<VoxelPlatformBlock> list in chunks.Values)
+                foreach (VoxelPlatformBlock block in list)
+                    results.Add(block.ToBaked());
         }
 
         // 运行记录和源对象一起改，编辑视图与运行状态才不会分叉；烘焙数据的方块没有源对象。
@@ -133,21 +162,72 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             return BreakBlocks(pendingTargets, collisionDuration);
         }
 
-        // 收集与破坏体积相交的启用方块，比较在世界空间进行。
+        // 以命中方块中心结算一次水平爆炸：半径按世界单位，垂直范围取该方块的世界高度区间。
+        internal int BreakBlocksAroundPosition(Vector3 localPosition, float worldRadius, float? collisionDuration)
+        {
+            if (!TryGetBlock(localPosition, out VoxelPlatformBlock target)) return 0;
+            Matrix4x4 localToWorld = owner.transform.localToWorldMatrix;
+            // 高度区间取命中方块自身的世界包围盒，爆炸只结算这一层。
+            Bounds targetBounds = GetWorldBounds(target, localToWorld);
+            Vector3 worldCenter = localToWorld.MultiplyPoint3x4(
+                (Vector3)target.Position / VoxelPlatformGeometry.PositionPrecision);
+            volumes.Clear();
+            volumes.Add(VoxelPlatformBlast.Horizontal(worldCenter, worldRadius,
+                targetBounds.min.y, targetBounds.max.y));
+            CollectBlastTargets(volumes, localToWorld, pendingTargets);
+            return BreakBlocks(pendingTargets, collisionDuration);
+        }
+
+        // 先把多份体积合并成保守的局部范围并映射到区块，每区块只扫描一次，
+        // 最终仍按世界包围盒精确判定，重叠体积覆盖的同一方块只进入结果一次。
         internal void CollectBlastTargets(IReadOnlyList<VoxelPlatformBlast> blasts, Matrix4x4 localToWorld,
             List<VoxelPlatformBlock> results)
         {
             results.Clear();
-            if (blasts == null || blasts.Count == 0) return;
-            foreach (VoxelPlatformBlock block in Blocks)
+            if (blasts == null || blasts.Count == 0 || chunks.Count == 0) return;
+
+            Bounds worldRange = blasts[0].WorldBounds;
+            for (int index = 1; index < blasts.Count; index++) worldRange.Encapsulate(blasts[index].WorldBounds);
+
+            // 包围盒角点换到平台局部空间，再按最大方块半尺寸扩张，得到保守的方块覆盖范围。
+            Matrix4x4 worldToLocal = localToWorld.inverse;
+            Vector3 min = worldRange.min;
+            Vector3 max = worldRange.max;
+            Vector3 localMin = Vector3.positiveInfinity;
+            Vector3 localMax = Vector3.negativeInfinity;
+            for (int corner = 0; corner < 8; corner++)
             {
-                if (!block.Active || !block.Mesh) continue;
-                Bounds bounds = GetWorldBounds(block, localToWorld);
-                for (int index = 0; index < blasts.Count; index++)
+                Vector3 point = new Vector3(
+                    (corner & 1) == 0 ? min.x : max.x,
+                    (corner & 2) == 0 ? min.y : max.y,
+                    (corner & 4) == 0 ? min.z : max.z);
+                Vector3 local = worldToLocal.MultiplyPoint3x4(point);
+                localMin = Vector3.Min(localMin, local);
+                localMax = Vector3.Max(localMax, local);
+            }
+
+            localMin -= maxBlockHalfSize;
+            localMax += maxBlockHalfSize;
+            // 范围映射到区块坐标，不存在的区块直接跳过。
+            Vector3Int minChunk = VoxelPlatformGeometry.ChunkOf(localMin);
+            Vector3Int maxChunk = VoxelPlatformGeometry.ChunkOf(localMax);
+            for (int x = minChunk.x; x <= maxChunk.x; x++)
+            for (int y = minChunk.y; y <= maxChunk.y; y++)
+            for (int z = minChunk.z; z <= maxChunk.z; z++)
+            {
+                if (!chunks.TryGetValue(new Vector3Int(x, y, z), out List<VoxelPlatformBlock> candidates))
+                    continue;
+                for (int index = 0; index < candidates.Count; index++)
                 {
-                    if (!blasts[index].Overlaps(bounds)) continue;
-                    results.Add(block);
-                    break;
+                    VoxelPlatformBlock block = candidates[index];
+                    if (!block.Active || !block.Mesh) continue;
+                    Bounds bounds = GetWorldBounds(block, localToWorld);
+                    for (int volume = 0; volume < blasts.Count; volume++)
+                    {
+                        if (!blasts[volume].Overlaps(bounds)) continue;
+                        results.Add(block);
+                        break;
+                    }
                 }
             }
         }
@@ -197,24 +277,37 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             dirtyChunks.Clear();
             // 平台矩阵在循环外求一次逆，避免对每个方块重复计算。
             Matrix4x4 worldToLocal = owner.transform.worldToLocalMatrix;
-            foreach (VoxelPlatformBlock block in Blocks)
+            bool moved = false;
+            foreach (List<VoxelPlatformBlock> list in chunks.Values)
             {
-                if (block.Transform && block.Transform.hasChanged)
+                foreach (VoxelPlatformBlock block in list)
                 {
-                    block.Transform.hasChanged = false;
-                    // 矩阵变化说明源方块被移动，记录里的落格已经失效，只能整体重建。
-                    if (worldToLocal * block.Transform.localToWorldMatrix != block.Matrix)
+                    if (block.Transform && block.Transform.hasChanged)
                     {
-                        Rebuild();
-                        return;
+                        block.Transform.hasChanged = false;
+                        // 矩阵变化说明源方块被移动，记录里的落格已经失效，只能整体重建。
+                        if (worldToLocal * block.Transform.localToWorldMatrix != block.Matrix)
+                        {
+                            moved = true;
+                            break;
+                        }
                     }
+
+                    // Inspector 中的启停和父级开关只能通过源组件读取，轮询后同步到运行记录。
+                    bool active = VoxelPlatformSourceCollector.IsActive(block);
+                    if (active == block.Active) continue;
+                    block.Active = active;
+                    MarkAffectedChunks(block);
                 }
 
-                // Inspector 中的启停和父级开关只能通过源组件读取，轮询后同步到运行记录。
-                bool active = VoxelPlatformSourceCollector.IsActive(block);
-                if (active == block.Active) continue;
-                block.Active = active;
-                MarkAffectedChunks(block);
+                if (moved) break;
+            }
+
+            // 整体重建会清空区块表，必须等遍历结束再执行。
+            if (moved)
+            {
+                Rebuild();
+                return;
             }
 
             // 没有任何方块变化时跳过占据重建和分块刷新，轮询开销只剩一次遍历。
@@ -244,12 +337,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             }
         }
 
-        private void AddToChunk(VoxelPlatformBlock block)
+        // 区块坐标由位置键统一换算，收集、烘焙加载与位置查找因此指向同一分块。
+        private void IndexBlock(VoxelPlatformBlock block)
         {
-            // 分块表按空格归属登记，重建时只取出同一块内的方块，不必扫描全平台。
-            if (!Chunks.TryGetValue(block.Chunk, out List<VoxelPlatformBlock> list))
-                Chunks.Add(block.Chunk, list = new List<VoxelPlatformBlock>());
+            block.Chunk = VoxelPlatformGeometry.ChunkOfPosition(block.Position);
+            if (!chunks.TryGetValue(block.Chunk, out List<VoxelPlatformBlock> list))
+                chunks.Add(block.Chunk, list = new List<VoxelPlatformBlock>());
             list.Add(block);
+            if (block.Mesh) maxBlockHalfSize = Vector3.Max(maxBlockHalfSize, VoxelPlatformGeometry.LocalHalfSize(block));
         }
 
         private void UpdateOccupancy()
@@ -257,25 +352,29 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
             Occupied.Clear();
             // 三维中心包含高度；重复键使用赋值建立索引，避免保存资源时抛出重复键异常。
             // 已破坏的方块不再遮挡邻居，建索引时就要排除。
-            foreach (VoxelPlatformBlock block in Blocks)
-                if (block.Occludes && block.Active) Occupied[block.Position] = block;
+            foreach (List<VoxelPlatformBlock> list in chunks.Values)
+                foreach (VoxelPlatformBlock block in list)
+                    if (block.Occludes && block.Active) Occupied[block.Position] = block;
         }
 
         internal void Clear()
         {
             // 恢复源渲染状态，编辑视图才能重新显示被合并表面顶替的源 Cube。
-            // 恢复要用到方块记录，这一步必须排在 Blocks.Clear() 之前。
-            foreach (VoxelPlatformBlock block in Blocks)
-                if (block.Renderer) block.Renderer.forceRenderingOff = block.OriginalForceOff;
+            // 恢复要用到方块记录，这一步必须排在区块表清空之前。
+            foreach (List<VoxelPlatformBlock> list in chunks.Values)
+                foreach (VoxelPlatformBlock block in list)
+                    if (block.Renderer) block.Renderer.forceRenderingOff = block.OriginalForceOff;
             Meshes.Clear();
             fragments.Clear();
-            Blocks.Clear();
+            chunks.Clear();
             hasSourceBlocks = false;
-            Chunks.Clear();
+            maxBlockHalfSize = Vector3.zero;
             Occupied.Clear();
             dirtyChunks.Clear();
             brokenBlocks.Clear();
             pendingTargets.Clear();
+            collected.Clear();
+            volumes.Clear();
         }
     }
 }

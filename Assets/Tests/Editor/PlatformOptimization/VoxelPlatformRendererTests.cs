@@ -18,7 +18,7 @@ public sealed class VoxelPlatformRendererTests
     [SetUp]
     public void SetUp()
     {
-        surfaceType = Type.GetType("Core.Scripts.Environment.VoxelPlatformRenderer, Assembly-CSharp");
+        surfaceType = Type.GetType("Core.Scripts.Scene.VoxelPlatform.VoxelPlatformRenderer, Assembly-CSharp");
         Assert.That(surfaceType, Is.Not.Null, "平台需要可刷新外表面的渲染组件。");
         root = new GameObject("Platform");
         material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -450,6 +450,62 @@ public sealed class VoxelPlatformRendererTests
     }
 
     [Test]
+    public void RuntimeStoresBlocksOnlyInsideItsChunkIndex()
+    {
+        AddCube(new Vector3(-1.5f, 0, 0));
+        AddCube(new Vector3(16, 0, 0));
+        Invoke("Rebuild");
+
+        object runtime = GetRuntime();
+        Type runtimeType = runtime.GetType();
+        Assert.That(runtimeType.GetField("Blocks", BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.Instance), Is.Null);
+        var chunksField = runtimeType.GetField("chunks", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(chunksField, Is.Not.Null);
+        var chunks = (System.Collections.IDictionary)chunksField.GetValue(runtime);
+        Assert.That(chunks.Count, Is.EqualTo(2));
+        Assert.That(chunks.Contains(new Vector3Int(-1, 0, 0)), Is.True);
+    }
+
+    [Test]
+    public void HorizontalBlastBreaksOnlyIntersectingBlocksInHitHeightLayer()
+    {
+        root.transform.SetPositionAndRotation(new Vector3(20, 5, -10), Quaternion.Euler(0, 35, 0));
+        root.transform.localScale = new Vector3(2, 1.5f, 2);
+        AddCubeWithFragments(new Vector3(-8, 0, 0));
+        AddCubeWithFragments(new Vector3(-7.75f, 0, 0));
+        var upper = AddCubeWithFragments(new Vector3(-8, 1.1f, 0));
+        AddCubeWithFragments(new Vector3(16, 0, 0));
+        Invoke("Rebuild");
+
+        MethodInfo blast = surfaceType.GetMethod("BreakBlocksAroundPosition",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(blast, Is.Not.Null);
+        int broken = (int)blast.Invoke(surface, new object[] { new Vector3(-8, 0, 0), 0.45f, null });
+
+        Assert.That(broken, Is.EqualTo(1));
+        Assert.That(upper.activeSelf, Is.True);
+        Assert.That(Triangles(), Is.EqualTo(36));
+    }
+
+    [Test]
+    public void HorizontalBlastCrossesChunkBoundaryAndDeduplicatesOverlappingVolumes()
+    {
+        AddCubeWithFragments(new Vector3(7.5f, 0, 0));
+        AddCubeWithFragments(new Vector3(8.25f, 0, 0));
+        AddCubeWithFragments(new Vector3(24, 0, 0));
+        Invoke("Rebuild");
+
+        MethodInfo blast = surfaceType.GetMethod("BreakBlocksAroundPosition",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(blast, Is.Not.Null);
+        int broken = (int)blast.Invoke(surface, new object[] { new Vector3(7.5f, 0, 0), 0.45f, null });
+
+        Assert.That(broken, Is.EqualTo(2));
+        Assert.That(Triangles(), Is.EqualTo(12));
+    }
+
+    [Test]
     public void PrefabStageBakePreservesAuthoringSources()
     {
         const string authoringPath =
@@ -577,7 +633,7 @@ public sealed class VoxelPlatformRendererTests
     private GameObject AddEditableRegion(Vector3 position)
     {
         Type exclusionType = Type.GetType(
-            "Core.Scripts.Environment.VoxelPlatformBakeExclusion, Assembly-CSharp");
+            "Core.Scripts.Scene.VoxelPlatform.Baking.VoxelPlatformBakeExclusion, Assembly-CSharp");
         Assert.That(exclusionType, Is.Not.Null, "可编辑区域需要显式排除烘焙的标记。");
         var group = new GameObject("CenterDisk");
         group.transform.SetParent(root.transform, false);
@@ -590,6 +646,12 @@ public sealed class VoxelPlatformRendererTests
     {
         return ((System.Collections.ICollection)surfaceType.GetField("bakedBlocks",
             BindingFlags.NonPublic | BindingFlags.Instance).GetValue(surface)).Count;
+    }
+
+    private object GetRuntime()
+    {
+        var runtimeField = surfaceType.GetField("runtime", BindingFlags.NonPublic | BindingFlags.Instance);
+        return runtimeField.GetValue(surface);
     }
 
     private void Invoke(string method)

@@ -36,8 +36,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Baking
                 owner.SurfaceRoot.gameObject.hideFlags = HideFlags.None;
                 owner.CollisionRoot.gameObject.hideFlags = HideFlags.None;
                 // 存档只保留运行时需要的字段，源组件引用不写入烘焙数据。
-                foreach (VoxelPlatformBlock block in runtime.Blocks)
-                    owner.BakedBlocks.Add(block.ToBaked());
+                runtime.CollectBakedBlocks(owner.BakedBlocks);
 
                 foreach (KeyValuePair<Vector3Int, List<VoxelPlatformSurface>> chunk in builder.Surfaces)
                 {

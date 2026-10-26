@@ -30,9 +30,9 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
         internal bool TryGetBlocksForCollision(Collider collider, out List<VoxelPlatformBlock> blocks)
         {
             blocks = null;
-            // 先由碰撞体找到所属区块，再从运行时分块索引取得该区块的方块候选。
+            // 先由碰撞体找到所属区块，再由运行索引取得该区块的方块候选。
             return Collisions.TryGetChunk(collider, out Vector3Int chunk) &&
-                   runtime.Chunks.TryGetValue(chunk, out blocks);
+                   runtime.TryGetChunkBlocks(chunk, out blocks);
         }
 
         internal VoxelPlatformMeshBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
@@ -73,9 +73,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             }
 
             // 兼容仅保存方块记录的旧烘焙数据：没有表面资产时按数据重生成一遍。
-            if (Surfaces.Count == 0)
-                foreach (Vector3Int chunk in new List<Vector3Int>(runtime.Chunks.Keys))
-                    RebuildChunk(chunk);
+            if (Surfaces.Count == 0) runtime.ForEachChunk(RebuildChunk);
 
             ActivateRoots();
             Collisions.UseBakedChunks(bakedChunks);
@@ -86,7 +84,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Rendering
             // 先清掉旧表面再生成，否则同一分块会残留上一次的渲染对象。
             ClearChunk(chunk);
             // 分块里没有方块时，清完旧表面就结束，不必生成空网格。
-            if (!runtime.Chunks.TryGetValue(chunk, out List<VoxelPlatformBlock> chunkBlocks))
+            if (!runtime.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks))
                 return;
 
             // 按材质分组：分块的绘制批次数量取决于材质种类，与方块数量无关。

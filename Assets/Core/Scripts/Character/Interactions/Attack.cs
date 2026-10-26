@@ -22,6 +22,9 @@ namespace Core.Scripts.Character.Interactions
         [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")] [SerializeField]
         private LayerMask hitLayers = ~0;
 
+        [Header("爆炸")] [Tooltip("命中方块后以该方块中心结算的水平爆炸半径，单位为世界单位。")] [SerializeField, Min(0f)]
+        private float blastRadius = 0.45f;
+
         [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
         private VoidEventSO gameStartEventSO;
 
@@ -124,7 +127,7 @@ namespace Core.Scripts.Character.Interactions
 
             if (!TryPickNearest(count, out RaycastHit nearest))
             {
-                // Log($"未命中可破坏目标：射线命中 {count} 个碰撞体，全部属于角色自身或为空");
+                //未命中可破坏目标
                 return;
             }
 
@@ -136,7 +139,8 @@ namespace Core.Scripts.Character.Interactions
             }
 
             bool resolved = platform.TryGetBlockPosition(nearest, out Vector3 localPosition);
-            bool broken = resolved && platform.BreakBlock(localPosition);
+            // 命中点反查到的方块中心就是爆炸中心，离开方块表面的部分同样参与结算。
+            bool broken = resolved && platform.BreakBlocksAroundPosition(localPosition, blastRadius) > 0;
         }
 
         // 相机位于角色身后，检测距离从角色位置起算，reachDistance 才是玩家感知到的攻击范围。

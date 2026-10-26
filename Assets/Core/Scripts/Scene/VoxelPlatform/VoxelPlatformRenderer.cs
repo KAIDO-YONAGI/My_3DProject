@@ -145,6 +145,16 @@ namespace Core.Scripts.Scene.VoxelPlatform
             return Runtime.BreakBlocksIn(blasts, transform.localToWorldMatrix, collisionDuration);
         }
 
+        /// <summary>
+        /// 以命中方块中心结算一次水平爆炸，半径按世界单位生效，只破坏本平台内相交的方块。
+        /// collisionDuration 为碎块从生成起保持碰撞的时长，省略时沿用 Prefab 上的配置。
+        /// </summary>
+        internal int BreakBlocksAroundPosition(Vector3 localPosition, float worldRadius,
+            float? collisionDuration = null)
+        {
+            return Runtime.BreakBlocksAroundPosition(localPosition, worldRadius, collisionDuration);
+        }
+
         /// <summary>从本平台合并碰撞的命中取得局部方块中心，供破坏与恢复共用。</summary>
         public bool TryGetBlockPosition(RaycastHit hit, out Vector3 localPosition)
         {

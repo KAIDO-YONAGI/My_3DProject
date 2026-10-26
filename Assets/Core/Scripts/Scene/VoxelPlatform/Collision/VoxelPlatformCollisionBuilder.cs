@@ -60,16 +60,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Collision
             }
 
             // 兼容仅保存表面的烘焙数据；已有碰撞数据时直接复用资产。
-            if (Surfaces.Count == 0)
-                foreach (Vector3Int chunk in new List<Vector3Int>(runtime.Chunks.Keys))
-                    RebuildChunk(chunk);
+            if (Surfaces.Count == 0) runtime.ForEachChunk(RebuildChunk);
         }
 
         internal void RebuildChunk(Vector3Int chunk)
         {
             ClearChunk(chunk);
             // 分块里没有方块时，清完旧碰撞体就结束，不必生成空网格。
-            if (!runtime.Chunks.TryGetValue(chunk, out List<VoxelPlatformBlock> chunkBlocks)) return;
+            if (!runtime.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks)) return;
 
             // 碰撞保留完整方块网格，剔除后的表面会让被遮挡的接触面留下可以穿过的缝隙。
             var instances = new List<CombineInstance>();
