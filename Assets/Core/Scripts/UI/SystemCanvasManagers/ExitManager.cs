@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.UI.SystemCanvasManagers
 {
+    /// <summary>根据运行环境停止编辑器播放或退出构建后的游戏。</summary>
     public class ExitManager : MonoBehaviour
     {
         public void QuitGame()

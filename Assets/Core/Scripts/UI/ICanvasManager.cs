@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Core.Scripts.UI
 {
+    /// <summary>定义画布管理器与 UIManager 交互所需的事件、状态和画布更新操作。</summary>
     public interface ICanvasManager
     {
         /// <summary>

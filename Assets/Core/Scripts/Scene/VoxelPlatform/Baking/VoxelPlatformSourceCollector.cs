@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Baking
 {
-    // 从编辑布局提取 Intact，保留源状态以便退出预览时恢复。
+    /// <summary>从编辑布局收集源方块数据，并保存退出预览时恢复所需的原始状态。</summary>
     static class VoxelPlatformSourceCollector
     {
         internal static bool HasSourceGeometry(VoxelPlatformRenderer owner)

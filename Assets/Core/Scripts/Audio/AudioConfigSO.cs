@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Audio
 {
+    /// <summary>保存一个音频片段及其在同类片段中的随机选取权重。</summary>
     [System.Serializable]
     public struct AudioItem
     {
@@ -9,6 +10,7 @@ namespace Core.Scripts.Audio
         [Range(0f, 1f)] public float weight;
     }
 
+    /// <summary>按音效类型组织可随机播放的音频片段。</summary>
     [System.Serializable]
     public class SFXEntry
     {
@@ -16,6 +18,7 @@ namespace Core.Scripts.Audio
         public AudioItem[] items;
     }
 
+    /// <summary>按背景音乐类型组织可随机播放的音频片段。</summary>
     [System.Serializable]
     public class BGMEntry
     {

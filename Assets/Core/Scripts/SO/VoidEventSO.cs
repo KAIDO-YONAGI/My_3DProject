@@ -5,6 +5,7 @@ using UnityEngine;
 // 如 SlashActionFinishedEventSO、SceneLoadedVoidEventSO；禁止再创建无语义的资产名。
 namespace Core.Scripts.SO
 {
+    /// <summary>广播不携带参数的通用事件。</summary>
     [CreateAssetMenu(fileName = "VoidEventSO", menuName = "Events/VoidEventSO", order = 0)]
 
     public class VoidEventSO : ScriptableObject

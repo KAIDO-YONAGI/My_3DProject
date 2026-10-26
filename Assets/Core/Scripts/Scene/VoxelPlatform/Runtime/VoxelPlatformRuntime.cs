@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Runtime
 {
-    // 维护单个平台的方块状态，并把一次变化归并为需要重建的空间分块。
+    /// <summary>维护单个平台的方块状态，并把变化归并为需要重建的空间分块。</summary>
     class VoxelPlatformRuntime
     {
         private readonly VoxelPlatformRenderer owner;
@@ -173,7 +173,6 @@ namespace Core.Scripts.Scene.VoxelPlatform.Runtime
                     results.Add(block.ToBaked());
         }
 
-        // 运行记录和源对象一起改，编辑视图与运行状态才不会分叉；烘焙数据的方块没有源对象。
         /// <summary>按区域体积收集命中方块并执行一次批量破坏。</summary>
         internal int BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast> blasts, float? collisionDuration)
         {

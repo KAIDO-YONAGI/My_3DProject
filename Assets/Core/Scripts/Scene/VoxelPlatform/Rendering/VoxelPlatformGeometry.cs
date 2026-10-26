@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Rendering
 {
-    // 只处理几何与邻接关系，缓存由同一源网格生成的六面掩码变体。
+    /// <summary>处理方块几何和邻接面剔除，并缓存源网格的可见面变体。</summary>
     class VoxelPlatformGeometry
     {
         // 位置键保留局部中心的小数部分，避免把半格布局或不同高度压进同一格。

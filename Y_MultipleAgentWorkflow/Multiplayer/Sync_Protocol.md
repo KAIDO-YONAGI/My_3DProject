@@ -16,6 +16,7 @@ UDP Datagram
   → CharacterIdSync 角色编号
   → CharacterMotionSync 运动快照
   → NetworkAudioPlayer 音频事件
+  → NetworkBlastManager 爆炸事件
 ```
 
 ## 传输层
@@ -76,27 +77,44 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 ### 音频事件
 
-反馈不作为持续状态同步。`AudioTriggerManager` 在本地触发时生成 `FeedbackMessage`，携带 `AudioType`、声源对象和触发时的 `WorldPosition`。本地先播放一次，再由来源对象对应的本地 `NetworkAudioPlayer` 调用 Command：
+反馈不作为持续状态同步。其他模块通过 `FeedbackEventSO.RequestAudio` 发布 `AudioRequest`，载荷包含 `AudioType` 和可选 `WorldPosition`。`AudioPlayerManager` 统一订阅请求，先本地播放；联网且存在本地玩家时，再将请求交给本地 `NetworkAudioPlayer`：
 
 ```text
 本地输入
-  → AudioPlayerManager 本地播放
   → FeedbackEventSO
-  → 本地拥有者 NetworkAudioPlayer
-  → CommandPlayAudio
+  → AudioPlayerManager 本地播放
+  → 本地玩家 NetworkAudioPlayer
+  → Command
   → 服务器
-  → RpcPlayAudio(includeOwner = false)
-  → 其他观察者按 WorldPosition 播放
+  → ClientRpc(includeOwner = false)
+  → 其他观察者按可选 WorldPosition 播放
 ```
 
-`isLocalPlayer` 用于限制 Command 的发起者，`includeOwner = false` 用于限制 ClientRpc 的接收者，两者职责不同，不能互相替代。事件来源不是本地网络玩家时直接忽略；客户端未 Ready 时不发送 Command。
+`AudioPlayerManager` 是音频事件的唯一订阅者，网络组件不持有事件资产或订阅生命周期。`NetworkAudioPlayer` 只允许本地拥有者在客户端 Ready 后发送 Command；远端 ClientRpc 保持拥有者排除，避免本地即时播放重复。无世界坐标的请求远端仍按 2D 音效播放。
+
+### 爆炸事件
+
+`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心后，发布 `BlastEventSO`。`BlastMessage` 携带来源网络玩家对象与 `AttackRequestPack`，后者序列化爆炸中心、伤害值和水平半径。
+
+```text
+本地攻击
+  → 本地 VoxelPlatformDestruction 立即结算
+  → BlastEventSO
+  → 来源对象对应的本地拥有者 NetworkBlastManager
+  → CommandAttack
+  → 服务器
+  → RpcRequestAttack(includeOwner = false)
+  → 其他观察者按中心与半径结算
+```
+
+`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点，只由 `isLocalPlayer` 实例订阅；事件来源必须等于该网络玩家对象，客户端未 Ready 时忽略。ClientRpc 排除拥有者，避免本地即时结算被执行两次。
 
 ## 兼容性规则
 
 客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
-`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
+`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer`、`NetworkBlastManager`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
 
 ## 维护触发
 
-修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频事件、序列化字段或兼容规则时更新本文档。
+修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频或爆炸事件、序列化字段或兼容规则时更新本文档。

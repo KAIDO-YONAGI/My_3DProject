@@ -1,5 +1,21 @@
 # Multiplayer 开发记录
 
+## 2026-10-27：由音频管理器统一分发音效请求
+
+- `FeedbackEventSO` 保留为模块间音效请求入口，载荷改为 `AudioRequest`，包含音效类型和可选世界位置。
+- `AudioPlayerManager` 成为唯一事件订阅者，统一负责本地播放和联网请求转交；`NetworkAudioPlayer` 移除事件订阅生命周期，只处理本地拥有者 Ready 校验、Command 和排除拥有者的 ClientRpc。
+- `NetworkPlayer.prefab` 移除网络音频组件上的事件资产引用，`PersistentScene` 将事件资产配置给 `AudioPlayerManager`。
+- 验证：静态核对事件调用点、Prefab/场景序列化字段和协议文档；未运行 Unity 编译或测试。
+- 计数：`1/5 → 2/5`。
+
+## 2026-10-27：接入网络爆炸 SO 事件管线
+
+- 新增 `BlastEventSO` 与 `BlastMessage`，由 `Attack` 在本地射线爆炸结算后发布来源玩家和 `AttackRequestPack`。
+- `NetworkBlastManager` 挂到 `NetworkPlayer.prefab` 根节点，仅本地拥有者订阅；校验来源对象和客户端 Ready 后调用 `CommandAttack`，服务器经排除拥有者的 `RpcRequestAttack` 通知远端观察者结算。
+- `Main Camera.prefab` 与 `NetworkPlayer.prefab` 引用同一个 `BlastEventSO` 资产，网络组件追加在根节点末尾。
+- 验证：静态核对脚本 GUID、SO 资产引用及 Prefab 网络组件顺序；未运行 Unity 编译或测试。
+- 计数：`0/5 → 1/5`。
+
 ## 2026-10-16：网络音频播放与网络脚本目录收敛
 
 - `NetworkAudioPlayer` 是 `NetworkBehaviour`，挂在网络玩家根节点，仅由本地玩家订阅 `FeedbackEventSO`，反馈因此能区分来源玩家。

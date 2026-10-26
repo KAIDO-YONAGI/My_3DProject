@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera
 {
+    /// <summary>保存并推进第三人称镜头的轨道角度、世界旋转和相对焦点偏移。</summary>
     class CameraOrbitState
     {
         public float Yaw { get; private set; }

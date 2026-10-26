@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Collision
 {
-    // 使用完整方块网格生成静态分块碰撞，与可见面剔除保持独立。
+    /// <summary>使用完整方块网格构建静态分块碰撞，并维护碰撞体到 chunk 的索引。</summary>
     class VoxelPlatformCollisionBuilder
     {
         private readonly VoxelPlatformRenderer owner;

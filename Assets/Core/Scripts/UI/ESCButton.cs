@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 namespace Core.Scripts.UI
 {
+    /// <summary>把按钮点击转换为关闭指定画布的请求。</summary>
     public class ESCButton : MonoBehaviour
     {
         [Tooltip("点击后请求关闭指定面板的按钮。")]

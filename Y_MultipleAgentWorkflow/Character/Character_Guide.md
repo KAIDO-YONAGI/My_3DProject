@@ -155,13 +155,13 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 准心交互
 
-`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含有效标记、世界爆炸中心、表面命中点和破坏数量；射线未命中平台时返回空结果。
+`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含可空的世界爆炸中心、实际半径和破坏数量；射线未命中平台时爆炸中心为空。
 
 `Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
-射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.Explode(Ray, ...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
+射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.ExplodeFromRay(...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
 
-射线命中最近的有效合并平台后，命中表面点同时作为爆炸中心与返回的 `SurfaceHitPoint`。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。Vector3 入口直接使用输入中心，不标记表面命中点；射线没有有效平台命中时返回无效中心与零破坏数。破坏结果由 `AttackResult` 返回调用方，供后续网络消息与本地特效定位使用。
+射线命中最近的有效合并平台后，命中表面坐标作为爆炸中心。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 直接使用输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、保留请求半径且破坏数为零。`Update` 在取得有效爆炸中心后发布 `Assets/Core/SO/Events/BlastEventSO.asset`，载荷包含角色根节点与 `AttackRequestPack`；同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
 
 ## 目录约定
 

@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Character.Presentation
 {
+    /// <summary>集中保存角色视觉 Prefab 的动画、相机、音频监听、控制器和骨骼跟随组件引用。</summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]
     public class CharacterVisual : MonoBehaviour

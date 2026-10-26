@@ -111,9 +111,9 @@ Cube_<材质名>
 
 Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并保留编辑用源布局。场景烘焙直接转换场景实例，各层源布局通过各自的编辑用资源保存，转换结果拥有独立的场景烘焙数据。重新编辑场景烘焙区域时，在原平台根节点下补齐对应的完整合并源布局后生成结果；独立区域沿用其场景编辑内容。公共运行用 Prefab 与独立场景平台分别通过各自的烘焙入口更新。
 
-`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。攻击射线由 `VoxelPlatformDestruction.Explode(Ray, ...)` 统一处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为爆炸中心并随 `AttackResult` 返回。
+`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。射线攻击由 `VoxelPlatformDestruction.ExplodeFromRay(...)` 处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为爆炸中心并随 `AttackResult` 返回。
 
-攻击只有两个公开入口，`Explode(Vector3 center, float radius)` 和 `Explode(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)`，两者均返回 `AttackResult`。结果包含有效爆炸中心、有效表面命中点和实际破坏数量；Vector3 入口使用给定中心且没有表面点，Ray 未命中有效平台时返回无有效中心和零破坏数。Ray 命中后以真实表面点作为爆炸中心。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
+攻击有两个互相独立的公开入口：`ExplodeAt(Vector3 triggerPoint, float radius)` 按世界触发点与半径结算，`ExplodeFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)` 在该入口内部检测最近有效命中后结算。两者均返回 `AttackResult`，包含可空爆炸中心、实际半径与破坏数量；位置入口使用给定触发点，Ray 未命中时爆炸中心为空。Ray 命中后以真实表面坐标作为爆炸中心。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
 
 `VoxelPlatformDestruction.BreakRegions(...)` 是独立区域触发器使用的 Collider 体积入口，不属于攻击 API。平台启用时登记、停用时注销；Vector3 攻击按已登记平台结算，Ray 攻击只结算最近有效命中的平台，不扫描场景对象。
 
@@ -145,9 +145,11 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 每个 `AudioPlayer` 管理一个带 `AudioSource` 的场景 GameObject，预热与按需创建的对象统一位于 `AudioPlayerManager` 节点下。每次播放都重新设置位置与 `spatialBlend`，同一实例可以交替承载 2D 与 3D 音效。播放结束或主动停止时，管理器停用对象并将其归还空闲队列；重复停止保持每个实例只入队一次。背景音乐使用管理器上的独立循环音源。
 
-`AudioTriggerManager` 在本地输入触发时记录声源对象与触发位置，先由本机 `AudioPlayerManager` 播放一次，再经 `FeedbackEventSO` 通知本地网络玩家。`NetworkAudioPlayer` 只允许本地拥有者的实例调用 `CommandPlayAudio`，服务器收到后经 `RpcPlayAudio` 转发给其他观察者，并通过 `includeOwner = false` 排除已经本地播放过的拥有者。远端客户端使用消息中的世界坐标播放，不读取自身角色位置。
+`FeedbackEventSO` 是跨模块的音效请求入口，`AudioRequest` 携带音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅并负责本地播放；联网时再将请求交给本地玩家的 `NetworkAudioPlayer`，由其通过 Command 和排除拥有者的 ClientRpc 转发给其他观察者。省略坐标的请求在所有客户端都按 2D 音效播放。
 
-`Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收，以及音频事件消息的声源和位置传递、触发器输入资源释放。
+音效请求事件资产为 `Assets/Core/SO/Events/FeedbackEventSO.asset`，常驻场景将其配置在 `AudioPlayerManager`。爆炸请求事件资产为 `Assets/Core/SO/Events/BlastEventSO.asset`，`Attack` 与 `NetworkBlastManager` 引用同一份资产，链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+
+`Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收。
 
 ## Addressables
 
@@ -176,7 +178,7 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 路径：`Assets/Core/Prefabs/NetworkPlayer.prefab`
 
-根节点共 8 个组件，顺序如下：
+根节点共 9 个组件，顺序如下：
 
 1. `Transform`
 2. `Mirror.NetworkIdentity`
@@ -186,8 +188,9 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 6. `CharacterIdSync`
 7. `CharacterMotionSync`
 8. `NetworkAudioPlayer`
+9. `NetworkBlastManager`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数，`NetworkAudioPlayer` 位于网络行为末尾，负责音频事件的拥有者上行和远端播放。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；`NetworkAudioPlayer` 和 `NetworkBlastManager` 位于网络行为末尾，分别转发音效请求和爆炸请求。
 
 ## 角色表现资源
 

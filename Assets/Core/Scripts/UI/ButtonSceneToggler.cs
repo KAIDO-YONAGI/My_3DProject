@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Core.Scripts.UI
 {
+    /// <summary>将按钮点击转换为场景组加载请求，并在提交后禁用按钮画布。</summary>
     public class ButtonSceneToggler : MonoBehaviour
     {
         [Tooltip("按顺序叠加加载的完整目标场景组。不要把常驻场景放进此列表。")]

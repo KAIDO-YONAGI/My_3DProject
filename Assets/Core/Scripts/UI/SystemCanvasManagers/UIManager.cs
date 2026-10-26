@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 
 namespace Core.Scripts.UI.SystemCanvasManagers
 {
+    /// <summary>统一调度画布开关、焦点顺序、键盘输入、互斥关系和场景切换复位。</summary>
     public class UIManager : YSingleton<UIManager>
     {
         // 常量保留转发，避免破坏 ICanvasManager.RefreshCanvaOrder 对 UIManager.DefaultOrder 的引用。
@@ -430,6 +431,7 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         }
     }
 
+    /// <summary>将画布类型映射到用于切换该画布的输入动作。</summary>
     [Serializable]
     public class CanvasInputBinding
     {

@@ -1,5 +1,6 @@
 namespace Core.Scripts.Common
 {
+    /// <summary>标识场景配置资产所代表的场景用途。</summary>
     public enum SceneType
     {
         Location,
@@ -9,6 +10,7 @@ namespace Core.Scripts.Common
         Default
     }
 
+    /// <summary>标识 UI 管理器可切换和排序的画布类型。</summary>
     public enum CanvasToToggle //显示优先级系统和画布唤起系统共用
     {
         ESC,

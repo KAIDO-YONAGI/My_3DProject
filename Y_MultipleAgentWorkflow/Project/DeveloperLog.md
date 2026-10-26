@@ -1,5 +1,13 @@
 # Project 开发记录
 
+## 2026-10-27：统一音效请求入口与管理器分发
+
+- `FeedbackEventSO` 作为跨模块音效请求入口，载荷 `AudioRequest` 包含音效类型和可选世界坐标。
+- `AudioPlayerManager` 统一订阅并负责本地播放，联机时将请求交给本地玩家的 `NetworkAudioPlayer`；网络组件只负责 Command/RPC 转发。
+- 常驻场景把请求事件配置在 `AudioPlayerManager`，`AudioTriggerManager` 只发布请求。
+- 验证：静态检查请求调用点、场景与 Prefab 序列化引用及权威文档；未运行 Unity 编译或测试。
+- 维护计数：`3/5 → 4/5`。
+
 ## 2026-10-20：触发器广播开局事件
 
 - 广播：`VoxelPlatformBlastTrigger` 增加 `gameStartEventSO` 字段，`OnTriggerEnter` 内先 `OnEventRaised()` 再调用 `Fire()`，订阅方在平台状态改变前收到通知；字段留空时只做破坏结算。

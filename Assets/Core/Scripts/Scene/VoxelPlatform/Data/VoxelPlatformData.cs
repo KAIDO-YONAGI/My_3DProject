@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Data
 {
-    // 运行记录兼容源对象预览；从烘焙数据加载时，源组件引用保持为空。
+    /// <summary>保存单个方块的运行状态、几何索引、渲染设置和可选源对象引用。</summary>
     class VoxelPlatformBlock
     {
         // 源引用只在编辑布局里有效，烘焙时不会写进数据。
@@ -61,7 +61,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Data
         }
     }
 
-    // 直接内联序列化到平台组件，字段名与现有烘焙资源保持一致。
+    /// <summary>保存可内联序列化到平台组件的单块烘焙数据。</summary>
     [Serializable]
     class VoxelPlatformBakedBlock
     {
@@ -107,7 +107,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Data
         }
     }
 
-    // Baked 网格属于资产；运行中替换表面时只隐藏它，临时网格才执行销毁。
+    /// <summary>记录一个分块表面对象及其网格、三角形统计和烘焙资产状态。</summary>
     [Serializable]
     class VoxelPlatformSurface
     {
@@ -119,7 +119,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Data
         public bool Baked;
     }
 
-    // 与表面同理，区分资产碰撞和运行时临时碰撞。
+    /// <summary>记录一个分块碰撞对象及其网格和烘焙资产状态。</summary>
     [Serializable]
     class VoxelPlatformCollisionSurface
     {
@@ -129,7 +129,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Data
         public bool Baked;
     }
 
-    // 分块是烘焙与重建的持久化单位，一个分块存放该范围内的全部表面与碰撞。
+    /// <summary>保存一个 chunk 的全部材质表面和合并碰撞记录。</summary>
     [Serializable]
     class VoxelPlatformBakedChunk
     {

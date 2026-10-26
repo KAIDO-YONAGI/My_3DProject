@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Networking.CharacterPresentation
 {
+    /// <summary>根据服务器确认的角色编号装配或移除网络玩家的本地与远程视觉表现。</summary>
     class CharacterPresentationService
     {
         private readonly NetworkCharacterManager manager;

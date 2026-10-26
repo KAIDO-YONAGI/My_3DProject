@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Core.Scripts.SO
 {
+    /// <summary>发布场景组加载请求及目标位置和过渡选项。</summary>
     [CreateAssetMenu(fileName = "SceneLoadEventSO", menuName = "Events/SceneLoadEventSO", order = 0)]
     public class SceneLoadEventSO : ScriptableObject
     {

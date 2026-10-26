@@ -2,14 +2,15 @@
 
 文档 ID：`BUS-MULTIPLAYER`
 状态：`Active`
-维护计数：`0/5`
-最后更新：`2026-10-16`
+维护计数：`2/5`
+最后更新：`2026-10-27`
 
 ## 任务路由
 
 | 任务 | 权威文档 |
 |---|---|
-| Mirror 组件、连接、自动连接、玩家网络行为 | `Multiplayer_Guide.md` |
+| Mirror 组件、连接、自动连接、玩家网络行为与音频请求转发 | `Multiplayer_Guide.md`、`Sync_Protocol.md` |
+| 攻击爆炸上行、服务器转发与远端结算 | `Multiplayer_Guide.md`、`Sync_Protocol.md` |
 | 客户端与服务器消息边界、同步字段和兼容规则 | `Sync_Protocol.md` |
 | 专用服务器启动、Headless 构建、监听和部署 | `Dedicated_Server.md` |
 | KCP 参数、NetworkManager、玩家 Prefab 与构建 | `../Project/Mirror_KCP_Config.md` |

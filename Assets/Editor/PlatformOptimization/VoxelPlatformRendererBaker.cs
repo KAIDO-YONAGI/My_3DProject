@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+/// <summary>提供平台网格烘焙的 Unity 编辑器菜单入口，并写回 Prefab 或场景资产。</summary>
 public static class VoxelPlatformRendererBaker
 {
     private const string OutputFolder = "Assets/Materials/MinecraftClassic/Generated";

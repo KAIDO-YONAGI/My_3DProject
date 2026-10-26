@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Networking.CharacterPresentation
 {
+    /// <summary>缓存一个网络玩家的角色实例、来源资源及其相机和音频表现状态。</summary>
     class CharacterPresentationState
     {
         public GameObject Instance;

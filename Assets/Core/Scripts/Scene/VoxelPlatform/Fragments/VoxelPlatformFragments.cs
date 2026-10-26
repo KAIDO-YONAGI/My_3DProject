@@ -7,7 +7,7 @@ using UnityEditor;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Fragments
 {
-    // 按方块延迟创建预切 Cube，只管理实例与装配位置；受力和刚体由表现脚本负责。
+    /// <summary>按需创建和回收方块碎片实例，并管理碎片相对平台的装配位置。</summary>
     class VoxelPlatformFragments
     {
         private readonly VoxelPlatformRenderer owner;

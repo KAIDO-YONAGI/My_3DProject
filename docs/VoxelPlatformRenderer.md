@@ -148,22 +148,22 @@
 
 ### 攻击爆炸接口
 
-攻击服务提供 Vector3 与 Ray 两个爆炸入口，均返回 `AttackResult`。Vector3 入口按输入世界坐标结算；Ray 入口在服务内部完成射线过滤、最近有效平台选择和命中方块解析，命中表面点同时作为爆炸中心及结果中的表面命中点。半径是世界空间 XZ 水平半径，不设高度上限；候选从中心所在的世界 chunk 列向相邻列扩展，再按方块中心的水平距离精确筛选。
+攻击服务提供 Vector3 与 Ray 两个爆炸入口，均返回 `AttackResult`。Vector3 入口按输入世界坐标结算；Ray 入口在服务内部完成射线过滤、最近有效平台选择和命中方块解析，并以命中表面坐标作为爆炸中心。半径是世界空间 XZ 水平半径，不设高度上限；候选从中心所在的世界 chunk 列向相邻列扩展，再按方块中心的水平距离精确筛选。
 
 ```csharp
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using UnityEngine;
 
-AttackResult atPosition = VoxelPlatformDestruction.Explode(worldCenter, blastRadius);
-AttackResult fromRay = VoxelPlatformDestruction.Explode(
+AttackResult atPosition = VoxelPlatformDestruction.ExplodeAt(triggerPoint, blastRadius);
+AttackResult fromRay = VoxelPlatformDestruction.ExplodeFromRay(
     ray, maxDistance, hitLayers, playerRoot, blastRadius);
-if (fromRay.HasSurfaceHitPoint)
+if (fromRay.ExplosionCenter is Vector3 hitPoint)
 {
-    Vector3 hitPoint = fromRay.SurfaceHitPoint;
+    // hitPoint 可用于本地特效锚定。
 }
 ```
 
-Vector3 入口返回输入中心且不提供表面命中点。Ray 未命中有效平台时两个有效标记均为 false，破坏数量为零。`Attack.AttackFromCrosshair()` 将结果直接返回调用方。
+`ExplodeAt` 返回输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、破坏数量为零。`AttackResult.Radius` 返回本次实际使用的水平半径，`Attack.AttackFromCrosshair()` 将完整结果直接返回调用方。
 
 ### 区域触发器调用
 

@@ -8,9 +8,9 @@ using UnityEngine;
 namespace Core.Scripts.Scene.VoxelPlatform
 {
     /// <summary>
-    /// 平台的生命周期和局部方块状态入口。世界爆炸由 VoxelPlatformDestruction 统一结算。
+    /// 平台的生命周期和局部方块状态入口。ExecuteAlways 使编辑视图也维护合并表面；
+    /// 世界爆炸由 VoxelPlatformDestruction 统一结算。
     /// </summary>
-    // ExecuteAlways 让编辑视图同样维护合并表面，界面上的启停与破坏操作直接作用在运行组件上。
     [ExecuteAlways, DisallowMultipleComponent]
     public class VoxelPlatformRenderer : MonoBehaviour
     {

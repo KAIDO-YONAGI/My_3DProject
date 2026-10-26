@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace Core.Scripts.SO
 {
-    [CreateAssetMenu(fileName = "ToggleCanvasEventSO", menuName = "Events/ToggleCanvasEventSO", order = 0)]
 //创建好之后不要忘了绑定到UIManager如果有键盘按键输入，可以一块绑定，没有也不影响
+    /// <summary>为指定画布提供开关请求和焦点层级刷新事件。</summary>
+    [CreateAssetMenu(fileName = "ToggleCanvasEventSO", menuName = "Events/ToggleCanvasEventSO", order = 0)]
     public class ToggleCanvasEventSO : ScriptableObject
     {
         public event Action<bool> toggleCanvasEvent;

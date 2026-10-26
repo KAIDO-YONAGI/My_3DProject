@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Core.Scripts.UI.SystemCanvasManagers
 {
+    /// <summary>响应 ESC 面板事件并在场景加载完成时复位面板显示状态。</summary>
     public class ESCMenuManager : MonoBehaviour, ICanvasManager
     {
         [SerializeField] private CanvasGroup ESCGroup;

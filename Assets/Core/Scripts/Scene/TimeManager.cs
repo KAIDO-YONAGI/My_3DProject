@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Scene
 {
+    /// <summary>通过暂停引用计数统一管理游戏时间的暂停、恢复和强制恢复。</summary>
     public class TimeManager : YSingleton<TimeManager>
     {
         private bool isGamePaused;

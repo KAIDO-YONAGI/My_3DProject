@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera
 {
+    /// <summary>管理镜头输入期间的光标锁定、释放和重新捕获状态。</summary>
     class CameraCursorController
     {
         private static CameraCursorController owner;

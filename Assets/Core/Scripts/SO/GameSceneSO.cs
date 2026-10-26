@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Core.Scripts.SO
 {
+    /// <summary>保存场景资源、场景类型、初始位置及用于存档匹配的稳定标识。</summary>
     [CreateAssetMenu(fileName = "GameSceneSO", menuName = "GameSceneSO/SceneSO", order = 0)]
     public class GameSceneSO : ScriptableObject {
         // 注意：这不是存档键。ID 由 OnValidate 生成且不落盘，跨会话/打包会变，不要用它索引存档。

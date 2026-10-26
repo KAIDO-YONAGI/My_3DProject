@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera
 {
+    /// <summary>提供与帧率无关的指数平滑和有界角度步进计算。</summary>
     static class CameraRotationMath
     {
         public static float ExponentialFactor(float rate, float deltaTime)

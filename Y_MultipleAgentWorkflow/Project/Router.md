@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`0/5`
-最后更新：`2026-10-20`
+维护计数：`4/5`
+最后更新：`2026-10-27`
 
 ## 任务路由
 
@@ -13,7 +13,7 @@
 | 渲染管线、URP 资产、三渲二着色器与调参 | `Project_Guide.md`、`Assets/Core/Shaders/Toon/TOON_MIGRATION.md` |
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
-| 音效播放、空间坐标与播放器对象池 | `Project_Guide.md` |
+| 音效请求事件、空间坐标与播放器对象池 | `Project_Guide.md` |
 | Prefab 组件组成 | `Project_Guide.md` |
 | 经典石材、Blender、Cell Fracture、不规则预切 Cube 与粒子材质 | `Project_Guide.md`；资源预览同时读取 `../Scene/Scene_Guide.md` |
 | 圆形平台、编辑器烘焙、轻量方块、合并碰撞、相邻面剔除与延迟碎块 | `Project_Guide.md`、`../Scene/Scene_Guide.md` |

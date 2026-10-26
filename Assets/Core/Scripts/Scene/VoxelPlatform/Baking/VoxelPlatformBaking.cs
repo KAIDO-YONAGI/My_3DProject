@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Baking
 {
-    // 生成可序列化的烘焙结果；AssetDatabase 持久化由编辑器 Baker 负责。
+    /// <summary>将平台源布局转换为可序列化的方块、表面和碰撞分块数据。</summary>
     static class VoxelPlatformBaking
     {
         internal static Mesh[] Bake(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)

@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 namespace Core.Scripts.Scene
 {
+    /// <summary>注册并在启动时异步加载配置的常驻场景。</summary>
     public class InitialLoad : MonoBehaviour
     {
         [Tooltip("启动时以叠加模式加载并持续保留的场景。")]

@@ -41,6 +41,7 @@ namespace Core.Scripts.Scene
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
         private readonly List<LoadedScene> currentScenes = new List<LoadedScene>();
 
+        /// <summary>关联场景配置资产与其当前加载的 Unity 场景实例。</summary>
         private class LoadedScene
         {
             public readonly GameSceneSO Asset;

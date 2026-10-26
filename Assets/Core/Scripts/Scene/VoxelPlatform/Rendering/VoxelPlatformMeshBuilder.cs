@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Rendering
 {
-    // 按分块和材质生成可见表面，协调同一分块的碰撞刷新。
+    /// <summary>按分块和材质生成可见表面，并协调对应分块的碰撞刷新。</summary>
     class VoxelPlatformMeshBuilder
     {
         private readonly VoxelPlatformRenderer owner;

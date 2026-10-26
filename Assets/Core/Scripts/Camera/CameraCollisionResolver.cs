@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Core.Scripts.Camera
 {
+    /// <summary>检测镜头焦点到候选位置之间的障碍，并裁剪镜头偏移以避免穿透碰撞体。</summary>
     class CameraCollisionResolver
     {
         // 使用固定数组接收无分配球形检测结果，容量足以覆盖镜头路径上的常见碰撞体。
