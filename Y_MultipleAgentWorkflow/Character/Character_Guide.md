@@ -159,9 +159,9 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
-射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.ExplodeFromRay(...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
+射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.Instance.ExplodeFromRay(...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
 
-射线命中最近的有效合并平台后，命中表面坐标作为爆炸中心。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 直接使用输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、保留请求半径且破坏数为零。`Update` 在本地爆炸结算成功后读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`，随后在攻击回路末尾发布 `Assets/Core/SO/Events/BlastEventSO.asset`。事件载荷为 `AttackType`、爆炸位置和水平半径，供粒子与音效订阅者响应；网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+射线命中最近的有效合并平台后，`AttackResult` 返回世界空间 `ExplosionCenter`、相对命中平台根节点的 `PlatformLocalPosition` 和登记 ID。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 接收平台局部触发点、世界水平半径与平台 ID，并转换为世界中心后结算；`ExplodeFromRay` 未命中有效平台时世界中心为空、平台 ID 为零、保留请求半径且破坏数为零。`Update` 在爆炸中心有效且平台 ID 为正时读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。网络请求与 `BlastEventSO` 共用 `AttackRequestPack`，其中 `PlatformLocalPosition` 相对目标平台根节点，`Radius` 仍是世界单位；本地表现事件在攻击回路末尾发布，网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
 
 ## 目录约定
 

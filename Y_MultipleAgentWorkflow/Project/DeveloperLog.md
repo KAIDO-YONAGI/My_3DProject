@@ -1,5 +1,12 @@
 # Project 开发记录
 
+## 2026-10-28：破坏服务单例化与平台注册事件
+
+- `VoxelPlatformDestruction` 由静态类改为 `YSingleton` 单例，查询缓冲与平台注册表改由实例持有。
+- 平台注册改由 `PlatformRegister` 发布 `PlatformRegisterEventSO`，注册表按场景句柄记录并在场景卸载时清理。
+- 破坏接口改为实例方法：`ExplodeAt` 接收平台局部位置、半径与平台 ID。
+- Project 维护计数：`0/5 → 1/5`。
+
 ## 2026-10-27：保留 BlastEventSO 作为攻击表现通知
 
 - `BlastEventSO` 继续表达爆炸事件，只广播攻击类型、世界位置和水平半径，不再中转网络请求。

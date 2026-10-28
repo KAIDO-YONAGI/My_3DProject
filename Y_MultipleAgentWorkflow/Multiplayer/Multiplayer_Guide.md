@@ -11,16 +11,18 @@
 - `CharacterIdSync`：同步 `characterId`，通过 `CommandSetCharacter` 接收本地玩家启动时上报的本机默认编号和本地拥有者提交的角色选择。
 - `CharacterMotionSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
 - `NetworkAudioPlayer`：接收 `AudioPlayerManager` 转交的本地音效请求，仅由本地拥有者通过 Command 上行音效类型和可选位置，服务器经 ClientRpc 转发给观察者，拥有者由 `includeOwner = false` 排除。
-- `NetworkBlastManager`：接收本地 `Attack` 直接调用的 `CommandAttack`，由服务器通过 `RpcRequestAttack` 通知其他观察者结算；远端结算后发布 `BlastEventSO` 表现通知。
+- `NetworkBlastManager`：接收本地 `Attack` 直接调用的 `CommandAttack`，请求携带平台 ID、平台局部位置、伤害与世界水平半径；服务器通过 `RpcRequestAttack` 通知其他观察者按同一平台 ID 结算，远端结算有效时发布 `BlastEventSO` 表现通知。
 - `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer` 和 `NetworkBlastManager`。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
-项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
+项目网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接与出生点分配，`Sync/` 放角色编号、运动、音频与爆炸请求同步，`CharacterPresentation/` 放角色表现装配。
+
+`NetworkSpawnManager` 是 `NetworkManager` 的扩展实现，在基类出生点机制上增加服务端占用记录：优先分配未被占用的出生点，玩家数超过出生点数时回到基类的随机与轮转规则；连接断开与服务器停止时释放占用。
 
 `FeedbackEventSO` 是跨模块的音效请求入口，载荷为 `AudioRequest`，包含音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅该事件并负责本地播放；联网且存在本地玩家时，再把请求交给该玩家的 `NetworkAudioPlayer`。网络组件只校验本地拥有者与客户端 Ready 状态，随后通过 Command 和 ClientRpc 向其他观察者转发。
 
-`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager`；本地玩家变化时重新获取组件。本地射线爆炸结算成功后，直接调用其 `CommandAttack` 提交包含 `AttackType`、位置、伤害和半径的 `AttackRequestPack`，随后在本地攻击回路末尾发布 `BlastEventSO`。该事件只通知粒子、音效等表现订阅者，不参与网络请求转发。服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按相同中心和半径结算，并在各远端结算后发布带攻击类型、位置和半径的 `BlastEventSO`；拥有者不接收 RPC，因此本地表现只触发一次。
+`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager`；本地玩家变化时重新获取组件。本地射线爆炸结算成功后，直接调用其 `CommandAttack` 提交 `AttackRequestPack`，并在本地攻击回路末尾将同一个载荷发布到 `BlastEventSO`。两条管线不再维护独立字段结构；`PlatformLocalPosition` 相对目标平台根节点，`Radius` 为世界单位的水平半径。服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按平台 ID 与局部位置重建世界爆炸中心并结算，随后发布同一载荷供表现订阅者使用；拥有者不接收 RPC，因此本地表现只触发一次。
 
 ## 连接与玩家生成
 

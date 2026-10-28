@@ -111,11 +111,11 @@ Cube_<材质名>
 
 Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并保留编辑用源布局。场景烘焙直接转换场景实例，各层源布局通过各自的编辑用资源保存，转换结果拥有独立的场景烘焙数据。重新编辑场景烘焙区域时，在原平台根节点下补齐对应的完整合并源布局后生成结果；独立区域沿用其场景编辑内容。公共运行用 Prefab 与独立场景平台分别通过各自的烘焙入口更新。
 
-`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。射线攻击由 `VoxelPlatformDestruction.ExplodeFromRay(...)` 处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为爆炸中心并随 `AttackResult` 返回。
+`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。射线攻击由 `VoxelPlatformDestruction.Instance.ExplodeFromRay(...)` 处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为世界爆炸中心，命中平台的登记 ID 与平台局部位置分别随 `AttackResult.PlatformId`、`AttackResult.PlatformLocalPosition` 返回。
 
-攻击有两个互相独立的公开入口：`ExplodeAt(Vector3 triggerPoint, float radius)` 按世界触发点与半径结算，`ExplodeFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)` 在该入口内部检测最近有效命中后结算。两者均返回 `AttackResult`，包含可空爆炸中心、实际半径与破坏数量；位置入口使用给定触发点，Ray 未命中时爆炸中心为空。Ray 命中后以真实表面坐标作为爆炸中心。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
+攻击有两个互相独立的公开入口：`ExplodeAt(Vector3 platformLocalPosition, float radius, int platformId)` 按平台局部位置、半径与平台登记 ID 结算单个平台，内部先把局部位置转成世界爆炸中心；`ExplodeFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)` 在该入口内部检测最近有效命中后结算命中平台。两者均返回 `AttackResult`，包含可空世界爆炸中心、平台局部位置、平台 ID、实际半径与破坏数量；位置入口使用给定局部位置，Ray 未命中时爆炸中心为空、平台 ID 为零。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
 
-`VoxelPlatformDestruction.BreakRegions(...)` 是独立区域触发器使用的 Collider 体积入口，不属于攻击 API。平台启用时登记、停用时注销；Vector3 攻击按已登记平台结算，Ray 攻击只结算最近有效命中的平台，不扫描场景对象。
+`VoxelPlatformDestruction` 是常驻场景上的单例服务，订阅 `PlatformRegisterEventSO` 维护跨场景平台注册表。平台所属场景中的 `PlatformRegister` 在场景加载完成后逐项发布平台组件、网络 ID 与所属场景，注册表按场景句柄记录并在场景卸载时移除该场景的平台；重复 ID 与无效引用在注册时拒绝。该 ID 是对外通信的平台标识，客户端与服务器必须一致。`VoxelPlatformRenderer` 不再自行登记或注销。`BreakRegions(...)` 是独立区域触发器使用的 Collider 体积入口，只结算与标记体积重叠的登记平台，不属于攻击 API。
 
 `VoxelPlatformBlastTrigger` 是触发器驱动的区域入口：挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把标记碰撞体交给 `BreakRegions`，同步完成破坏；`regions` 留空时用子物体上的碰撞体，`collisionDuration` 传给区域结算，`oneShot` 打开时只响应第一次触发。触发器要与静态平台产生物理事件，触发器自身或进入它的物体上需要有 Rigidbody。
 

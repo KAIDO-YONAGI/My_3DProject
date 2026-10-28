@@ -1,5 +1,10 @@
 # Character 开发记录
 
+## 2026-10-28：攻击请求改用平台局部位置与平台 ID
+
+- `Attack` 在爆炸中心有效且平台 ID 为正时发布请求，请求携带平台局部位置、世界水平半径与平台 ID。
+- 本地表现事件与网络请求共用 `AttackRequestPack`；Character 维护计数：`3/5 → 4/5`。
+
 ## 2026-10-27：攻击网络请求直调与爆炸表现事件
 
 - `Attack` 以 `NetworkClient.localPlayer` 为键缓存本地网络玩家对象上的 `NetworkBlastManager`，本地爆炸结算成功后在该组件上直接调用 `CommandAttack`，并在攻击回路末尾发布 `BlastEventSO`。

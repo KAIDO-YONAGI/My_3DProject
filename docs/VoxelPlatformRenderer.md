@@ -148,14 +148,15 @@
 
 ### 攻击爆炸接口
 
-攻击服务提供 Vector3 与 Ray 两个爆炸入口，均返回 `AttackResult`。Vector3 入口按输入世界坐标结算；Ray 入口在服务内部完成射线过滤、最近有效平台选择和命中方块解析，并以命中表面坐标作为爆炸中心。半径是世界空间 XZ 水平半径，不设高度上限；候选从中心所在的世界 chunk 列向相邻列扩展，再按方块中心的水平距离精确筛选。
+攻击服务由常驻场景中的 `VoxelPlatformDestruction` 单例提供，`ExplodeAt` 与 `ExplodeFromRay` 两个入口均返回 `AttackResult`。`ExplodeAt` 接收平台局部位置、世界水平半径与平台 ID，内部转换为世界中心后结算该平台；`ExplodeFromRay` 在服务内部完成射线过滤、最近有效平台选择和命中方块解析，返回世界中心、平台局部位置与平台 ID。半径是世界空间 XZ 水平半径，不设高度上限；候选从中心所在的世界 chunk 列向相邻列扩展，再按方块中心的水平距离精确筛选。
 
 ```csharp
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using UnityEngine;
 
-AttackResult atPosition = VoxelPlatformDestruction.ExplodeAt(triggerPoint, blastRadius);
-AttackResult fromRay = VoxelPlatformDestruction.ExplodeFromRay(
+AttackResult atPosition = VoxelPlatformDestruction.Instance.ExplodeAt(
+    platformLocalPoint, blastRadius, platformId);
+AttackResult fromRay = VoxelPlatformDestruction.Instance.ExplodeFromRay(
     ray, maxDistance, hitLayers, playerRoot, blastRadius);
 if (fromRay.ExplosionCenter is Vector3 hitPoint)
 {
@@ -163,7 +164,7 @@ if (fromRay.ExplosionCenter is Vector3 hitPoint)
 }
 ```
 
-`ExplodeAt` 返回输入触发点；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、破坏数量为零。`AttackResult.Radius` 返回本次实际使用的水平半径，`Attack.AttackFromCrosshair()` 将完整结果直接返回调用方。
+`ExplodeAt` 返回输入局部位置对应的世界中心；`ExplodeFromRay` 未命中有效平台时爆炸中心为空、平台 ID 为零、破坏数量为零。`AttackResult.Radius` 返回本次实际使用的水平半径，`PlatformLocalPosition` 供网络请求复用。
 
 ### 区域触发器调用
 
@@ -173,10 +174,10 @@ if (fromRay.ExplosionCenter is Vector3 hitPoint)
 using Core.Scripts.Scene.VoxelPlatform.Destruction;
 
 // regions 为 Collider 数组；collisionDuration 为本次碎块保持碰撞的时长。
-int broken = VoxelPlatformDestruction.BreakRegions(regions, collisionDuration);
+int broken = VoxelPlatformDestruction.Instance.BreakRegions(regions, collisionDuration);
 ```
 
-区域入口按标记 Collider 的世界包围盒或球形范围结算已登记平台，返回实际破坏数；它与两个攻击爆炸入口分开。
+区域入口按标记 Collider 的世界包围盒或球形范围只结算与体积重叠的注册平台，返回实际破坏数；它与两个攻击爆炸入口分开。
 
 `VoxelPlatformBlastTrigger` 将触发事件接到同一入口；区域字段留空时收集子碰撞体，再退到自身碰撞体。它还承接开局事件、平台刚体与围栏行为，使用时应按当前组件职责配置引用。
 

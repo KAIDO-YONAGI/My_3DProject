@@ -1,5 +1,12 @@
 # Multiplayer 开发记录
 
+## 2026-10-28：攻击请求携带平台标识，出生点按连接占用分配
+
+- `AttackRequestPack` 改为携带平台 ID、相对平台根节点的局部位置、伤害与世界水平半径；`BlastEventSO` 复用同一请求包作为表现载荷。
+- `NetworkBlastManager.RpcRequestAttack` 按平台 ID 与局部位置调用 `VoxelPlatformDestruction.Instance.ExplodeAt`，结算有效时才发布表现事件。
+- 新增 `NetworkSpawnManager`：在基类出生点机制上按连接编号记录占用，玩家数超过出生点数时回退基类规则。
+- Multiplayer 维护计数：`4/5 → 5/5`。
+
 ## 2026-10-27：攻击请求与爆炸表现事件分离
 
 - `Attack` 不再通过 `BlastEventSO` 中转网络请求，改为直接调用缓存的本地 `NetworkBlastManager.CommandAttack`。

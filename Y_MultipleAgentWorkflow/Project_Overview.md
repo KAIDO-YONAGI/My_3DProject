@@ -70,12 +70,12 @@ Assets/Core/Scripts/
 │  └─ Presentation/        CharacterBoneFollower、CharacterVisual
 ├─ Common/                 YSingleton、CommonEnums（含 AttackType）
 ├─ Networking/
-│  ├─ Connection/            AutoStartClient
+│  ├─ Connection/            AutoStartClient、NetworkSpawnManager
 │  ├─ Sync/                  CharacterIdSync、CharacterMotionSync、NetworkAudioPlayer、NetworkBlastManager
 │  └─ CharacterPresentation/ NetworkCharacterManager、CharacterPresentationService
 ├─ Scene/                  SceneChanger、InitialLoad、PersistentSceneRegistry、TimeManager、Teleport、FloatingSignboard
-│  └─ VoxelPlatform/       平台数据、运行时状态、烘焙、碰撞、破坏、碎块与渲染
-├─ SO/                     GameSceneSO、SceneLoadEventSO、SceneLoadedEventSO、ToggleCanvasEventSO、VoidEventSO、FeedbackEventSO
+│  └─ VoxelPlatform/       平台注册、平台数据、运行时状态、烘焙、碰撞、破坏、碎块与渲染
+├─ SO/                     GameSceneSO、SceneLoadEventSO、SceneLoadedEventSO、ToggleCanvasEventSO、VoidEventSO、FeedbackEventSO、BlastEventSO、PlatformRegisterEventSO
 ├─ StateMachine/           HierarchicalState、HierarchicalStateMachine
 └─ UI/                     UIManager、CanvasFocusStack、ICanvasManager、CharacterSelectButton、ButtonSceneToggler、RetryButton、ESCButton
    └─ SystemCanvasManagers/ ESCMenuManager、GameOverCanvasManager、ExitManager
