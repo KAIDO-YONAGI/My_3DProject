@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Core.Scripts.Common;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityScene = UnityEngine.SceneManagement.Scene;
 
 namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 {
@@ -10,53 +13,151 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         /// <summary>本次爆炸中心；射线未命中有效平台时为空。</summary>
         public Vector3? ExplosionCenter { get; }
 
+        /// <summary>本次爆炸中心相对目标平台根节点的位置。</summary>
+        public Vector3 PlatformLocalPosition { get; }
+
+        /// <summary>命中并结算的平台稳定标识。</summary>
+        public int PlatformId { get; }
+
         /// <summary>本次结算实际破坏的方块数量。</summary>
         public int BrokenBlockCount { get; }
+
         /// <summary>本次爆炸使用的有效世界空间水平半径。</summary>
         public float Radius { get; }
 
-        /// <summary>创建一次攻击结算结果并保存位置、半径和破坏数量。</summary>
-        internal AttackResult(Vector3? explosionCenter,
-            int brokenBlockCount, float radius)
+        /// <summary>创建包含世界中心、平台局部中心和结算数据的攻击结果。</summary>
+        internal AttackResult(Vector3? explosionCenter, Vector3 platformLocalPosition,
+            int platformId, int brokenBlockCount, float radius)
         {
             ExplosionCenter = explosionCenter;
+            PlatformLocalPosition = platformLocalPosition;
+            PlatformId = platformId;
             BrokenBlockCount = brokenBlockCount;
             Radius = radius;
         }
     }
 
-    /// <summary>
-    /// 攻击统一通过位置或射线提交水平爆炸；区域触发器保留独立的碰撞体入口。
-    /// </summary>
-    public static class VoxelPlatformDestruction
+    /// <summary>维护跨场景平台注册表，并执行单平台攻击与区域破坏结算。</summary>
+    public sealed class VoxelPlatformDestruction : YSingleton<VoxelPlatformDestruction>
     {
-        // 已启用的平台在启用时登记，结算时不必扫描场景。
-        private static readonly List<VoxelPlatformRenderer> platforms = new();
-        // 区域触发器的体积转换缓冲；结算同步执行，不重入。
-        private static readonly List<VoxelPlatformBlast> blasts = new();
         private const int InitialRayHitCapacity = 16;
         private const int MaxRayHitCapacity = 256;
-        private static RaycastHit[] rayHits = new RaycastHit[InitialRayHitCapacity];
 
-        /// <summary>
-        /// 按世界触发点和水平半径结算圆柱爆炸。
-        /// </summary>
-        public static AttackResult ExplodeAt(Vector3 triggerPoint, float radius)
+        /// <summary>保存平台运行时注册信息及其所属场景，用于按场景卸载清理。</summary>
+        private sealed class RegisteredPlatform
         {
-            if (!IsFinite(triggerPoint) || !IsFinite(radius)) return default;
-            float effectiveRadius = Mathf.Max(0f, radius);
-            int broken = BreakActivePlatforms(triggerPoint, effectiveRadius);
-            return new AttackResult(triggerPoint, broken, effectiveRadius);
+            public VoxelPlatformRenderer Renderer;
+            public int Id;
+            public UnityScene Scene;
         }
 
-        /// <summary>从射线最近的有效平台命中位置结算水平圆柱爆炸。</summary>
+        [SerializeField] private PlatformRegisterEventSO platformRegisterEvent;
+
+        // 查询缓冲和批处理状态属于场景服务实例，不由静态类跨场景共享。
+        private RaycastHit[] rayHits = new RaycastHit[InitialRayHitCapacity];
+        private readonly List<RegisteredPlatform> platforms = new();
+        private readonly List<VoxelPlatformBlast> blasts = new();
+        private readonly HashSet<VoxelPlatformRenderer> uniquePlatforms = new();
+
+        /// <summary>订阅平台注册事件和 Unity 场景卸载事件，建立运行时平台注册表。</summary>
+        protected override void OnSingletonInitialized()
+        {
+            base.OnSingletonInitialized();
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+
+            if (platformRegisterEvent == null)
+            {
+                Debug.LogError("未配置平台注册事件，跨场景平台不会进入破坏注册表。", this);
+                return;
+            }
+
+            platformRegisterEvent.PlatformRegistrationRequested += RegisterPlatform;
+        }
+
+        /// <summary>解除事件订阅并让单例基类清理当前实例引用。</summary>
+        protected override void OnDestroy()
+        {
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            if (platformRegisterEvent != null)
+                platformRegisterEvent.PlatformRegistrationRequested -= RegisterPlatform;
+
+            base.OnDestroy();
+        }
+
+        /// <summary>校验平台注册请求并将平台、稳定 ID 和所属场景加入运行时表。</summary>
+        private void RegisterPlatform(VoxelPlatformRenderer platform, int platformId, UnityScene scene)
+        {
+            if (platform == null || platformId <= 0 || !scene.IsValid() || !scene.isLoaded)
+            {
+                Debug.LogError("拒绝无效的平台注册请求。", this);
+                return;
+            }
+
+            RegisteredPlatform existingPlatform = null;
+            for (int index = 0; index < platforms.Count; index++)
+            {
+                RegisteredPlatform registered = platforms[index];
+                if (registered.Renderer == platform)
+                {
+                    existingPlatform = registered;
+                    continue;
+                }
+
+                if (registered.Id == platformId)
+                {
+                    Debug.LogError("平台列表存在重复 Platform Id，拒绝注册：" + platformId, platform);
+                    return;
+                }
+            }
+
+            if (existingPlatform != null)
+            {
+                existingPlatform.Id = platformId;
+                existingPlatform.Scene = scene;
+                return;
+            }
+
+            platforms.Add(new RegisteredPlatform
+            {
+                Renderer = platform,
+                Id = platformId,
+                Scene = scene
+            });
+        }
+
+        /// <summary>场景卸载时由注册表持有方移除该场景注册的平台。</summary>
+        private void OnSceneUnloaded(UnityScene unloadedScene)
+        {
+            for (int index = platforms.Count - 1; index >= 0; index--)
+            {
+                if (platforms[index].Scene.handle == unloadedScene.handle)
+                    platforms.RemoveAt(index);
+            }
+        }
+
+        /// <summary>按平台根节点局部触发点、世界水平半径和平台注册 ID 结算爆炸。</summary>
+        public AttackResult ExplodeAt(Vector3 platformLocalPosition, float radius, int platformId)
+        {
+            if (!IsFinite(platformLocalPosition) || !IsFinite(radius) || platformId <= 0)
+                return default;
+
+            VoxelPlatformRenderer platform = FindRegisteredPlatform(platformId);
+            if (!platform) return default;
+
+            float effectiveRadius = Mathf.Max(0f, radius);
+            Vector3 worldCenter = platform.transform.TransformPoint(platformLocalPosition);
+            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(worldCenter, effectiveRadius);
+            return new AttackResult(worldCenter, platformLocalPosition, platformId, broken, effectiveRadius);
+        }
+
+        /// <summary>从最近有效的平台射线命中结算爆炸，并返回目标平台标识与表面命中点。</summary>
         /// <param name="ray">用于查找可破坏平台的世界空间射线。</param>
         /// <param name="maxDistance">射线检测的最大世界距离。</param>
         /// <param name="layerMask">允许射线检测的物理层；碎块层会自动排除。</param>
         /// <param name="ignoredRoot">射线需要忽略的对象根节点及其子层级。</param>
         /// <param name="radius">以命中位置为中心的世界 XZ 水平爆炸半径。</param>
-        /// <returns>包含命中中心、实际半径和破坏数量；没有有效平台命中时中心为空。</returns>
-        public static AttackResult ExplodeFromRay(Ray ray, float maxDistance, int layerMask,
+        /// <returns>包含命中中心、目标平台、实际半径和破坏数量；无有效平台命中时为空结果。</returns>
+        public AttackResult ExplodeFromRay(Ray ray, float maxDistance, int layerMask,
             Transform ignoredRoot, float radius)
         {
             // 拒绝无效射线参数，避免无意义的物理查询或非有限坐标进入爆炸筛选。
@@ -81,47 +182,46 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
                     ray, rayHits, maxDistance, queryMask, QueryTriggerInteraction.Ignore);
             }
 
-            // 达到缓冲上限仍填满时，分配完整结果以免遗漏更近的有效平台命中。
+            // 达到缓冲上限仍填满时，读取完整结果以免遗漏最近的平台命中。
             RaycastHit[] candidates = rayHits;
             int candidateCount = count;
             if (count == rayHits.Length && rayHits.Length == MaxRayHitCapacity)
             {
-                // 固定缓冲仍被填满时读取完整命中，确保最近的有效平台不会被截掉。
                 candidates = Physics.RaycastAll(ray, maxDistance, queryMask, QueryTriggerInteraction.Ignore);
                 candidateCount = candidates.Length;
             }
 
             if (!TryFindNearestPlatformHit(candidates, candidateCount, ignoredRoot,
                     out VoxelPlatformRenderer platform, out RaycastHit hit))
-                return new AttackResult(null, 0, effectiveRadius);
+                return new AttackResult(null, default, 0, 0, effectiveRadius);
 
-            // 使用最近有效平台的实际命中坐标作为中心，并仅结算该平台。
+            // 命中点作为中心，只调用命中平台自己的分块结算。
             int broken = platform.Runtime.BreakBlocksAroundWorldCenter(hit.point, effectiveRadius);
-            return new AttackResult(hit.point, broken, effectiveRadius);
+            int platformId = GetRegisteredPlatformId(platform);
+            Vector3 platformLocalPosition = platform.transform.InverseTransformPoint(hit.point);
+            return new AttackResult(hit.point, platformLocalPosition, platformId, broken, effectiveRadius);
         }
 
-        /// <summary>把一组标记碰撞体转换为区域体积，并在活动平台上批量结算。</summary>
-        public static int BreakRegions(IReadOnlyList<Collider> markers, float? collisionDuration = null)
+        /// <summary>把区域标记转换为体积，再只结算与这些体积物理重叠的平台。</summary>
+        public int BreakRegions(IReadOnlyList<Collider> markers, float? collisionDuration = null)
         {
             if (markers == null || markers.Count == 0) return 0;
+
             blasts.Clear();
+            uniquePlatforms.Clear();
             for (int index = 0; index < markers.Count; index++)
             {
                 Collider marker = markers[index];
-                if (marker) blasts.Add(VoxelPlatformBlast.FromCollider(marker));
+                if (!marker) continue;
+
+                blasts.Add(VoxelPlatformBlast.FromCollider(marker));
             }
 
             int broken = 0;
-            for (int index = platforms.Count - 1; index >= 0; index--)
+            for (int index = 0; index < platforms.Count; index++)
             {
-                VoxelPlatformRenderer platform = platforms[index];
-                if (!platform)
-                {
-                    platforms.RemoveAt(index);
-                    continue;
-                }
-
-                if (platform.isActiveAndEnabled)
+                VoxelPlatformRenderer platform = platforms[index].Renderer;
+                if (platform && platform.isActiveAndEnabled && uniquePlatforms.Add(platform))
                     broken += platform.Runtime.BreakBlocksIn(blasts, collisionDuration);
             }
 
@@ -129,7 +229,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         }
 
         /// <summary>从物理命中中选出最近且能解析到活动平台方块的命中。</summary>
-        private static bool TryFindNearestPlatformHit(RaycastHit[] candidates, int count,
+        private bool TryFindNearestPlatformHit(RaycastHit[] candidates, int count,
             Transform ignoredRoot, out VoxelPlatformRenderer nearestPlatform, out RaycastHit nearestHit)
         {
             nearestPlatform = null;
@@ -146,6 +246,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 
                 VoxelPlatformRenderer platform = collider.GetComponentInParent<VoxelPlatformRenderer>();
                 if (!platform || !platform.isActiveAndEnabled ||
+                    !IsRegistered(platform) ||
                     !platform.Runtime.TryGetBlockPosition(candidate, out _))
                     continue;
 
@@ -155,6 +256,53 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             }
 
             return nearestPlatform;
+        }
+
+        /// <summary>检查射线命中的平台是否已由场景服务显式登记。</summary>
+        private bool IsRegistered(VoxelPlatformRenderer platform)
+        {
+            for (int index = 0; index < platforms.Count; index++)
+            {
+                if (platforms[index].Renderer == platform) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>返回显式注册的平台 ID；未登记时返回零。</summary>
+        private int GetRegisteredPlatformId(VoxelPlatformRenderer platform)
+        {
+            for (int index = 0; index < platforms.Count; index++)
+            {
+                RegisteredPlatform registered = platforms[index];
+                if (registered.Renderer == platform)
+                    return registered.Id;
+            }
+
+            return 0;
+        }
+
+        /// <summary>按网络 ID 从显式注册表中查找唯一活动平台。</summary>
+        private VoxelPlatformRenderer FindRegisteredPlatform(int platformId)
+        {
+            VoxelPlatformRenderer match = null;
+            for (int index = 0; index < platforms.Count; index++)
+            {
+                RegisteredPlatform registered = platforms[index];
+                if (registered.Id != platformId || !registered.Renderer ||
+                    !registered.Renderer.isActiveAndEnabled)
+                    continue;
+
+                if (match && match != registered.Renderer)
+                {
+                    Debug.LogError("平台列表中存在重复 Platform Id，拒绝结算：" + platformId, this);
+                    return null;
+                }
+
+                match = registered.Renderer;
+            }
+
+            return match;
         }
 
         /// <summary>检查三维坐标的分量是否都是有限数值。</summary>
@@ -167,39 +315,6 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         private static bool IsFinite(float value)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value);
-        }
-
-        /// <summary>在登记的活动平台上按同一世界中心结算攻击爆炸。</summary>
-        private static int BreakActivePlatforms(Vector3 center, float radius)
-        {
-            int broken = 0;
-            for (int index = platforms.Count - 1; index >= 0; index--)
-            {
-                VoxelPlatformRenderer platform = platforms[index];
-                if (!platform)
-                {
-                    platforms.RemoveAt(index);
-                    continue;
-                }
-
-                if (platform.isActiveAndEnabled)
-                    broken += platform.Runtime.BreakBlocksAroundWorldCenter(center, radius);
-            }
-
-            return broken;
-        }
-
-        /// <summary>将启用的平台加入跨平台世界爆炸使用的登记表。</summary>
-        internal static void Register(VoxelPlatformRenderer platform)
-        {
-            if (!platform || platforms.Contains(platform)) return;
-            platforms.Add(platform);
-        }
-
-        /// <summary>从跨平台爆炸登记表移除停用的平台。</summary>
-        internal static void Unregister(VoxelPlatformRenderer platform)
-        {
-            platforms.Remove(platform);
         }
     }
 }

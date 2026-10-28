@@ -11,7 +11,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
     /// 玩家进入触发器时同时广播开局事件，订阅方自行决定收到后的行为。
     /// </summary>
     [DisallowMultipleComponent, AddComponentMenu("Environment/Voxel Platform Blast Trigger")]
-    public sealed class VoxelPlatformBlastTrigger : MonoBehaviour
+    public class VoxelPlatformBlastTrigger : MonoBehaviour
     {
         [SerializeField] private Rigidbody platform;
         [SerializeField] private GameObject fence;
@@ -69,7 +69,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             if (oneShot && fired) return 0;
             fired = true;
             CollectRegions(resolved);
-            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.BreakRegions(resolved, collisionDuration);
+            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.Instance.BreakRegions(resolved, collisionDuration);
         }
 
         // 留空时退到子物体上的碰撞体；仍然找不到就把触发器自己当成区域。

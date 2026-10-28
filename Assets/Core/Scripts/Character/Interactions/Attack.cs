@@ -110,15 +110,14 @@ namespace Core.Scripts.Character.Interactions
                 return;
             //本地构造射线并提交 返回的结果提供给RPC
             AttackResult result = AttackFromCrosshair();
-            if (!result.ExplosionCenter.HasValue) return;
+            if (!result.ExplosionCenter.HasValue || result.PlatformId <= 0) return;
 
             AttackRequestPack request = new AttackRequestPack(
-                AttackType.Explosion, result.ExplosionCenter.Value, 1, result.Radius);
+                AttackType.Explosion, result.PlatformLocalPosition, 1, result.Radius, result.PlatformId);
             SubmitNetworkAttack(request);
 
             // 本地表现事件放在攻击回路末尾，供特效和音效订阅。
-            blastEventSO.OnEventRaised(new BlastMessage(
-                request.AttackType, request.Position, request.Radius));
+            blastEventSO.OnEventRaised(request);
         }
 
         /// <summary>按本地玩家身份刷新网络组件缓存，并在联机 Ready 后提交攻击命令。</summary>
@@ -150,7 +149,7 @@ namespace Core.Scripts.Character.Interactions
         public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(transform.position, transform.forward);
-            return VoxelPlatformDestruction.ExplodeFromRay(
+            return VoxelPlatformDestruction.Instance.ExplodeFromRay(
                 ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
         }
 

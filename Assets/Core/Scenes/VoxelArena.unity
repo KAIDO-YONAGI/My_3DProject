@@ -13775,6 +13775,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1135102914}
+  - component: {fileID: 7826000000000000007}
   m_Layer: 0
   m_Name: Platforms
   m_TagString: Untagged
@@ -16955,7 +16956,7 @@ Transform:
   m_GameObject: {fileID: 1379004621}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 5, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -679405,6 +679406,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8993820755174200144}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7826000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1135102913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f80a20fdc8e3ff419b65591fc9a3bf0, type: 3}
+  m_Name: ''
+  m_EditorClassIdentifier: ''
+  platforms:
+  - Renderer: {fileID: 3109448510085756624}
+    ID: 1
+  - Renderer: {fileID: 3109448511545108918}
+    ID: 2
+  - Renderer: {fileID: 3109448510140008509}
+    ID: 3
+  - Renderer: {fileID: 3109448510857008009}
+    ID: 4
+  - Renderer: {fileID: 3109448510263025743}
+    ID: 5
+  - Renderer: {fileID: 3109448510917316829}
+    ID: 6
+  registerEvent: {fileID: 11400000, guid: e8b0c551e46a4e2789b8a8ce4c88ca47, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

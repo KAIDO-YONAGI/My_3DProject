@@ -62,11 +62,9 @@ namespace Core.Scripts.Scene.VoxelPlatform
         public bool HasBakedSurface => surfaceRoot && bakedBlocks.Count > 0 && bakedChunks.Count > 0;
         public bool HasBakeSources => VoxelPlatformSourceCollector.HasSourceGeometry(this);
 
-        /// <summary>登记活动平台，并在适用时加载烘焙表面。</summary>
+        /// <summary>启用平台，并在适用时加载烘焙表面。</summary>
         private void OnEnable()
         {
-            // 平台在启用时登记到破坏服务，批量结算按登记表遍历，不必扫描场景。
-            VoxelPlatformDestruction.Register(this);
 #if UNITY_EDITOR
             // 编辑用平台保留源 Cube，避免启用组件时用烘焙结果覆盖编辑视图。
             if (!Application.isPlaying && HasBakeSources) return;
@@ -85,10 +83,9 @@ namespace Core.Scripts.Scene.VoxelPlatform
             RefreshChangedBlocks();
         }
 
-        /// <summary>注销活动平台并清理生成的运行资源。</summary>
+        /// <summary>清理平台生成的运行资源。</summary>
         private void OnDisable()
         {
-            VoxelPlatformDestruction.Unregister(this);
             // 禁用后运行表面留在场景里会继续参与渲染和碰撞，必须一并清掉。
             Runtime.Clear();
         }
