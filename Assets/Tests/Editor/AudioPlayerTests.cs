@@ -5,7 +5,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
-public sealed class AudioPlayerTests
+public class AudioPlayerTests
 {
     private const string AudioNamespace = "Core.Scripts.Audio.";
     private const BindingFlags InstanceMembers =

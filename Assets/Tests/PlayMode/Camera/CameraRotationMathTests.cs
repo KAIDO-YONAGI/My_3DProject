@@ -3,7 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
-public sealed class CameraRotationMathTests
+public class CameraRotationMathTests
 {
     private MethodInfo boundedStep;
     private MethodInfo exponentialFactor;

@@ -4,7 +4,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-public sealed class CharacterVisualConfigurationTests
+public class CharacterVisualConfigurationTests
 {
     [TestCase("娜娜莉（华丽飞踢）")]
     [TestCase("娜娜莉（学园之星）")]

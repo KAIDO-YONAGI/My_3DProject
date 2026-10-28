@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using NUnit.Framework;
 
-public sealed class CharacterMovementStateMachineTests
+public class CharacterMovementStateMachineTests
 {
     private static readonly BindingFlags PublicInstance = BindingFlags.Instance | BindingFlags.Public;
 

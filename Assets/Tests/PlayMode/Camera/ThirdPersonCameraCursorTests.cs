@@ -12,7 +12,7 @@ using UnityEngine.TestTools;
 /// 同时保持 Escape 释放与左键重新捕获的原有行为。
 /// 编辑器会自行接管 Cursor.lockState，因此“是否锁定”以组件内部状态为准，再用 Cursor.visible 验证真实生效。
 /// </summary>
-public sealed class ThirdPersonCameraCursorTests
+public class ThirdPersonCameraCursorTests
 {
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
 

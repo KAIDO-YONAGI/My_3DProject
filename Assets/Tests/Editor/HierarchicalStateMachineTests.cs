@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Core.Scripts.StateMachine;
 using NUnit.Framework;
 
-public sealed class HierarchicalStateMachineTests
+public class HierarchicalStateMachineTests
 {
     [Test]
     public void StartEntersDefaultSubtreeFromTopDown()
@@ -120,7 +120,7 @@ public sealed class HierarchicalStateMachineTests
         Assert.That(machine.Leaf, Is.SameAs(tree.LeftA));
     }
 
-    private sealed class Tree
+    private class Tree
     {
         public List<string> Log { get; } = new List<string>();
 
@@ -157,7 +157,7 @@ public sealed class HierarchicalStateMachineTests
         return tree;
     }
 
-    private sealed class ProbeState : HierarchicalState<string>
+    private class ProbeState : HierarchicalState<string>
     {
         private readonly string name;
         private readonly List<string> log;

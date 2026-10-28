@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(CharacterVisual))]
-public sealed class CharacterVisualEditor : Editor
+public class CharacterVisualEditor : Editor
 {
     public override void OnInspectorGUI()
     {

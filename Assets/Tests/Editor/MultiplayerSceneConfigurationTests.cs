@@ -7,7 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public sealed class MultiplayerSceneConfigurationTests
+public class MultiplayerSceneConfigurationTests
 {
     private const string PersistentScenePath = "Assets/Core/Scenes/PersistentScene.unity";
     private const string GameplayScenePath = "Assets/Core/Scenes/MultiplayerSampleScene.unity";

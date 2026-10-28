@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 /// <summary>
 /// 从真实相机层级、输入和物理结果验证行为，不把相机脱离角色层级后测试。
 /// </summary>
-public sealed class ThirdPersonCameraBehaviourTests
+public class ThirdPersonCameraBehaviourTests
 {
     private const BindingFlags Members = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
     private readonly List<GameObject> obstacles = new List<GameObject>();

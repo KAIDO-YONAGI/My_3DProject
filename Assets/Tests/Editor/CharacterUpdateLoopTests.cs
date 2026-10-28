@@ -5,7 +5,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-public sealed class CharacterUpdateLoopTests
+public class CharacterUpdateLoopTests
 {
     private const string CharacterNamespace = "Core.Scripts.Character.";
     private const string TemplatePath = "Assets/Core/Models/Resources/CharacterLocomotion.controller";

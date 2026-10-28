@@ -3,7 +3,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
-public sealed class NetworkConnectionConfigurationTests
+public class NetworkConnectionConfigurationTests
 {
     [Test]
     public void AutoStartClientUsesNetworkManagerAddressConfiguration()

@@ -6,7 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public sealed class NetworkCharacterPresentationTests
+public class NetworkCharacterPresentationTests
 {
     private const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic;
     private readonly List<GameObject> objects = new List<GameObject>();

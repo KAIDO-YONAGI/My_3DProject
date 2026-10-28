@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-public sealed class VoxelPlatformRendererTests
+public class VoxelPlatformRendererTests
 {
     private GameObject root;
     private Component surface;

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-public sealed class SceneChangerInstanceTests
+public class SceneChangerInstanceTests
 {
     private const string GameplayName = "MultiplayerSampleScene";
     private const string OtherGameplayName = "MultiplayerSampleScene 1";
