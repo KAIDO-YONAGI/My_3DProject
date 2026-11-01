@@ -1,145 +1,55 @@
 # My_3DProject
 
-面向 2～5 人短回合乱斗的物理派对游戏。客户端基于 Unity，网络层使用 Mirror，专用服务器通过 KCP 传输承载连接、玩家生成与位置同步。
+![Unity](https://img.shields.io/badge/Unity-2022.3.62f3c1-222222?logo=unity&logoColor=white) ![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white) ![URP](https://img.shields.io/badge/URP-14.0.12-555555) ![Mirror](https://img.shields.io/badge/Mirror-96.11.2-2D80D3) ![KCP](https://img.shields.io/badge/KCP-Transport-168B74)
 
-## 环境要求
+基于 Unity 与 C# 的多人 3D 物理派对游戏，面向 2～5 人短回合对战。角色通过第三人称移动、跳跃与爆破攻击，在可破坏的体素竞技场中展开对抗。
 
-| 项目 | 内容 |
+玩法围绕角色控制、专用服务器联机和体素场地破坏展开。角色运动、网络身份与视觉表现分开管理，场地通过编辑器烘焙生成运行数据，并在破坏发生时局部重建。
+
+## 项目内容
+
+| 功能 | 内容 |
 |---|---|
-| Unity 编辑器 | `2022.3.62f3c1` |
-| 包依赖 | `Packages/manifest.json` |
-| 第三方插件 | `Assets/Plugins/`（含 `Mirror/`、`DynamicBone/`） |
+| 角色操作 | 第三人称移动、疾跑与跳跃，按相机朝向控制移动方向，两套角色外观共用运动与动画流程 |
+| 多人联机 | 基于 Mirror 与 KCP 专用服务器的连接、自动重连、角色生成与选择，以及远程动画表现 |
+| 爆破与场地破坏 | 攻击命中体素平台后移除受损方块、生成预切碎块，并更新平台表面与碰撞 |
+| 场景组织 | 启动场景加载常驻管理层，由常驻层切换玩法场景并协调角色装配与联机入口 |
 
-## 快速开始
+### 角色控制与动画
 
-1. 使用 Unity `2022.3.62f3c1` 打开项目，等待包解析与脚本编译完成。
-2. 打开 `Assets/Core/Scenes/InitialScene.unity`，进入播放模式。`AutoStartClient` 连接 `127.0.0.1`。
-3. 编辑器单独运行时，`PersistentScene` 中的单机 `LocalPlayer` 承担移动、物理与相机表现。
-4. 联机运行时，先构建 Windows Server 并运行 `My_3DProject.exe`。服务器以 `HeadlessStartMode=AutoStartServer` 启动并在 UDP `7777` 监听，客户端连接后由 Mirror 生成 `NetworkPlayer`。
-5. 本机多客户端联调时，使用 `Assets/Plugins/ParrelSync/` 克隆编辑器实例。
+角色运动由独立的移动模块处理，分层状态机维护待机、移动、疾跑、上升与下落状态。动画层读取运动状态、局部移动方向与混合权重来驱动角色表现；不同外观共用动画流程，并接入各自的动画资源。
 
-## 场景流程
+本地相机跟随角色，移动方向以相机朝向为参考。联机时，输入与相机按角色身份启用；远程角色通过同步的位置和运动快照呈现移动与动画。
 
-三个场景按以下顺序进入 Build Settings。
+### 多人连接与角色装配
 
-```text
-InitialScene                启动引导，注册并加载常驻场景
-  → PersistentScene         常驻管理层，承载网络、角色表现、场景切换与时间管理
-  → MultiplayerSampleScene  玩法环境，提供地形、碰撞与光照
-```
+服务器为每个连接生成玩家网络根，承载网络身份、运动、碰撞与变换同步。客户端根据角色编号装配完整角色表现，将模型、动画和相机资源接到对应网络根下，本地与远程角色共用同一套资源。
 
-`InitialLoad` 从 `InitialScene` 加载 `PersistentScene`，`SceneChanger` 以 Additive 模式加载 `MultiplayerSampleScene`。Mirror 的 `onlineScene` 留空，场景切换由 `SceneChanger` 负责。
+角色选择、攻击请求与音效分别通过各自的同步入口传递。爆破请求携带平台标识与平台局部命中位置，经服务器转发后，各客户端对对应平台进行破坏结算。
 
-## 目录结构
+### 体素平台与爆破
 
-| 路径 | 内容 |
+编辑器烘焙将方块布局转换为方块记录、合并表面网格与分块碰撞。烘焙按空间划分更新范围，剔除相邻方块之间的隐藏面，并按材质合并表面。运行时直接加载处理后的平台数据与网格。
+
+爆破时，仅为受损方块生成预切碎块，更新方块占据状态，并重建受影响分块及相邻边界的表面与碰撞。同一次批量破坏中的重复目标和更新范围会先合并，减少重复重建。平台负责场地状态与几何更新，碎块表现负责运动、碰撞时序和寿命。
+
+## 使用入口
+
+依赖配置、首次运行、多人联调与 Windows 客户端构建见[项目上手与构建](docs/项目上手与构建.md)。服务器启动和部署见[专用服务器构建与运行](Y_MultipleAgentWorkflow/Multiplayer/Dedicated_Server.md)。
+
+## 文档导航
+
+| 文档 | 内容 |
 |---|---|
-| `Assets/Core/Scenes/` | 三个场景 |
-| `Assets/Core/Prefabs/` | `NetworkManager`、`NetworkPlayer`、`Characters/`、`Lights/` |
-| `Assets/Core/Scripts/Networking/` | 自动连接、角色编号同步、角色表现装配 |
-| `Assets/Core/Scripts/Character/` | 输入、移动、动画数据流与角色表现 |
-| `Assets/Core/Scripts/Camera/` | 第三人称相机轨道、光标、避让与转向数学 |
-| `Assets/Core/Models/` | 角色模型源文件与骨骼配置说明 |
-| `Assets/Terrain/` | 玩法地形数据 |
-| `Assets/Core/SO/` | 场景与事件 ScriptableObject |
-| `Assets/Core/Scripts/StateMachine/` | 通用分层状态机框架（程序集 `Core.FrameWork.StateMachine`） |
-| `Assets/Tests/` | EditMode 与 PlayMode 测试程序集 |
-| `Assets/ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
-| `Assets/Rendering/` | URP 管线与 Renderer 资产 |
-| `Assets/Plugins/AddressableAssetsData/` | Addressables 分组与构建配置 |
-| `Assets/Core/Scripts/Common/` | 单例基类与通用枚举 |
-| `Assets/Core/Scripts/Scene/` | 场景加载链路、时间管理与体素平台 |
-| `Assets/Core/Scripts/UI/` | 界面管理与系统画布 |
-| `Assets/Core/Scripts/SO/` | 事件与场景脚本类型 |
-| `Assets/Core/Scripts/Audio/` | 音频播放、触发与配置 |
-| `Assets/Materials/ForestMaterials/` | 地形植被与地表贴图 |
-| `Assets/Materials/SFX/` | 音效与背景音乐素材 |
-| `Assets/Core/SO/Audio/` | 音频配置资产 |
-| `Assets/Plugins/TextMesh Pro/` | TextMeshPro 资源 |
-| `Assets/Plugins/Mirror/MirrorScriptTemplates/` | Mirror 脚本模板 |
-| `Assets/Plugins/ParrelSync/` | 多编辑器实例工具 |
-| `Assets/Plugins/DynamicBone/` | 骨骼跟随（发辫、裙摆、尾巴）的第三方实现 |
-| `Y_MultipleAgentWorkflow/` | 项目权威文档 |
-| `docs/` | 计划、草案与教学材料 |
+| [文档索引](docs/README.md) | 上手指南、系统说明、性能基准与专题材料 |
+| [角色控制图示](docs/diagrams/character-control/README.md) | 移动状态、逐帧数据流与同步边界 |
+| [体素平台实现](docs/VoxelPlatformRenderer.md) | 烘焙、网格合并、局部破坏与碎块接入 |
+| [体素平台烘焙基准](docs/VoxelPlatformBakingBenchmark.md) | 平台烘焙前后的性能数据与测量条件 |
+| [多人联机配置](Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md) | Mirror、KCP、玩家装配与联机验证 |
+| [项目系统索引](Y_MultipleAgentWorkflow/Router.md) | 按角色、联机、场景和工程配置查阅系统文档 |
 
-## 网络配置
+文档路由与多 Agent 并发协作采用我开发并维护的 [Y_MultipleAgentWorkflow](https://github.com/KAIDO-YONAGI/Y_MultipleAgentWorkflow)。
 
-| 配置项 | 值 |
-|---|---|
-| Transport | `kcp2k.KcpTransport` |
-| 服务器端口 | UDP `7777` |
-| 客户端地址 | `127.0.0.1` |
-| 玩家 Prefab | `Assets/Core/Prefabs/NetworkPlayer.prefab` |
-| 自动创建玩家 | `true` |
-| 出生点模式 | `Random` |
-| 同步方向 | `ClientToServer` |
-| Mirror onlineScene | 留空 |
-| 自动重连间隔 | `3` 秒 |
+## 致谢与许可
 
-`NetworkManager.prefab` 承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 与 `AutoStartClient`。`NetworkPlayer.prefab` 承载 `NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController` 与 `CharacterIdSync`。
-
-## 角色资源
-
-`NetworkCharacterManager.characters` 按编号保存完整角色 Prefab，每个角色只维护一份，单机、联机本地和远程身份共用它，身份差异由运行时组件启停处理。
-
-| 编号 | 模型 | 完整角色 Prefab |
-|---|---|---|
-| `0` | 娜娜莉（华丽飞踢） | `Assets/Core/Prefabs/Characters/娜娜莉（华丽飞踢）.prefab` |
-| `1` | 娜娜莉（学园之星） | `Assets/Core/Prefabs/Characters/娜娜莉（学园之星）.prefab` |
-
-默认角色编号为 `1`。两个模型的源文件、材质、贴图与动画分别位于 `Assets/Core/Models/异环_娜娜莉（华丽飞踢）/` 与 `Assets/Core/Models/异环_娜娜莉（学园之星）/`。
-
-完整角色 Prefab 提供 `Camera`、`AudioListener`、`ThirdPersonCamera`、`Animator`、`CharacterController`、`DynamicBone` 与 `PlayerCharacterController`。本地拥有者启用相机、控制器与监听器，远程玩家只保留模型与动画。
-
-角色骨骼物理由 `DynamicBone` 与 `DynamicBoneCollider` 驱动，参数含义与当前取值记录在 `Assets/Core/Models/骨骼配置须知.md`。
-
-### 装配规则
-
-`NetworkPlayer` 是稳定的网络根，服务器为每个连接生成一个网络根，客户端根据 `CharacterIdSync.characterId` 与 `NetworkIdentity.isLocalPlayer` 装配表现。
-
-- 视觉实例挂到网络根下，局部 Transform 归零。
-- 视觉实例自带的 `PlayerCharacterController` 与 `CharacterController` 停用，输入、运动与碰撞由网络根负责。
-- 网络根的 `PlayerCharacterController` 绑定视觉实例的 `Animator` 与动画配置。
-- 本地拥有者启用相机、`ThirdPersonCamera` 与 `AudioListener`，相机成为 `PlayerCharacterController.inputSpace`。
-- 远程玩家显示模型与动画，相机与音频监听器保持关闭。
-- 连接完成后，`PersistentScene` 中的单机 `LocalPlayer` 收起，活动角色数量与 Mirror 玩家数量一致。
-
-## 插件与依赖
-
-### 第三方插件
-
-| 插件 | 位置 | 用途 |
-|---|---|---|
-| Mirror `96.11.2` | `Assets/Plugins/Mirror/` | 网络框架，附带 KCP 传输 |
-| ParrelSync | `Assets/Plugins/ParrelSync/` | 多开 Unity 编辑器做联机联调 |
-| DynamicBone | `Assets/Plugins/DynamicBone/` | 角色头发、裙摆与尾巴的骨骼物理 |
-
-### Unity 包
-
-| 包 | 版本 |
-|---|---|
-| Addressables | `1.22.3` |
-| Input System | `1.14.2` |
-| Terrain Tools | `5.0.6` |
-| TextMeshPro | `3.0.7` |
-| Timeline | `1.7.7` |
-| UGUI | `1.0.0` |
-| Visual Scripting | `1.9.4` |
-| Unity MCP | Git 依赖 `main` 分支 |
-
-## 构建
-
-```text
-客户端      D:/Unity/Releases/3D_MultiplayerGame/Client/
-专用服务器  D:/Unity/Releases/3D_MultiplayerGame/Server/
-```
-
-两个构建都包含 `InitialScene`、`PersistentScene` 与 `MultiplayerSampleScene`，并使用相同的 `NetworkPlayer` 组件布局与序列化字段。Windows Server 构建以 `HeadlessStartMode=AutoStartServer` 启动，在 UDP `7777` 监听。
-
-## 文档
-
-`Y_MultipleAgentWorkflow/` 是项目权威文档入口，按 `Client`、`Networking`、`Server`、`Protocol`、`UnityRuntime` 拆分知识域，`Workflow` 管理文档路由与并发租约。`docs/` 存放计划、草案与教学材料。
-
-### 工作流出处
-
-本项目的多智能体工作流出自作者本人维护的开源项目 [KAIDO-YONAGI/Y_MultipleAgentWorkflow](https://github.com/KAIDO-YONAGI/Y_MultipleAgentWorkflow)，不是移植或套用的第三方框架。仓库沉淀的是同一套可复用方案：分层路由与权威文档库、WorkingAgent 并发租约，以及多客户端 Skill 分发；本项目中的 `Y_MultipleAgentWorkflow/`、`AGENTS.md` 与 `CLAUDE.md` 入口均按该方案落地。
+项目代码采用 [GPL-3.0](LICENSE) 许可。第三方插件与资源的许可见各自附带的声明。
