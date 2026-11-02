@@ -16039,7 +16039,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1320012518}
   m_Layer: 0
-  m_Name: Floor0
+  m_Name: Floor1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16745,7 +16745,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1370119426}
   m_Layer: 0
-  m_Name: Floor1
+  m_Name: Floor2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -665042,6 +665042,32 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7826000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1135102913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f80a20fdc8e3ff419b65591fc9a3bf0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  platforms:
+  - renderer: {fileID: 3109448510085756624}
+    id: 1
+  - renderer: {fileID: 3109448511545108918}
+    id: 2
+  - renderer: {fileID: 3109448510140008509}
+    id: 3
+  - renderer: {fileID: 3109448510857008009}
+    id: 4
+  - renderer: {fileID: 3109448510263025743}
+    id: 5
+  - renderer: {fileID: 3109448510917316829}
+    id: 6
+  registerEvent: {fileID: 11400000, guid: e8b0c551e46a4e2789b8a8ce4c88ca47, type: 2}
 --- !u!1 &7833990023313092612
 GameObject:
   m_ObjectHideFlags: 0
@@ -679406,32 +679432,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8993820755174200144}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7826000000000000007
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1135102913}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f80a20fdc8e3ff419b65591fc9a3bf0, type: 3}
-  m_Name: ''
-  m_EditorClassIdentifier: ''
-  platforms:
-  - Renderer: {fileID: 3109448510085756624}
-    ID: 1
-  - Renderer: {fileID: 3109448511545108918}
-    ID: 2
-  - Renderer: {fileID: 3109448510140008509}
-    ID: 3
-  - Renderer: {fileID: 3109448510857008009}
-    ID: 4
-  - Renderer: {fileID: 3109448510263025743}
-    ID: 5
-  - Renderer: {fileID: 3109448510917316829}
-    ID: 6
-  registerEvent: {fileID: 11400000, guid: e8b0c551e46a4e2789b8a8ce4c88ca47, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

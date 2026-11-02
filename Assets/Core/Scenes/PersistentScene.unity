@@ -527,8 +527,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e8b2f7a9c1d3e5f7a9b0c2d4e6f8a13, type: 3}
-  m_Name: ''
-  m_EditorClassIdentifier: ''
+  m_Name: 
+  m_EditorClassIdentifier: 
   platformRegisterEvent: {fileID: 11400000, guid: e8b0c551e46a4e2789b8a8ce4c88ca47, type: 2}
 --- !u!1 &906009866
 GameObject:

@@ -5,14 +5,14 @@ using UnityScene = UnityEngine.SceneManagement.Scene;
 namespace Core.Scripts.Scene.VoxelPlatform
 {
     /// <summary>集中配置同场景平台引用和网络 ID，并在场景加载后发布注册事件。</summary>
-    public sealed class PlatformRegister : MonoBehaviour
+    public sealed class VoxelPlatformRegister : MonoBehaviour
     {
         /// <summary>保存一个平台根组件及其跨客户端一致的网络 ID。</summary>
         [System.Serializable]
         public struct PlatformReference
         {
-            public VoxelPlatformRenderer Renderer;
-            [Min(1)] public int ID;
+            public VoxelPlatformRenderer renderer;
+            [Min(1)] public int id;
         }
 
         [SerializeField] private PlatformReference[] platforms;
@@ -61,15 +61,15 @@ namespace Core.Scripts.Scene.VoxelPlatform
             for (int index = 0; index < platforms.Length; index++)
             {
                 PlatformReference reference = platforms[index];
-                if (reference.Renderer == null || reference.ID <= 0 ||
-                    reference.Renderer.gameObject.scene != scene)
+                if (reference.renderer == null || reference.id <= 0 ||
+                    reference.renderer.gameObject.scene != scene)
                 {
                     Debug.LogError("平台注册项必须引用当前场景中的平台根组件，并使用正数 Platform ID。", this);
                     continue;
                 }
 
-                registerEvent.RaisePlatformRegistration(reference.Renderer, reference.ID,
-                    reference.Renderer.gameObject.scene);
+                registerEvent.RaisePlatformRegistration(reference.renderer, reference.id,
+                    reference.renderer.gameObject.scene);
                 raisedAnyRegistration = true;
             }
 

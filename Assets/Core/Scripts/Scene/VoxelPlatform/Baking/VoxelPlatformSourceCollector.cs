@@ -19,7 +19,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Baking
 
         private static bool IsBakeSource(MeshFilter filter)
         {
-            // 独立编辑区使用自己的 Renderer 和 Collider，外围合批不接管它的状态。
+            // 独立编辑区使用自己的 renderer 和 Collider，外围合批不接管它的状态。
             return filter.name == "Intact" &&
                 !filter.GetComponentInParent<VoxelPlatformBakeExclusion>(true);
         }
