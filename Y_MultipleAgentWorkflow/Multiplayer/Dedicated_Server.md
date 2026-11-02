@@ -4,6 +4,23 @@
 状态：`Active`
 最后核验：`2026-10-11`
 
+## 维护规则
+
+本文件对应的实现、约束或规则发生变化时，按已核验事实更新相关章节，证据记录在[开发日志](DeveloperLog.md)。修改小标题时同步文档内目录；计数与维护周期遵循[工作流维护规则](../Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护触发
+
+修改 Headless 启动、服务器构建配置、NetworkManager、KCP 监听、玩家生成或服务端同步逻辑时更新本文档。
+
+## 文档内目录
+
+- [当前实现](#当前实现)
+- [启动流程](#启动流程)
+- [玩家生命周期](#玩家生命周期)
+- [构建与运行](#构建与运行)
+
+先读目录，再按任务读取相关章节，避免整份指南载入上下文。
+
 ## 当前实现
 
 服务端能力由 `PersistentScene` 中的 NetworkManager 实例、`Assets/Core/Prefabs/NetworkManager.prefab`、`KcpTransport`、玩家 Prefab 和 Windows Server 构建共同承载。服务器以 `HeadlessStartMode=AutoStartServer` 启动，在 UDP 上监听，出生点选择模式为 `Random`。完整参数值见 `../Project/Mirror_KCP_Config.md`。
@@ -38,6 +55,3 @@ Windows Server 构建启动
 - 服务端启动日志显示监听 UDP `7777`。
 - 构建场景清单与客户端一致。
 
-## 维护触发
-
-修改 Headless 启动、服务器构建配置、NetworkManager、KCP 监听、玩家生成或服务端同步逻辑时更新本文档。

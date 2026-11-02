@@ -4,6 +4,40 @@
 状态：`Active`
 最后核验：`2026-10-20`
 
+## 维护规则
+
+本文件对应的实现、约束或规则发生变化时，按已核验事实更新相关章节，证据记录在[开发日志](DeveloperLog.md)。修改小标题时同步文档内目录；计数与维护周期遵循[工作流维护规则](../Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护触发
+
+修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
+
+经典石材来源、Blender 制作入口、预切 Cube 层级、圆形平台分组与合批方式、材质映射或粒子渲染依赖变化时更新本文档；平台与资源预览场景的引用与分组变化时，同时维护 `../Scene/Scene_Guide.md`。
+
+## 文档内目录
+
+- [渲染管线](#渲染管线)
+- [版本与依赖](#版本与依赖)
+- [资产目录布局](#资产目录布局)
+- [经典石材与不规则预切资源](#经典石材与不规则预切资源)
+  - [Cube 层级与材质映射](#cube-层级与材质映射)
+  - [圆形平台资源](#圆形平台资源)
+  - [Blender 制作入口](#blender-制作入口)
+  - [粒子表现资源](#粒子表现资源)
+- [音效播放与回收](#音效播放与回收)
+- [Addressables](#addressables)
+- [Player Settings 与输入](#player-settings-与输入)
+- [NetworkManager Prefab](#networkmanager-prefab)
+- [NetworkPlayer Prefab](#networkplayer-prefab)
+- [角色表现资源](#角色表现资源)
+  - [角色动画 Controller](#角色动画-controller)
+  - [华丽飞踢模型与 Avatar 导入](#华丽飞踢模型与-avatar-导入)
+  - [学园之星裙摆 Prefab 配置](#学园之星裙摆-prefab-配置)
+- [Inspector 配置提示](#inspector-配置提示)
+- [验证覆盖](#验证覆盖)
+
+先读目录，再按任务读取相关章节，避免整份指南载入上下文。
+
 ## 渲染管线
 
 工程使用 **URP 14.0.12**，并实装基于 `UnityURPToonLitShaderExample` 改造的三渲二着色器，上游许可为 MIT。
@@ -246,8 +280,3 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 `Core.EditorTests` 覆盖单机角色引用绑定、表现模式切换、两份完整角色 Prefab、出生点高度、两份角色动画覆盖资产的完整性和 `characters` 数组绑定。`Core.Networking.PlayModeTests` 覆盖共享角色 Prefab 在单机、联机本地和远程身份下的组件启停、模型延迟挂载后的 Controller 绑定与初始化。场景与 Prefab 的序列化引用均可解析。构建输出根目录为 `D:/Unity/Releases/3D_MultiplayerGame/`，客户端与专用服务器分别输出到 `Client/` 与 `Server/`。
 
-## 维护触发
-
-修改 Unity 或包版本、渲染管线、着色器、资产目录布局、Addressables 配置目录与分组、Player Settings、Prefab 组件组成、角色数组或移动配置时更新本文档。共用动画 Controller、角色覆盖资产、Prefab 动画绑定、角色 FBX 导入、Humanoid Avatar 映射或模型 GUID 引用变化时，同时维护本文档与 `../Character/Character_Guide.md`。场景内容归 `../Scene/Scene_Guide.md`，Mirror 与 KCP 参数归 `Mirror_KCP_Config.md`。
-
-经典石材来源、Blender 制作入口、预切 Cube 层级、圆形平台分组与合批方式、材质映射或粒子渲染依赖变化时更新本文档；平台与资源预览场景的引用与分组变化时，同时维护 `../Scene/Scene_Guide.md`。

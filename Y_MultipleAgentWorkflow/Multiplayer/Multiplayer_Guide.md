@@ -4,6 +4,25 @@
 状态：`Active`
 最后核验：`2026-10-16`
 
+## 维护规则
+
+本文件对应的实现、约束或规则发生变化时，按已核验事实更新相关章节，证据记录在[开发日志](DeveloperLog.md)。修改小标题时同步文档内目录；计数与维护周期遵循[工作流维护规则](../Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护触发
+
+修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接策略、玩家生成、角色装配、相机归属、网络音频或爆炸事件流程时更新本文档。
+
+## 文档内目录
+
+- [当前组件](#当前组件)
+- [连接与玩家生成](#连接与玩家生成)
+- [角色装配](#角色装配)
+- [表现模式与相机收拢](#表现模式与相机收拢)
+- [同步边界](#同步边界)
+- [源码字段说明](#源码字段说明)
+
+先读目录，再按任务读取相关章节，避免整份指南载入上下文。
+
 ## 当前组件
 
 - `AutoStartClient`：编辑器和普通客户端读取 `NetworkManager.networkAddress` 发起连接，断线后按重试间隔重连。批处理进程、活动 Server 和活动 Client 跳过自动连接。
@@ -103,6 +122,3 @@ AutoStartClient.StartClient
 - `CharacterIdSync`：`characterId` 由服务器写入并经 `SyncVar` 同步；`playerController` 缓存网络根上的运动控制器。本机默认编号在本地玩家启动时上报一次，运行中的角色选择由拥有者经同一个 `Command` 提交到服务器，服务器拒收未通过校验的编号并记录警告。
 - `CharacterMotionSync`：按 `syncInterval` 以可靠 `ClientToServer` 向观察者同步运动快照；越界快照丢弃并限流记录警告。上行读取根控制器缓存的当前快照。
 
-## 维护触发
-
-修改 `Assets/Core/Scripts/Networking/`、Mirror 组件列表、同步方向、连接策略、玩家生成、角色装配、相机归属、网络音频或爆炸事件流程时更新本文档。

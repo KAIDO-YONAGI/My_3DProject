@@ -4,6 +4,29 @@
 状态：`Active`
 最后核验：`2026-10-16`
 
+## 维护规则
+
+本文件对应的实现、约束或规则发生变化时，按已核验事实更新相关章节，证据记录在[开发日志](DeveloperLog.md)。修改小标题时同步文档内目录；计数与维护周期遵循[工作流维护规则](../Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护触发
+
+修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频或爆炸事件、序列化字段或兼容规则时更新本文档。
+
+## 文档内目录
+
+- [协议分层](#协议分层)
+- [传输层](#传输层)
+- [Mirror 消息层](#mirror-消息层)
+- [现有同步字段](#现有同步字段)
+  - [角色变换](#角色变换)
+  - [角色编号](#角色编号)
+  - [运动表现](#运动表现)
+  - [音频事件](#音频事件)
+  - [爆炸事件](#爆炸事件)
+- [兼容性规则](#兼容性规则)
+
+先读目录，再按任务读取相关章节，避免整份指南载入上下文。
+
 ## 协议分层
 
 ```text
@@ -115,6 +138,3 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 `NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer`、`NetworkBlastManager`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
 
-## 维护触发
-
-修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频或爆炸事件、序列化字段或兼容规则时更新本文档。

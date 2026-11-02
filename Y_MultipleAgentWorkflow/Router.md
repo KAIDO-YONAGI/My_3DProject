@@ -4,6 +4,14 @@
 状态：`Active`
 最后核验：`2026-10-20`
 
+## 维护规则
+
+任务路由、权威文档或职责边界变化时更新本文，详细文档索引在所属功能域 Router 就近维护。证据记录在[开发日志](DeveloperLog.md)；计数与维护周期遵循[工作流维护规则](Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护
+
+只有成功且实质影响业务实现的任务才增加对应功能域的维护计数。只读分析、租约操作和纯文档维护不计数。计数达到 `5/5` 时，根据实际项目状态复核权威文档并重置计数。
+
 本目录是项目权威文档入口。项目知识按功能域拆分为 `Character`、`Multiplayer`、`Scene`、`Project`，`Workflow` 管理文档路由与并发租约。工程当前事实以实际代码、资源、运行结果和本目录 Guide 为准。
 
 编写准则与行为细则见 `RULES.md`。权威文档不是垃圾场，新增内容一律服从该准则。
@@ -13,7 +21,7 @@
 1. 在本文档确定功能域。
 2. 阅读 `Workflow/Concurrency_Guide.md`。
 3. 轻量只读定位完成后，在详细分析、子代理、修改或状态变更前，使用 `Workflow/Scripts/WorkingAgent.ps1` 申请精确租约。
-4. 读取被路由的权威文档和完成任务所需的实际代码或资源。
+4. 先读被路由 Guide 的文档内目录，再读相关章节与必要证据；需要日志时只定位最近一天或两天的相关条目，禁止整份日志载入上下文。
 5. 成功、失败或取消时释放租约。
 
 跨功能域任务同时读取所有受影响入口。
@@ -70,27 +78,3 @@
 - 网络玩家 Prefab：`Assets/Core/Prefabs/NetworkPlayer.prefab`。
 - Mirror/KCP、自动连接、玩家生成、同步方向和构建事实：`Project/Mirror_KCP_Config.md`。
 
-## 文档索引
-
-| 文档 ID | 路径 | 职责 | 状态 |
-|---|---|---|---|
-| `RULES` | `RULES.md` | 回答与工作行为细则 | Active |
-| `PROJ-OVERVIEW` | `Project_Overview.md` | 项目边界、当前架构和联机链路 | Active |
-| `BUS-CHARACTER` | `Character/Router.md` | Character 域路由 | Active |
-| `CHARACTER-GUIDE` | `Character/Character_Guide.md` | 输入、移动、状态机、动画和本地相机 | Active |
-| `BUS-MULTIPLAYER` | `Multiplayer/Router.md` | Multiplayer 域路由 | Active |
-| `MULTIPLAYER-GUIDE` | `Multiplayer/Multiplayer_Guide.md` | Mirror 网络运行时组件与连接管理 | Active |
-| `SYNC-PROTOCOL` | `Multiplayer/Sync_Protocol.md` | 协议边界、同步字段和兼容规则 | Active |
-| `DEDICATED-SERVER` | `Multiplayer/Dedicated_Server.md` | 专用服务器运行与构建事实 | Active |
-| `BUS-SCENE` | `Scene/Router.md` | Scene 域路由 | Active |
-| `SCENE-GUIDE` | `Scene/Scene_Guide.md` | 场景列表、职责、加载链路和表现模式 | Active |
-| `BUS-PROJECT` | `Project/Router.md` | Project 域路由 | Active |
-| `PROJECT-GUIDE` | `Project/Project_Guide.md` | Unity 工程配置、依赖和资产布局 | Active |
-| `UNITY-NETCFG` | `Project/Mirror_KCP_Config.md` | Mirror 与 KCP 工程配置及验证方式 | Active |
-| `WF-GUIDE` | `Workflow/Workflow_Guide.md` | 路由与维护规则 | Active |
-| `WF-CONCURRENCY` | `Workflow/Concurrency_Guide.md` | WorkingAgent 租约规则 | Active |
-| `WF-CONFIG-METHOD` | `Workflow_Configuration_Guide.md` | 工作流配置通用方法 | Active |
-
-## 维护
-
-只有成功且实质影响业务实现的任务才增加对应功能域的维护计数。只读分析、租约操作和纯文档维护不计数。计数达到 `5/5` 时，根据实际项目状态复核权威文档并重置计数。

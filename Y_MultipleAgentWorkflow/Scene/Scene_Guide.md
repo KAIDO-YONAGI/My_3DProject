@@ -4,6 +4,29 @@
 状态：`Active`
 最后核验：`2026-10-20`
 
+## 维护规则
+
+本文件对应的实现、约束或规则发生变化时，按已核验事实更新相关章节，证据记录在[开发日志](DeveloperLog.md)。修改小标题时同步文档内目录；计数与维护周期遵循[工作流维护规则](../Workflow/Workflow_Guide.md#维护规则)。
+
+### 维护触发
+
+修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。经典石材平台与预览场景的分组职责、Prefab 引用、合批设置或显示方式变化时，同步更新本文档与 `../Project/Project_Guide.md`。
+
+## 文档内目录
+
+- [场景列表](#场景列表)
+- [加载链路](#加载链路)
+- [场景职责](#场景职责)
+  - [InitialScene](#initialscene)
+  - [PersistentScene](#persistentscene)
+  - [MultiplayerSampleScene](#multiplayersamplescene)
+  - [MinecraftClassicPreview](#minecraftclassicpreview)
+  - [MinecraftClassicPlatform](#minecraftclassicplatform)
+- [场景配置资产](#场景配置资产)
+- [光照与渲染](#光照与渲染)
+
+先读目录，再按任务读取相关章节，避免整份指南载入上下文。
+
 ## 场景列表
 
 Build Settings 的启用场景顺序如下：
@@ -89,6 +112,3 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 地形出画需要把 TerrainLayer 画到地形上，入口为 Terrain → Paint Texture / Paint Details。草地材质的风动画模板位于 `Assets/Materials/ForestMaterials/grass/Materials/Toon/`，TerrainLayer 指向该目录即可启用风动画。
 
-## 维护触发
-
-修改场景列表、场景内容、加载与卸载链路、场景配置资产、单机联机表现切换规则或常驻层音频触发器时更新本文档。经典石材平台与预览场景的分组职责、Prefab 引用、合批设置或显示方式变化时，同步更新本文档与 `../Project/Project_Guide.md`。
