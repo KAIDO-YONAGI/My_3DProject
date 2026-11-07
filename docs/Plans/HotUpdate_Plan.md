@@ -24,7 +24,7 @@
 
 | 接入点 | 当前机制 | 证据 |
 |---|---|---|
-| 引擎与资源系统 | Unity 2022.3.62f3c1，Addressables 1.22.3 | `ProjectSettings/ProjectVersion.txt:1`、`Packages/manifest.json:4` |
+| 引擎与资源系统 | Unity 2022.3.62f3，Addressables 1.22.3 | `ProjectSettings/ProjectVersion.txt:1`、`Packages/manifest.json:4` |
 | Addressables 内容入口 | `Scenes` 组为空，资源构建起点需要覆盖实际引用链 | `Assets/Plugins/AddressableAssetsData/AssetGroups/Scenes.asset:19` |
 | Catalog 与路径 | Catalog 使用本地基线，组路径指向 Local Profile | `Assets/Plugins/AddressableAssetsData/AddressableAssetSettings.asset:20`、`:60`；`Assets/Plugins/AddressableAssetsData/AssetGroups/Schemas/Scenes_BundledAssetGroupSchema.asset:36` |
 | Player 联动构建 | 配置取值委托给编辑器全局偏好，发布流水线需要显式选择构建策略 | `Assets/Plugins/AddressableAssetsData/AddressableAssetSettings.asset:44`；Addressables 包源码 `Editor/Settings/AddressableAssetSettings.cs:221` |
