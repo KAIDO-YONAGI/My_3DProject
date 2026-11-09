@@ -1,6 +1,6 @@
 # My_3DProject
 
-![Unity](https://img.shields.io/badge/Unity-2022.3.62f3c1-222222?logo=unity&logoColor=white) ![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white) ![URP](https://img.shields.io/badge/URP-14.0.12-555555) ![Mirror](https://img.shields.io/badge/Mirror-96.11.2-2D80D3) ![KCP](https://img.shields.io/badge/KCP-Transport-168B74)
+![Unity](https://img.shields.io/badge/Unity-2022.3.62f3-222222?logo=unity&logoColor=white) ![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white) ![URP](https://img.shields.io/badge/URP-14.0.12-555555) ![Mirror](https://img.shields.io/badge/Mirror-96.11.2-2D80D3) ![KCP](https://img.shields.io/badge/KCP-Transport-168B74)
 
 基于 Unity 与 C# 的多人 3D 物理派对游戏，面向 2～5 人短回合对战。角色通过第三人称移动、跳跃与爆破攻击，在可破坏的体素竞技场中展开对抗。
 
