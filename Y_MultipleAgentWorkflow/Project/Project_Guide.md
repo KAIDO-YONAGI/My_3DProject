@@ -26,6 +26,7 @@
   - [粒子表现资源](#粒子表现资源)
 - [音效播放与回收](#音效播放与回收)
 - [Addressables](#addressables)
+- [Lua 开发环境](#lua-开发环境)
 - [Player Settings 与输入](#player-settings-与输入)
 - [NetworkManager Prefab](#networkmanager-prefab)
 - [NetworkPlayer Prefab](#networkplayer-prefab)
@@ -57,6 +58,7 @@
 - Mirror：`96.11.2`。
 - **URP：`14.0.12`**。
 - Addressables：`1.22.3`。
+- xLua：官方标签 `2.1.16_android_16kb`，提交 `cc2bfc0d79018c4a274b4fe2ff346c57586eefc1`，Windows x64 原生库运行 Lua 5.3。
 - Input System：`1.14.2`。
 - Terrain Tools：`5.0.6`。
 - TextMeshPro：`3.0.7`。
@@ -75,6 +77,7 @@
 | `Art/` | 经典石材纹理、URP 材质、预切 Cube 模型与粒子资源 |
 | `Materials/` | 地形植被与地表贴图、音效与背景音乐等素材 |
 | `Plugins/` | 第三方插件 |
+| `XLua/` | xLua 运行库、编辑器代码生成器与 Lua 辅助资源 |
 | `Tests/` | EditMode 与 PlayMode 测试程序集 |
 | `ToonEditor/` | 三渲二管线与材质迁移编辑器工具 |
 | `Rendering/` | URP 管线与 Renderer 资产 |
@@ -193,6 +196,16 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 - 激活的构建脚本为 `BuildScriptPackedMode`。`Local.BuildPath` 与 `Local.LoadPath` 引用 `Addressables.BuildPath` 和 `Addressables.RuntimePath`，构建产物位于 `Library/com.unity.addressables/`。
 - 内容状态文件位于 `Assets/Plugins/AddressableAssetsData/Windows/addressables_content_state.bin`，路径由 `GetContentStateBuildPath()` 按配置目录与平台子目录求值。
 - 移动配置目录时，先让资源库完成该目录变更，再重新加载脚本域，然后核对 `ConfigFolder` 指向新目录。`AddressableAssetSettings` 的 `AssetPath` 与 `ConfigFolder` 在设置对象首次访问时求值，并在该脚本域内保持不变；在资源库完成目录变更前求值会得到变更前的位置，构建、Analyze 与内容更新随后按该位置创建目录。
+
+## Lua 开发环境
+
+`Assets/XLua/Src/` 保存官方运行库与编辑器代码生成器，`Assets/XLua/Editor/XLuaUnityDefaultConfig.cs` 提供 Unity 类型过滤配置。`Resources/xlua/` 保存官方辅助模块。来源、目录职责与脚本加载入口见 `Assets/XLua/README.md`，许可见同目录 `LICENSE.TXT`。
+
+`Assets/Plugins/x86_64/xlua.dll` 供 Windows x64 编辑器与 Player 加载，平台范围由相邻 `.meta` 配置。`XLua/Generate Code` 将互调代码输出到 `Assets/XLua/Gen/`，运行库与生成代码同属 `Assembly-CSharp`。
+
+`My_3DProject/Lua/验证 xLua 环境` 菜单由 `Assets/XLua/Editor/ProjectXLuaDependencyCheck.cs` 提供，检查原生库加载、Lua 运算、Lua 调用 C#、Unity API 访问和自定义模块加载。该入口也支持 Unity `-executeMethod ProjectXLuaDependencyCheck.Run`。
+
+Rider 的 Lua 编辑支持由 EmmyLua2 提供，并依赖 LSP4IJ。本机 Rider 2026.2 配置目录安装 EmmyLua2 `0.24.0.115-IDEA262` 与 LSP4IJ `0.21.0`。Lua 执行由 Unity 内的 xLua 提供，断点调试通过业务 Lua 启动入口连接插件调试器。
 
 ## Player Settings 与输入
 

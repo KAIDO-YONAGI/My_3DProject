@@ -1,5 +1,17 @@
 # Project 开发记录
 
+## 维护规则
+
+按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
+
+## 2026-11-09：准备 xLua 与 Rider Lua 开发依赖
+
+- 来源：Tencent/xLua 官方标签 `2.1.16_android_16kb`，提交 `cc2bfc0d79018c4a274b4fe2ff346c57586eefc1`。`Assets/XLua/` 保存运行库、生成器、Unity 默认配置、辅助模块、许可与依赖说明；Windows x64 原生库位于 `Assets/Plugins/x86_64/xlua.dll`。
+- 原生库：SHA-256 为 `F80B9A5F5E70633262BC638A8656EE163F949A3FB4FE1D297D4ABC51A7EA6DAE`，与上游一致；导入范围为 Windows x64 编辑器与 Player。运行库 `Src/` 的逐文件哈希与上游一致。
+- Rider：本机 `Rider2026.2/plugins/` 安装 EmmyLua2 `0.24.0.115-IDEA262` 与必需依赖 LSP4IJ `0.21.0`，插件文件与下载包逐文件哈希一致。
+- 验证：Unity 2022.3.62f3 批处理执行 `ProjectXLuaDependencyCheck.Run`，退出码 `0`。日志 `C:/Users/12248/AppData/Local/Temp/codex-xlua-unity-check-20261109.log:519` 输出 `[xLua dependency check] PASS: Lua 5.3, Unity 2022.3.62f3, arithmetic, C# interop, custom loader.`。验证菜单位于 `My_3DProject/Lua/验证 xLua 环境`。
+- Project 维护计数：`2/5 → 3/5`。
+
 ## 2026-11-07：编辑器回到官方 2022.3.62f3 并加入 Linux 交叉编译工具链
 
 - `ProjectSettings/ProjectVersion.txt` 由 `2022.3.62f3c1` 改为官方版 `2022.3.62f3`。
@@ -7,10 +19,6 @@
 - 新增依赖 `com.unity.toolchain.win-x86_64-linux-x86_64` 2.0.11，可在 Windows 上构建 Linux 专用服务器。
 - 新增 `.vsconfig`，声明 Visual Studio 的托管游戏开发工作负载。
 - Project 维护计数：`1/5 → 2/5`。
-
-## 维护规则
-
-按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
 ## 2026-10-28：破坏服务单例化与平台注册事件
 

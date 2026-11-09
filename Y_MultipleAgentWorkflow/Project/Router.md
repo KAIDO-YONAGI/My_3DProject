@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`2/5`
-最后更新：`2026-11-07`
+维护计数：`3/5`
+最后更新：`2026-11-09`
 
 ## 维护规则
 
@@ -16,6 +16,7 @@
 | Unity 版本、Packages、资产目录布局 | `Project_Guide.md` |
 | 渲染管线、URP 资产、三渲二着色器与调参 | `Project_Guide.md`、`Assets/Core/Shaders/Toon/TOON_MIGRATION.md` |
 | Addressables 配置与构建脚本 | `Project_Guide.md` |
+| xLua、Lua 运行环境、Rider Lua 插件与依赖验证 | `Project_Guide.md`、`../../Assets/XLua/README.md` |
 | Player Settings、输入系统开关与旧输入 API 边界 | `Project_Guide.md` |
 | 音效请求与攻击表现事件、空间坐标和播放器对象池 | `Project_Guide.md`、`../Multiplayer/Sync_Protocol.md` |
 | Prefab 组件组成 | `Project_Guide.md` |
@@ -46,6 +47,8 @@
 - `ProjectSettings/QualitySettings.asset`
 - `Packages/manifest.json`
 - `Packages/packages-lock.json`
+- `Assets/XLua/`
+- `Assets/Plugins/x86_64/xlua.dll`
 - `Assets/Core/Shaders/Toon/`
 - `Assets/ToonEditor/`
 - `Assets/Core/Scripts/Audio/`
