@@ -54,3 +54,6 @@ scripts/push.sh
 
 # Profile Analyzer 采集数据
 /ProfileAnalyzer/
+
+# 本机开发计划与教程
+/docs/Plans/
