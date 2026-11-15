@@ -13,7 +13,7 @@ namespace Core.Scripts.Scene
 
         [SerializeField] private Vector3 newPosition;
         [Tooltip("按顺序叠加加载的完整目标场景组。不要把常驻场景放进此列表。")]
-        [SerializeField] private List<GameSceneSO> sceneToLoad = new List<GameSceneSO>();
+        [SerializeField] private List<GameSceneSO> sceneToLoad = new();
         [SerializeField] private bool isToFade = true;
 
         private void OnTriggerEnter(Collider collider)

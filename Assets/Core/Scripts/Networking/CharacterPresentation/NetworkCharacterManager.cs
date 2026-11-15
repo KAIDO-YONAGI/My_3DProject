@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Core.Scripts.Camera;
 using Core.Scripts.Character.Presentation;
@@ -18,7 +19,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
         // 下标对应角色编号，本地拥有者从这里取得模型、动画配置和本地相机。
         [Tooltip("每个编号配置一个完整角色 Prefab。单机、本地联机和远程联机共用它，运行时按身份启停组件。")]
         [SerializeField]
-        private GameObject[] characters = new GameObject[0];
+        private GameObject[] characters = Array.Empty<GameObject>();
 
         [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号，对应角色资源条目下标。")] [SerializeField, Min(0)]
         private int defaultCharacterId;
@@ -27,13 +28,13 @@ namespace Core.Scripts.Networking.CharacterPresentation
         private GameObject standalonePlayer;
 
         [Header("场景单机相机")] [Tooltip("需要随单机模式启停的场景 Camera，直接引用组件。")] [SerializeField]
-        private UnityEngine.Camera[] standaloneCameras = new UnityEngine.Camera[0];
+        private UnityEngine.Camera[] standaloneCameras = Array.Empty<UnityEngine.Camera>();
 
         [Tooltip("需要随单机模式启停的场景 ThirdPersonCamera。")] [SerializeField]
-        private ThirdPersonCamera[] standaloneCameraControllers = new ThirdPersonCamera[0];
+        private ThirdPersonCamera[] standaloneCameraControllers = Array.Empty<ThirdPersonCamera>();
 
         [Tooltip("需要随单机模式启停的场景 AudioListener。")] [SerializeField]
-        private AudioListener[] standaloneListeners = new AudioListener[0];
+        private AudioListener[] standaloneListeners = Array.Empty<AudioListener>();
 
         // 当前离线模式使用的角色编号，-1 表示场景实例对应的编号尚未记录。
         private int standaloneCharacterId = -1;
@@ -266,23 +267,23 @@ namespace Core.Scripts.Networking.CharacterPresentation
 
         // 包含停用对象一起查找，按表现模式切换整个单机角色的激活状态。
         // 角色现由场景序列化引用提供，停用后仍可直接访问，不再执行全局查找。
-        private void SetStandalonePlayerEnabled(bool enabled)
+        private void SetStandalonePlayerEnabled(bool state)
         {
-            if (standalonePlayer != null && standalonePlayer.activeSelf != enabled)
+            if (standalonePlayer != null && standalonePlayer.activeSelf != state)
             {
-                standalonePlayer.SetActive(enabled);
+                standalonePlayer.SetActive(state);
             }
         }
 
         // 通过父级 NetworkIdentity 识别网络表现，相机模式切换作用于场景单机组件。
         // 单机组件现由场景显式引用区分，不再扫描场景或查询父级身份。
-        private void SetStandaloneCameraEnabled(bool enabled)
+        private void SetStandaloneCameraEnabled(bool state)
         {
-            foreach (UnityEngine.Camera camera in standaloneCameras)
+            foreach (UnityEngine.Camera characterCamera in standaloneCameras)
             {
-                if (camera != null)
+                if (characterCamera != null)
                 {
-                    camera.enabled = enabled;
+                    characterCamera.enabled = state;
                 }
             }
 

@@ -33,11 +33,11 @@ namespace XLua
         internal static volatile TryArrayGet genTryArrayGetPtr = null;
         internal static volatile TryArraySet genTryArraySetPtr = null;
 
-        internal static volatile ObjectTranslatorPool objectTranslatorPool = new ObjectTranslatorPool();
+        internal static volatile ObjectTranslatorPool objectTranslatorPool = new();
 
         internal static volatile int LUA_REGISTRYINDEX = -10000;
 
-        internal static volatile Dictionary<string, string> supportOp = new Dictionary<string, string>()
+        internal static volatile Dictionary<string, string> supportOp = new()
         {
             { "op_Addition", "__add" },
             { "op_Subtraction", "__sub" },
@@ -62,7 +62,7 @@ namespace XLua
         internal static volatile LuaDLL.CSharpWrapperCaller CSharpWrapperCallerPtr = new LuaDLL.CSharpWrapperCaller(StaticLuaCallbacks.CSharpWrapperCallerImpl);
 #endif
 
-        internal static volatile LuaCSFunction LazyReflectionWrap = new LuaCSFunction(Utils.LazyReflectionCall);
+        internal static volatile LuaCSFunction LazyReflectionWrap = new(Utils.LazyReflectionCall);
     }
 
 }

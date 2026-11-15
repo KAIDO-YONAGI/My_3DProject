@@ -23,7 +23,7 @@ namespace Core.Scripts.Character.Movement
 
         // 非跳跃离地的持续时长，用于判断下坡与台阶造成的悬空是否仍在容忍窗口内。
         private float airborneDuration;
-        private readonly CharacterMovementStateMachine stateMachine = new CharacterMovementStateMachine();
+        private readonly CharacterMovementStateMachine stateMachine = new();
 
         /// <summary>
         /// 绑定运动对象、碰撞控制器和参数配置，并用贴地拉力初始化竖直速度。

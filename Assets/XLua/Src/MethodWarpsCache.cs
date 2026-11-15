@@ -280,7 +280,7 @@ namespace XLua
     public class MethodWrap
     {
         private string methodName;
-        private List<OverloadMethodWrap> overloads = new List<OverloadMethodWrap>();
+        private List<OverloadMethodWrap> overloads = new();
         private bool forceCheck;
 
         public MethodWrap(string methodName, List<OverloadMethodWrap> overloads, bool forceCheck)
@@ -323,9 +323,9 @@ namespace XLua
         ObjectCheckers objCheckers;
         ObjectCasters objCasters;
 
-        Dictionary<Type, LuaCSFunction> constructorCache = new Dictionary<Type, LuaCSFunction>();
-        Dictionary<Type, Dictionary<string, LuaCSFunction>> methodsCache = new Dictionary<Type, Dictionary<string, LuaCSFunction>>();
-        Dictionary<Type, LuaCSFunction> delegateCache = new Dictionary<Type, LuaCSFunction>();
+        Dictionary<Type, LuaCSFunction> constructorCache = new();
+        Dictionary<Type, Dictionary<string, LuaCSFunction>> methodsCache = new();
+        Dictionary<Type, LuaCSFunction> delegateCache = new();
 
         public MethodWrapsCache(ObjectTranslator translator, ObjectCheckers objCheckers, ObjectCasters objCasters)
         {

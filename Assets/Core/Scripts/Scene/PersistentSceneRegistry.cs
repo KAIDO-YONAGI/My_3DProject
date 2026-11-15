@@ -10,7 +10,7 @@ namespace Core.Scripts.Scene
     /// </summary>
     public static class PersistentSceneRegistry
     {
-        private static readonly HashSet<string> SceneNames = new HashSet<string>();
+        private static readonly HashSet<string> SceneNames = new();
 
         public static void Register(IEnumerable<GameSceneSO> scenes)
         {

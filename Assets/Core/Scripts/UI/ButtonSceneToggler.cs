@@ -9,7 +9,7 @@ namespace Core.Scripts.UI
     public class ButtonSceneToggler : MonoBehaviour
     {
         [Tooltip("按顺序叠加加载的完整目标场景组。不要把常驻场景放进此列表。")]
-        [SerializeField] private List<GameSceneSO> sceneToLoad = new List<GameSceneSO>();
+        [SerializeField] private List<GameSceneSO> sceneToLoad = new();
         [SerializeField] private CanvasGroup ButtonCanvas;
         [SerializeField] private Vector3 newPosition;
         [SerializeField] private bool isToFade = true;

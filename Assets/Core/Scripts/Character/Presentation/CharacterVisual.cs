@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Core.Scripts.Camera;
 using Core.Scripts.Character.Control;
@@ -12,15 +13,15 @@ namespace Core.Scripts.Character.Presentation
     {
         [SerializeField] private Animator animator;
         [SerializeField] private UnityEngine.Camera inputCamera;
-        [SerializeField] private UnityEngine.Camera[] cameras = new UnityEngine.Camera[0];
-        [SerializeField] private AudioListener[] listeners = new AudioListener[0];
-        [SerializeField] private ThirdPersonCamera[] cameraControllers = new ThirdPersonCamera[0];
+        [SerializeField] private UnityEngine.Camera[] cameras = Array.Empty<UnityEngine.Camera>();
+        [SerializeField] private AudioListener[] listeners = Array.Empty<AudioListener>();
+        [SerializeField] private ThirdPersonCamera[] cameraControllers = Array.Empty<ThirdPersonCamera>();
         [SerializeField] private PlayerCharacterController standaloneController;
         [SerializeField] private CharacterController movementCollider;
 
         [Header("发辫跟随")]
         // 可选修正项，在 Animator 完成骨骼更新后执行。
-        [SerializeField] private CharacterBoneFollower ponytailFollower = new CharacterBoneFollower();
+        [SerializeField] private CharacterBoneFollower ponytailFollower = new();
 
         public Animator Animator => animator;
         public UnityEngine.Camera InputCamera => inputCamera;

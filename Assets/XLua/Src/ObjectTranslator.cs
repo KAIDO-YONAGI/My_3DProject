@@ -108,19 +108,19 @@ namespace XLua
         internal ObjectCheckers objectCheckers;
         internal ObjectCasters objectCasters;
 
-        internal readonly ObjectPool objects = new ObjectPool();
-        internal readonly Dictionary<object, int> reverseMap = new Dictionary<object, int>(new ReferenceEqualsComparer());
+        internal readonly ObjectPool objects = new();
+        internal readonly Dictionary<object, int> reverseMap = new(new ReferenceEqualsComparer());
 		internal LuaEnv luaEnv;
 		internal StaticLuaCallbacks metaFunctions;
 		internal List<Assembly> assemblies;
 		private LuaCSFunction importTypeFunction,loadAssemblyFunction, castFunction;
         //延迟加载
-        private readonly Dictionary<Type, Action<RealStatePtr>> delayWrap = new Dictionary<Type, Action<RealStatePtr>>();
+        private readonly Dictionary<Type, Action<RealStatePtr>> delayWrap = new();
 
-        private readonly Dictionary<Type, Func<int, LuaEnv, LuaBase>> interfaceBridgeCreators = new Dictionary<Type, Func<int, LuaEnv, LuaBase>>();
+        private readonly Dictionary<Type, Func<int, LuaEnv, LuaBase>> interfaceBridgeCreators = new();
 
         //无法访问的类，比如声明成internal，可以用其接口、基类的生成代码来访问
-        private readonly Dictionary<Type, Type> aliasCfg = new Dictionary<Type, Type>();
+        private readonly Dictionary<Type, Type> aliasCfg = new();
 
         public void DelayWrapLoader(Type type, Action<RealStatePtr> loader)
         {
@@ -132,7 +132,7 @@ namespace XLua
             interfaceBridgeCreators.Add(type, creator);
         }
 
-        Dictionary<Type, bool> loaded_types = new Dictionary<Type, bool>();
+        Dictionary<Type, bool> loaded_types = new();
         public bool TryDelayWrapLoader(RealStatePtr L, Type type)
         {
             if (loaded_types.ContainsKey(type)) return true;
@@ -346,8 +346,7 @@ namespace XLua
 #endif
         MethodInfo[] genericAction = null;
         MethodInfo[] genericFunc = null;
-        Dictionary<Type, Func<DelegateBridgeBase, Delegate>> delegateCreatorCache
-            = new Dictionary<Type, Func<DelegateBridgeBase, Delegate>>();
+        Dictionary<Type, Func<DelegateBridgeBase, Delegate>> delegateCreatorCache = new();
 
         Func<DelegateBridgeBase, Delegate> getCreatorUsingGeneric(DelegateBridgeBase bridge, Type delegateType, MethodInfo delegateMethod)
         {
@@ -468,7 +467,7 @@ namespace XLua
 
             throw new InvalidCastException("This type must add to CSharpCallLua: " + delegateType.GetFriendlyName());
         }
-        Dictionary<int, WeakReference> delegate_bridges = new Dictionary<int, WeakReference>();
+        Dictionary<int, WeakReference> delegate_bridges = new();
         public object CreateDelegateBridge(RealStatePtr L, Type delegateType, int idx)
         {
             LuaAPI.lua_pushvalue(L, idx);
@@ -999,10 +998,10 @@ namespace XLua
             }
         }
 
-        Dictionary<Type, int> typeIdMap = new Dictionary<Type, int>();
+        Dictionary<Type, int> typeIdMap = new();
 
         //only store the type id to type map for struct
-        Dictionary<int, Type> typeMap = new Dictionary<int, Type>();
+        Dictionary<int, Type> typeMap = new();
 
         public int GetTypeId(RealStatePtr L, Type type)
         {
@@ -1010,7 +1009,7 @@ namespace XLua
             return getTypeId(L, type, out isFirst);
         }
 
-        HashSet<Type> privateAccessibleFlags = new HashSet<Type>();
+        HashSet<Type> privateAccessibleFlags = new();
 
         public void PrivateAccessible(RealStatePtr L, Type type)
         {
@@ -1195,7 +1194,7 @@ namespace XLua
             }
         }
 
-        Dictionary<object, int> enumMap = new Dictionary<object, int>();
+        Dictionary<object, int> enumMap = new();
 
         public int TranslateToEnumToTop(RealStatePtr L, Type type, int idx)
         {
@@ -1393,7 +1392,7 @@ namespace XLua
             }
         }
 
-        List<LuaCSFunction> fix_cs_functions = new List<LuaCSFunction>();
+        List<LuaCSFunction> fix_cs_functions = new();
 
         internal LuaCSFunction GetFixCSFunction(int index)
         {
@@ -1506,9 +1505,9 @@ namespace XLua
         public delegate object GetCSObject(RealStatePtr L, int idx);
         public delegate void UpdateCSObject(RealStatePtr L, int idx, object obj);
 
-        private Dictionary<Type, PushCSObject> custom_push_funcs = new Dictionary<Type, PushCSObject>();
-        private Dictionary<Type, GetCSObject> custom_get_funcs = new Dictionary<Type, GetCSObject>();
-        private Dictionary<Type, UpdateCSObject> custom_update_funcs = new Dictionary<Type, UpdateCSObject>();
+        private Dictionary<Type, PushCSObject> custom_push_funcs = new();
+        private Dictionary<Type, GetCSObject> custom_get_funcs = new();
+        private Dictionary<Type, UpdateCSObject> custom_update_funcs = new();
 
         void registerCustomOp(Type type, PushCSObject push, GetCSObject get, UpdateCSObject update)
         {

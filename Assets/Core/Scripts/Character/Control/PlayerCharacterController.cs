@@ -11,7 +11,6 @@ namespace Core.Scripts.Character.Control
     /// 本类只负责组织“采集输入 -> CharacterMotor 位移 -> CharacterAnimator 表现”的顺序，
     /// 具体运动算法、动画绑定分别由独立类型承担，骨骼表现由视觉实例管理。
     /// </summary>
-    [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
     public class PlayerCharacterController : MonoBehaviour
     {
@@ -25,7 +24,7 @@ namespace Core.Scripts.Character.Control
 
         [Header("移动")]
         // 参数对象只描述手感，实际速度状态保存在 CharacterMotor 中。
-        [SerializeField] private CharacterMovementSettings movementSettings = new CharacterMovementSettings();
+        [SerializeField] private CharacterMovementSettings movementSettings = new();
 
         // 输入读取器按需创建 PlayerControls，只有真正读取输入的本地玩家才会占用输入资源。
         private readonly CharacterInputReader input = new();
@@ -41,7 +40,6 @@ namespace Core.Scripts.Character.Control
 
         /// <summary>
         /// 应用网络同步的远程运动快照。
-        /// 参数只收网络能够提供的字段，本地专有信息不参与，避免远程角色误用默认值。
         /// </summary>
         public void ReceiveRemoteMotion(CharacterMotionSnapshot snapshot)
         {
@@ -54,7 +52,7 @@ namespace Core.Scripts.Character.Control
             EnsureSettings();
         }
 
-        // Awake 只负责组装依赖，不在这里读取输入或执行位移。
+        // Awake 负责组装依赖
         private void Awake()
         {
             EnsureRuntimeState();

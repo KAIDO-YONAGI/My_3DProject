@@ -22,7 +22,7 @@ namespace Core.Scripts.Scene
         [SerializeField] private float fadeDuration = 1f;
 
         [Tooltip("启动时自动加载的初始场景组。按列表顺序以 Additive 模式加载，通常配置为菜单场景组。")]
-        [SerializeField] private List<GameSceneSO> firstSceneToLoad = new List<GameSceneSO>();
+        [SerializeField] private List<GameSceneSO> firstSceneToLoad = new();
 
         [SerializeField] private GameObject player;
         [SerializeField] private CanvasGroup fadeCanva;
@@ -39,7 +39,7 @@ namespace Core.Scripts.Scene
         [SerializeField] private Object[] objectsToUnableWhileMenuOrReset;
 
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
-        private readonly List<LoadedScene> currentScenes = new List<LoadedScene>();
+        private readonly List<LoadedScene> currentScenes = new();
 
         /// <summary>关联场景配置资产与其当前加载的 Unity 场景实例。</summary>
         private class LoadedScene

@@ -24,7 +24,7 @@ namespace XLua
 	public class ObjectTranslatorPool
 	{
 #if !SINGLE_ENV
-        private Dictionary<RealStatePtr, WeakReference> translators = new Dictionary<RealStatePtr, WeakReference>();
+        private Dictionary<RealStatePtr, WeakReference> translators = new();
         RealStatePtr lastPtr = default(RealStatePtr);
 #endif
         ObjectTranslator lastTranslator = default(ObjectTranslator);

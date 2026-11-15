@@ -29,7 +29,7 @@ namespace XLua
 
     public class ObjectCheckers
     {
-        Dictionary<Type, ObjectCheck> checkersMap = new Dictionary<Type, ObjectCheck>();
+        Dictionary<Type, ObjectCheck> checkersMap = new();
         ObjectTranslator translator;
 
         public ObjectCheckers(ObjectTranslator translator)
@@ -217,7 +217,7 @@ namespace XLua
 
     public class ObjectCasters
     {
-        Dictionary<Type, ObjectCast> castersMap = new Dictionary<Type, ObjectCast>();
+        Dictionary<Type, ObjectCast> castersMap = new();
         ObjectTranslator translator;
 
         public ObjectCasters(ObjectTranslator translator)
