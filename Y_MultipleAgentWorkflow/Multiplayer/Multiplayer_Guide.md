@@ -80,11 +80,11 @@ AutoStartClient.StartClient
 
 每个网络玩家在 `presentations` 字典中对应一条 `CharacterPresentationState`，保存视觉实例、角色编号、来源 Prefab、已配置的本地身份以及相机组件数组。实例有效、编号和来源 Prefab 相同时复用该状态；身份相同时直接返回，身份变化时使用缓存组件重新配置相机和输入参考空间。编号或来源 Prefab 变化时替换实例，已销毁的实例重新装配。
 
-装配时读取视觉 Prefab 的显式 `CharacterVisual` 引用，停用不属于当前用途的 Camera、`AudioListener` 和 `ThirdPersonCamera`，再配置本地相机目标和网络根输入空间。角色组件不通过运行时层级扫描补齐模型配置。
+装配时读取视觉 Prefab 的显式 `CharacterVisual` 引用，停用不属于当前用途的 Camera、`AudioListener` 和 `ThirdPersonCamera`，再配置本地相机目标；视觉的 Animator 与输入相机通过 `BindModel` 交给网络根控制器。角色组件不通过运行时层级扫描补齐模型配置。
 
-网络根的 `PlayerCharacterController` 首次初始化时缓存自身 `NetworkIdentity`，单机控制器也缓存身份缺失的结果。身份组件在初始化前配置；组件内的本地与远程归属值实时读取。此缓存与客户端稍后挂载的模型、Animator 初始化独立，角色装配和模型替换继续使用原有重绑入口。
+网络根的 `PlayerCharacterController` 在 `Awake` 解析自身 `NetworkIdentity` 并创建运动对象，专用服务器不创建。本地与远程归属值实时读取，不缓存身份存在与否的标志。
 
-根控制器在 `Awake` 初始化运动依赖，角色装配通过 `RebindAnimator` 绑定 Animator、动画配置和素材可用性缓存。逐帧更新使用缓存依赖，模型解绑后保持空动画引用，后续装配再次显式绑定。运动驱动在模型替换过程中沿用同一实例。
+视觉绑定由装配流程显式调用 `BindModel`：动画驱动随首次绑定创建，同一实例的身份变化只更新输入参考。模型替换先 `UnbindModel` 再绑定新实例，运动驱动在替换过程中沿用同一实例，解绑后动画引用为空。
 
 ## 表现模式与相机收拢
 

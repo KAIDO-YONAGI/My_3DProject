@@ -4,6 +4,22 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：破坏结算改用命中方块中心并同步真实命中点
+
+- `AttackResult` 新增 `BlockCenter` 与 `PlatformLocalBlockCenter`：`ExplosionCenter` 保持为射线真实命中点，`BlockCenter` 是命中方块的世界中心，两者各带一份平台局部位置随结果返回。
+- `VoxelPlatformDestruction.ExplodeFromRay` 以命中方块中心作为 `BreakBlocksAroundWorldCenter` 的圆心，真实命中点单独保留给表现；`ExplodeAt` 按传入的平台局部爆炸中心结算，并把该位置同时作为两类中心返回。
+- `AttackRequestPack` 新增 `PlatformLocalBlockCenter`；`Attack` 同时提交真实命中点与命中方块中心，`NetworkBlastManager` 在远端用命中方块中心复算破坏。
+- 依据：命中日志 `命中点=(14.51, -10.00, -0.01)`、`破坏=0`；平台世界变换 `(5, -10, 0)`，方块为 1 单位 Cube，最近方块中心水平距离 0.4901 与 0.5101，均大于 `blastRadius` 0.45。
+- 验证：`Assembly-CSharp` 以 Unity 2022.3.62f3 的 Roslyn 与 `Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp` 编译，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告；未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Character_Guide.md` 准心交互同步两个中心与请求字段。Character 维护计数 `0/5 → 1/5`。
+
+## 2026-11-16：攻击射线临时诊断用于定位，定位后移除
+
+- 定位阶段给 `Attack` 加了编辑器专用开关 `drawAttackRay` 与 `AttackRayDebug`：在 Scene 视图绘制射线、最近物理命中点、玩家自身碰撞箱、平台命中点与爆炸半径圈，Console 输出射线参数、原始命中清单、平台解析结论与破坏数量；攻击输入被拒绝状态或未锁定光标拦下时输出拦下原因。
+- 诊断脚手架在问题定位结束后移除，`AttackRayDebug`、`drawAttackRay` 开关与拦下原因日志均不在仓库中保留。
+- 验证：诊断接入期间与移除后都用 Unity 2022.3.62f3 的 Roslyn 编译 `Assembly-CSharp`，退出码均为 `0`，仅保留既有 `AutoStartClient` 未使用字段警告。
+- 文档与计数：仅临时诊断，不改变业务实现，不增加维护计数。
+
 ## 2026-11-16：角色与音频组件的必填引用改为断言
 
 - `Attack` 的 `blastEventSO`、`gameStartEventSO`、`retryEventSO` 改为 `Debug.Assert`，爆炸结算改用 `VoxelPlatformDestruction.RequiredInstance`。

@@ -117,7 +117,7 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 ### 爆炸事件
 
-`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心与正平台 ID 后，直接调用缓存的 `NetworkBlastManager.CommandAttack` 提交网络请求。网络请求与表现事件共用 `AttackRequestPack`，字段包括攻击类型、相对目标平台根节点的位置、伤害值、世界水平半径和平台 ID。平台 ID 来自 `VoxelPlatformDestruction` 的运行时登记表，客户端与服务器的取值必须一致，远端据此确定平台，并将局部位置转换为世界爆炸中心后结算。`BlastEventSO` 仍是表现通知管线，载荷复用该请求包，供粒子和音效订阅者使用。
+`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心与正平台 ID 后，直接调用缓存的 `NetworkBlastManager.CommandAttack` 提交网络请求。网络请求与表现事件共用 `AttackRequestPack`，字段包括攻击类型、相对目标平台根节点的真实命中点、相对目标平台根节点的命中方块中心、伤害值、世界水平半径和平台 ID。平台 ID 来自 `VoxelPlatformDestruction` 的运行时登记表，客户端与服务器的取值必须一致，远端据此确定平台，并按命中方块中心转换为世界坐标结算；真实命中点留给爆炸表现。`BlastEventSO` 仍是表现通知管线，载荷复用该请求包，供粒子和音效订阅者使用。
 
 ```text
 本地攻击
@@ -126,11 +126,11 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
   → 本地 Attack 在回路末尾发布 BlastEventSO
   → 服务器
   → RpcRequestAttack(includeOwner = false)
-  → 远端按平台 ID、局部位置与世界半径结算
+  → 远端按平台 ID、命中方块中心与世界半径结算
   → 远端结算有效时发布 BlastEventSO
 ```
 
-`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、平台局部位置与世界半径完成爆炸，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
+`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、命中方块中心与世界半径完成爆炸，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
 
 ## 兼容性规则
 

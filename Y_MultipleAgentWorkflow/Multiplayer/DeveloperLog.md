@@ -4,6 +4,14 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：爆炸请求同时携带真实命中点与命中方块中心
+
+- `AttackRequestPack` 新增 `PlatformLocalBlockCenter`（平台局部坐标）；`PlatformLocalPosition` 保持为真实命中点，只用于爆炸表现。
+- 链路：`Attack` 同时提交两个位置，`NetworkBlastManager.RpcRequestAttack` 用命中方块中心调用 `ExplodeAt` 复算破坏，结算有效时把同一请求包发布到 `BlastEventSO`。
+- 兼容性：请求包字段顺序变化，客户端与服务器必须同版构建部署。
+- 验证：同次 `Assembly-CSharp` 编译退出码 `0`；未运行网络 PlayMode 测试。
+- 文档与计数：`Sync_Protocol.md` 的「爆炸事件」同步字段与远端结算入口。Multiplayer 维护计数 `1/5 → 2/5`。
+
 ## 2026-11-16：网络组件的必填引用与必需单例访问
 
 - `CharacterMotionSync` 在 `Awake` 断言同物体 `PlayerCharacterController`；`NetworkBlastManager.blastEvent` 改为断言。

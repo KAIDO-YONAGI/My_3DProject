@@ -80,7 +80,7 @@ Debug.Assert(loadEventSO != null,
 | 必填配置缺失 | 自有场景或 Prefab 应配置，缺失会让对应功能静默失效 | `Awake`/`OnSingletonInitialized` 断言，调用点直接使用 | `SceneChanger.firstSceneToLoad`、`VoxelPlatformRegister.registerEvent`、`UIManager.toggleCanvasEvents` |
 | 可留空配置 | `Tooltip` 或注释写明留空语义 | 不做断言，保留判空 | `VoxelPlatformBlastTrigger.gameStartEventSO`、`UIManager.inputBindings`、`SceneChanger.transitionImagesDuringFade` |
 | 运行时注入 | 由表现层或网络装配在运行时赋值 | 不做断言，按装配时序处理 | `ThirdPersonCamera.target`、`PlayerCharacterController.inputSpace`、`CharacterBoneFollower.headBone` |
-| 运行时状态 | 未连接、玩家未生成、对象池为空、批处理、场景切换中 | 保留判空并注释原因 | `AudioPlayerManager` 的网络转发缓存、`FloatingSignboard` 的 `Camera.main`、`PlayerCharacterController` 的延迟挂载 |
+| 运行时状态 | 未连接、玩家未生成、对象池为空、批处理、场景切换中 | 保留判空并注释原因 | `AudioPlayerManager` 的网络转发缓存、`FloatingSignboard` 的 `Camera.main`、`CharacterPresentationService` 的 `manager.isActiveAndEnabled` |
 
 判定顺序：先看字段在自有场景或 Prefab 中是否已配置且缺失后果是否静默；再看 `Tooltip` 或注释是否已声明留空语义；两者都不成立时按必填处理。
 

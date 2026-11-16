@@ -158,9 +158,9 @@ CharacterInputReader（PlayerControls.inputactions）
 
 `PlayerCharacterController` 是普通 `MonoBehaviour`。对象存在 `NetworkIdentity` 且客户端已经连接时，仅 `isLocalPlayer=true` 的实例读取输入。单机角色没有 `NetworkIdentity`，使用相同的移动代码。
 
-`Awake` 调用 `EnsureRuntimeState`，补齐组件引用、配置和运动驱动。网络身份组件在首次初始化时查询一次，`networkIdentityInitialized` 同时缓存「有身份」和「无身份」两种结果。身份组件在初始化前配置，缓存的是组件引用，`isLocalPlayer` 等归属值实时读取。
+`Awake` 只在承担运动的控制器上建立运动对象：同对象的 `CharacterController`、`CharacterMovementSettings` 与 `NetworkIdentity` 在此解析一次，`CharacterMotor` 随即创建。专用服务器不创建运动对象；挂在网络根下的视觉实例不承担运动，其控制器由表现层在激活前停用。
 
-视觉模型的延迟挂载和替换通过 `RebindAnimator` 绑定动画驱动，运动驱动沿用根对象中的实例。`Update` 检查已缓存的运动依赖后依次读取输入、执行移动、应用动画；远程动画更新读取已绑定的驱动。模型解绑时动画引用保持为空，下一次装配由 `RebindAnimator` 接入。
+视觉实例的动画与输入参考通过 `BindModel(animator, inputSpace)` 一次传入，由 `CharacterPresentationService` 在装配完成后调用，`UnbindModel` 在销毁视觉实例前调用。`Update` 在视觉已绑定、且本机是该角色模拟者时读取输入、执行移动并应用动画；远程玩家的 `LateUpdate` 只应用网络快照。控制器不自行查找模型，也不缓存身份存在与否的标志。
 
 ## 输入系统与光标规则
 
@@ -182,13 +182,14 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 准心交互
 
-`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含可空的世界爆炸中心、实际半径和破坏数量；射线未命中平台时爆炸中心为空。
+`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含可空的真实命中点、可空的命中方块中心、两者的平台局部位置、实际半径和破坏数量；射线未命中平台时两个中心都为空。
 
 `Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
 射线以相机位置为起点、相机朝向为方向。检测距离取角色根节点到相机的距离再加上 `reachDistance`，相机在角色身后的那段不占用攻击范围。`Attack` 将射线、检测距离、命中层、角色根节点和爆炸半径提交给 `VoxelPlatformDestruction.Instance.ExplodeFromRay(...)`；射线查询、自身层级与碎块层过滤、最近有效平台筛选和命中方块解析均由该入口完成。
 
-射线命中最近的有效合并平台后，`AttackResult` 返回世界空间 `ExplosionCenter`、相对命中平台根节点的 `PlatformLocalPosition` 和登记 ID。爆炸按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；从中心所在的世界 chunk 列向邻接列扩展，只检查与爆炸圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 接收平台局部触发点、世界水平半径与平台 ID，并转换为世界中心后结算；`ExplodeFromRay` 未命中有效平台时世界中心为空、平台 ID 为零、保留请求半径且破坏数为零。`Update` 在爆炸中心有效且平台 ID 为正时读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。网络请求与 `BlastEventSO` 共用 `AttackRequestPack`，其中 `PlatformLocalPosition` 相对目标平台根节点，`Radius` 仍是世界单位；本地表现事件在攻击回路末尾发布，网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+射线命中最近的有效合并平台后，`AttackResult` 返回世界空间 `ExplosionCenter`（真实命中点）、世界空间 `BlockCenter`（命中方块中心）、两者的平台局部位置 `PlatformLocalPosition` 与 `PlatformLocalBlockCenter`，以及登记 ID。破坏以命中方块中心为圆心，按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；射线命中点常压在方块边界上，用方块中心作圆心保证命中的那块方块一定进入结算。从圆心所在的世界 chunk 列向邻接列扩展，只检查与圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 接收平台局部的命中方块中心、世界水平半径与平台 ID，并转换为世界中心后结算；`ExplodeFromRay` 未命中有效平台时两个中心为空、平台 ID 为零、保留请求半径且破坏数为零。`Update` 在真实命中点与命中方块中心都有效且平台 ID 为正时读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。网络请求与 `BlastEventSO` 共用 `AttackRequestPack`，其中 `PlatformLocalPosition` 是真实命中点、`PlatformLocalBlockCenter` 是命中方块中心，两者都相对目标平台根节点，`Radius` 仍是世界单位；本地表现事件在攻击回路末尾发布，网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+
 
 ## 目录约定
 
