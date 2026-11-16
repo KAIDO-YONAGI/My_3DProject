@@ -29,23 +29,15 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，订阅与开关流程直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，订阅与开关流程直接解引用。
         private void ValidateReferences()
         {
-            if (gameOverGroup == null)
-            {
-                Debug.LogError($"[{nameof(GameOverCanvasManager)}] gameOverGroup 未指定：画布显隐无法生效。", this);
-            }
-
-            if (toggleGameOverEvent == null)
-            {
-                Debug.LogError($"[{nameof(GameOverCanvasManager)}] toggleGameOverEvent 未指定：收不到开关指令。", this);
-            }
-
-            if (sceneLoadedEvent == null)
-            {
-                Debug.LogError($"[{nameof(GameOverCanvasManager)}] sceneLoadedEvent 未指定：切场景时不会自动关闭。", this);
-            }
+            Debug.Assert(gameOverGroup != null,
+                $"{nameof(gameOverGroup)} 未指定：画布显隐无法生效。", this);
+            Debug.Assert(toggleGameOverEvent != null,
+                $"{nameof(toggleGameOverEvent)} 未指定：收不到开关指令。", this);
+            Debug.Assert(sceneLoadedEvent != null,
+                $"{nameof(sceneLoadedEvent)} 未指定：切场景时不会自动关闭。", this);
         }
 
         private void OnEnable()
@@ -69,11 +61,11 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         {
             if (state)
             {
-                TimeManager.Instance.PauseGame();
+                TimeManager.RequiredInstance.PauseGame();
             }
             else
             {
-                TimeManager.Instance.ResumeGame();
+                TimeManager.RequiredInstance.ResumeGame();
             }
 
             ((ICanvasManager)this).SetCanvaState(gameOverGroup, CanvasToToggle.GameOver, state);

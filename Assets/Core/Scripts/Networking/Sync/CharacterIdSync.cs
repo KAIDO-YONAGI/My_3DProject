@@ -44,10 +44,8 @@ namespace Core.Scripts.Networking.Sync
             base.OnStartServer();
 
             // 服务器生成玩家时读取自身配置的默认编号，取非负值写入 characterId，供初始 Spawn 下发。
-            // 该值是客户端未上报或上报编号未通过校验时的兜底值，管理器为空时初始编号为 0，视觉资源在客户端装配时解析。
-            characterId = NetworkCharacterManager.Instance != null
-                ? Mathf.Max(0, NetworkCharacterManager.Instance.DefaultCharacterId)
-                : 0;
+            // 该值是客户端未上报或上报编号未通过校验时的兜底值，管理器属于必需依赖。
+            characterId = Mathf.Max(0, NetworkCharacterManager.RequiredInstance.DefaultCharacterId);
         }
 
         public override void OnStartClient()
@@ -77,19 +75,18 @@ namespace Core.Scripts.Networking.Sync
         /// </summary>
         private void ReportLocalDefaultCharacter()
         {
-            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
-            if (manager == null || !NetworkClient.active || !isLocalPlayer)
+            if (!NetworkClient.active || !isLocalPlayer)
             {
                 return;
             }
 
-            CommandSetCharacter(manager.DefaultCharacterId);
+            CommandSetCharacter(NetworkCharacterManager.RequiredInstance.DefaultCharacterId);
         }
 
         // 客户端玩家停止时，回收其视觉实例、动画引用和输入参考。
         public override void OnStopClient()
         {
-            // 用 == null 判断：?. 不遵循 Unity 的销毁语义，管理器已销毁时仍会照常调用。
+            // 允许暂缺：停止流程可能先于常驻场景管理器销毁，且 ?. 不遵循 Unity 的销毁语义。
             NetworkCharacterManager manager = NetworkCharacterManager.Instance;
             if (manager != null)
             {
@@ -107,8 +104,7 @@ namespace Core.Scripts.Networking.Sync
         public void SetLocalCharacter(int requestedCharacterId)
         {
             if (!isLocalPlayer
-                || NetworkCharacterManager.Instance == null
-                || !NetworkCharacterManager.Instance.IsValidCharacterId(requestedCharacterId))
+                || !NetworkCharacterManager.RequiredInstance.IsValidCharacterId(requestedCharacterId))
             {
                 return;
             }
@@ -122,8 +118,8 @@ namespace Core.Scripts.Networking.Sync
         [Command]
         private void CommandSetCharacter(int requestedCharacterId)
         {
-            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
-            if (manager == null || !manager.IsValidCharacterId(requestedCharacterId))
+            NetworkCharacterManager manager = NetworkCharacterManager.RequiredInstance;
+            if (!manager.IsValidCharacterId(requestedCharacterId))
             {
                 // 拒收时保留服务器当前编号并留下可定位的日志，避免角色编号被静默丢弃。
                 Debug.LogWarning(
@@ -144,12 +140,8 @@ namespace Core.Scripts.Networking.Sync
 
         private void ApplyCharacter()
         {
-            // 下行装配入口：将当前网络玩家和已接收的编号交给管理器，由本地身份选择对应 Prefab。
-            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
-            if (manager != null)
-            {
-                manager.ApplyCharacter(this, characterId);
-            }
+            // 下行装配入口：将当前网络玩家和已接收的编号交给管理器，管理器属于必需依赖。
+            NetworkCharacterManager.RequiredInstance.ApplyCharacter(this, characterId);
         }
     }
 }

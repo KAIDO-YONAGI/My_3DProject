@@ -19,12 +19,18 @@ namespace Core.Scripts.UI
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，点击流程直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，点击流程直接解引用。
         private void ValidateReferences()
         {
-            if (ButtonCanvas == null)
+            Debug.Assert(ButtonCanvas != null,
+                $"{nameof(ButtonCanvas)} 未指定：点击后按钮不会隐藏，可能被重复触发。", this);
+            Debug.Assert(sceneToLoad != null && sceneToLoad.Count > 0,
+                $"{nameof(sceneToLoad)} 未配置：点击不会切换场景；重试按钮请改用 RetryButton 组件。", this);
+
+            for (int index = 0; index < sceneToLoad.Count; index++)
             {
-                Debug.LogError($"[{nameof(ButtonSceneToggler)}] ButtonCanvas 未指定：点击后按钮不会隐藏，可能被重复触发。", this);
+                Debug.Assert(sceneToLoad[index] != null,
+                    $"{nameof(sceneToLoad)}[{index}] 为空：该场景组条目会被跳过。", this);
             }
         }
 
@@ -34,15 +40,8 @@ namespace Core.Scripts.UI
             ButtonCanvas.interactable = false;
             ButtonCanvas.blocksRaycasts = false;
 
-            if (sceneToLoad != null && sceneToLoad.Count > 0 && sceneToLoad[0] != null)
-            {
-                // 场景切换走 SceneChanger 的唯一入口；直接 Raise 事件只会通知订阅方，不会切场景
-                SceneChanger.Instance.RequestSceneLoad(sceneToLoad, newPosition, isToFade);
-            }
-            else
-            {
-                Debug.LogWarning("[ButtonSceneToggler] sceneToLoad 未配置。重试按钮请改用 RetryButton 组件。", this);
-            }
+            // 场景切换走 SceneChanger 的唯一入口；直接 Raise 事件只会通知订阅方，不会切场景
+            SceneChanger.RequiredInstance.RequestSceneLoad(sceneToLoad, newPosition, isToFade);
         }
     }
 }

@@ -12,17 +12,15 @@ namespace Core.Scripts.Networking.Sync
 
         private void Awake()
         {
-            if (blastEvent == null)
-            {
-                Debug.LogError($"[{nameof(NetworkBlastManager)}] blastEvent 未指定：远端爆炸表现事件不会发布。", this);
-            }
+            Debug.Assert(blastEvent != null,
+                $"{nameof(blastEvent)} 未指定：远端爆炸表现事件不会发布。", this);
         }
 
         /// <summary>远端客户端结算攻击，并发布攻击表现事件供特效和音效订阅。</summary>
         [ClientRpc(includeOwner = false)]
         private void RpcRequestAttack(AttackRequestPack request)
         {
-            AttackResult result = VoxelPlatformDestruction.Instance.ExplodeAt(
+            AttackResult result = VoxelPlatformDestruction.RequiredInstance.ExplodeAt(
                 request.PlatformLocalPosition, request.Radius, request.PlatformId);
             if (!result.ExplosionCenter.HasValue) return;
             blastEvent.OnEventRaised(request);

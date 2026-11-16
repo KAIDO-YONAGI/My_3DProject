@@ -63,26 +63,31 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             focusStack.OnFocusRefreshRequested = RaiseFocusEvent;
         }
 
-        // 必填引用在单例注册后只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        // 必填引用在单例注册后只校验一次：缺失时按字段名断言，订阅点直接解引用。
         private void ValidateReferences()
         {
-            if (loadEventSO == null)
-            {
-                Debug.LogError($"[{nameof(UIManager)}] loadEventSO 未指定：画布不会随场景切换复位。", this);
-            }
-
-            if (toggleCanvasEvents == null || toggleCanvasEvents.Count == 0)
-            {
-                Debug.LogWarning($"[{nameof(UIManager)}] toggleCanvasEvents 未配置：没有任何画布能被本组件主动开关。", this);
-                return;
-            }
+            Debug.Assert(loadEventSO != null,
+                $"{nameof(loadEventSO)} 未指定：画布不会随场景切换复位。", this);
+            Debug.Assert(toggleCanvasEvents != null && toggleCanvasEvents.Count > 0,
+                $"{nameof(toggleCanvasEvents)} 未配置：没有任何画布能被本组件主动开关。", this);
 
             for (int index = 0; index < toggleCanvasEvents.Count; index++)
             {
-                if (toggleCanvasEvents[index] == null)
-                {
-                    Debug.LogError($"[{nameof(UIManager)}] toggleCanvasEvents[{index}] 为空：该条目不会参与开关调度。", this);
-                }
+                Debug.Assert(toggleCanvasEvents[index] != null,
+                    $"{nameof(toggleCanvasEvents)}[{index}] 为空：该条目不会参与开关调度。", this);
+            }
+
+            // inputBindings 允许整体留空；已配置的绑定必须能解析到输入动作。
+            if (inputBindings == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < inputBindings.Count; index++)
+            {
+                CanvasInputBinding binding = inputBindings[index];
+                Debug.Assert(binding != null && binding.action != null && binding.action.action != null,
+                    $"{nameof(inputBindings)}[{index}] 配置无效：该按键绑定不会生效。", this);
             }
         }
 
@@ -226,7 +231,7 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         {
             foreach (var eventSO in toggleCanvasEvents)
             {
-                if (eventSO != null && eventSO.canvasToToggle == canvas)
+                if (eventSO.canvasToToggle == canvas)
                     return eventSO;
             }
 

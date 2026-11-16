@@ -93,6 +93,7 @@ namespace Core.Scripts.UI
             CanvasToToggle canvasToToggle,
             bool state)
         {
+            // 允许暂缺：UIManager 尚未注册时退化为默认层级，不阻塞画布自身的显隐。
             int order = UIManager.Instance != null
                 //按 open-order 链表顺序分配降序排序优先级，顶层（链表末尾）最高
                 ? UIManager.Instance.GetCanvasOrder(canvasToToggle, state)

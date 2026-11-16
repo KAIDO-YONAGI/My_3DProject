@@ -33,18 +33,25 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，触发回调里直接解引用。
-        /// <summary>报告触发流程所需但未配置的平台刚体或围栏引用。</summary>
+        // 必填引用只校验一次：缺失时按字段名与下标断言，触发回调里直接解引用。
+        /// <summary>断言触发流程所需的平台刚体、围栏与破坏区域引用。</summary>
         private void ValidateReferences()
         {
-            if (platform == null)
+            Debug.Assert(platform != null,
+                $"{nameof(platform)} 未指定：触发后无法放开平台刚体。", this);
+            Debug.Assert(fence != null,
+                $"{nameof(fence)} 未指定：触发后无法开启围栏。", this);
+
+            // regions 允许留空并退到子物体碰撞体；配置后每一项都必须有效。
+            if (regions == null)
             {
-                Debug.LogError($"[{nameof(VoxelPlatformBlastTrigger)}] platform 未指定：触发后无法放开平台刚体。", this);
+                return;
             }
 
-            if (fence == null)
+            for (int index = 0; index < regions.Length; index++)
             {
-                Debug.LogError($"[{nameof(VoxelPlatformBlastTrigger)}] fence 未指定：触发后无法开启围栏。", this);
+                Debug.Assert(regions[index] != null,
+                    $"{nameof(regions)}[{index}] 为空：破坏区域收集中断。", this);
             }
         }
 
@@ -69,7 +76,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             if (oneShot && fired) return 0;
             fired = true;
             CollectRegions(resolved);
-            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.Instance.BreakRegions(resolved, collisionDuration);
+            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.RequiredInstance.BreakRegions(resolved, collisionDuration);
         }
 
         // 留空时退到子物体上的碰撞体；仍然找不到就把触发器自己当成区域。
@@ -80,7 +87,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             if (regions != null && regions.Length > 0)
             {
                 foreach (Collider region in regions)
-                    if (region) results.Add(region);
+                    results.Add(region);
                 return;
             }
 

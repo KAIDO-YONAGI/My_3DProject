@@ -18,13 +18,11 @@ namespace Core.Scripts.Audio
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，运行时调用点直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，运行时调用点直接解引用。
         private void ValidateReferences()
         {
-            if (feedbackEvent == null)
-            {
-                Debug.LogError($"[{nameof(AudioTriggerManager)}] feedbackEvent 未指定：按键反馈不会播放也不会同步。", this);
-            }
+            Debug.Assert(feedbackEvent != null,
+                $"{nameof(feedbackEvent)} 未指定：按键反馈不会播放也不会同步。", this);
         }
 
         private void OnDisable()
@@ -55,15 +53,13 @@ namespace Core.Scripts.Audio
             if (NetworkClient.isConnected)
             {
                 // 联机模式使用当前连接的本地玩家对象，不能使用场景中预先配置的单机角色引用。
-                return NetworkClient.localPlayer != null
-                    ? NetworkClient.localPlayer.gameObject
-                    : null;
+                // 玩家尚未生成时为空属于合法连接状态，调用方跳过本次触发即可。
+                NetworkIdentity localPlayer = NetworkClient.localPlayer;
+                return localPlayer != null ? localPlayer.gameObject : null;
             }
 
-            // 单机模式读取管理器当前角色，角色替换后仍能拿到最新实例。
-            return NetworkCharacterManager.Instance != null
-                ? NetworkCharacterManager.Instance.StandalonePlayer
-                : null;
+            // 单机模式的角色由常驻场景的管理器维护，管理器缺失按必需依赖直接失败。
+            return NetworkCharacterManager.RequiredInstance.StandalonePlayer;
         }
     }
 }

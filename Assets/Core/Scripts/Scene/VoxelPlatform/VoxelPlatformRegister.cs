@@ -20,6 +20,28 @@ namespace Core.Scripts.Scene.VoxelPlatform
 
         private bool registrationRaised;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名与下标断言，注册流程直接解引用。
+        private void ValidateReferences()
+        {
+            Debug.Assert(platforms != null && platforms.Length > 0,
+                $"{nameof(platforms)} 未配置：场景中的平台不会注册。", this);
+            Debug.Assert(registerEvent != null,
+                $"{nameof(registerEvent)} 未指定：平台注册事件无法发布。", this);
+
+            for (int index = 0; index < platforms.Length; index++)
+            {
+                Debug.Assert(platforms[index].renderer != null,
+                    $"{nameof(platforms)}[{index}].renderer 为空：该平台不会注册。", this);
+                Debug.Assert(platforms[index].id > 0,
+                    $"{nameof(platforms)}[{index}].id 不是正数：该平台不会注册。", this);
+            }
+        }
+
         /// <summary>监听 Unity 场景加载完成事件，以便只发布所属场景的平台。</summary>
         private void OnEnable()
         {
@@ -51,20 +73,13 @@ namespace Core.Scripts.Scene.VoxelPlatform
             if (registrationRaised || !scene.IsValid() || !scene.isLoaded)
                 return;
 
-            if (platforms == null || platforms.Length == 0 || registerEvent == null)
-            {
-                Debug.LogError("平台注册需要至少一个平台引用和有效的注册事件。", this);
-                return;
-            }
-
             bool raisedAnyRegistration = false;
             for (int index = 0; index < platforms.Length; index++)
             {
                 PlatformReference reference = platforms[index];
-                if (reference.renderer == null || reference.id <= 0 ||
-                    reference.renderer.gameObject.scene != scene)
+                if (reference.renderer.gameObject.scene != scene)
                 {
-                    Debug.LogError("平台注册项必须引用当前场景中的平台根组件，并使用正数 Platform ID。", this);
+                    Debug.LogError("平台注册项必须引用当前场景中的平台根组件。", this);
                     continue;
                 }
 

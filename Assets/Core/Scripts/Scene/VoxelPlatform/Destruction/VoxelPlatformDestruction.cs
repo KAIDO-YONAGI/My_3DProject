@@ -53,6 +53,9 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
 
         [SerializeField] private PlatformRegisterEventSO platformRegisterEvent;
 
+        // 注册事件是否已订阅：OnDestroy 据此退订，不再对资产做第二次判空。
+        private bool subscribed;
+
         // 查询缓冲和批处理状态属于场景服务实例，不由静态类跨场景共享。
         private RaycastHit[] rayHits = new RaycastHit[InitialRayHitCapacity];
         private readonly List<RegisteredPlatform> platforms = new();
@@ -65,21 +68,21 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             base.OnSingletonInitialized();
             SceneManager.sceneUnloaded += OnSceneUnloaded;
 
-            if (platformRegisterEvent == null)
-            {
-                Debug.LogError("未配置平台注册事件，跨场景平台不会进入破坏注册表。", this);
-                return;
-            }
-
+            Debug.Assert(platformRegisterEvent != null,
+                $"{nameof(platformRegisterEvent)} 未指定：跨场景平台不会进入破坏注册表。", this);
             platformRegisterEvent.PlatformRegistrationRequested += RegisterPlatform;
+            subscribed = true;
         }
 
         /// <summary>解除事件订阅并让单例基类清理当前实例引用。</summary>
         protected override void OnDestroy()
         {
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            if (platformRegisterEvent != null)
+            if (subscribed)
+            {
                 platformRegisterEvent.PlatformRegistrationRequested -= RegisterPlatform;
+                subscribed = false;
+            }
 
             base.OnDestroy();
         }

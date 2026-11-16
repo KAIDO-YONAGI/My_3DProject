@@ -71,23 +71,15 @@ namespace Core.Scripts.Audio
             bgmSource.loop = true;
         }
 
-        // 必填引用只在这里校验一次：缺失时按字段名报错，后续调用点直接解引用，不再逐处判空。
+        // 必填引用只在这里校验一次：缺失时按字段名断言，后续调用点直接解引用，不再逐处判空。
         private void ValidateReferences()
         {
-            if (audioConfig == null)
-            {
-                Debug.LogError($"[{nameof(AudioPlayerManager)}] audioConfig 未指定：音效与 BGM 全部无法播放。", this);
-            }
-
-            if (sceneLoadedEvent == null)
-            {
-                Debug.LogError($"[{nameof(AudioPlayerManager)}] sceneLoadedEvent 未指定：场景加载音效不会播放。", this);
-            }
-
-            if (audioRequestEvent == null)
-            {
-                Debug.LogError($"[{nameof(AudioPlayerManager)}] audioRequestEvent 未指定：外部音效请求不会处理。", this);
-            }
+            Debug.Assert(audioConfig != null,
+                $"{nameof(audioConfig)} 未指定：音效与 BGM 全部无法播放。", this);
+            Debug.Assert(sceneLoadedEvent != null,
+                $"{nameof(sceneLoadedEvent)} 未指定：场景加载音效不会播放。", this);
+            Debug.Assert(audioRequestEvent != null,
+                $"{nameof(audioRequestEvent)} 未指定：外部音效请求不会处理。", this);
         }
 
         private void OnEnable()

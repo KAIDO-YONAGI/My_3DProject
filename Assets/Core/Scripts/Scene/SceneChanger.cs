@@ -102,27 +102,48 @@ namespace Core.Scripts.Scene
             ValidateReferences();
         }
 
-        // 必填引用在单例注册后只校验一次：缺失时按字段名报错，后续调用点直接解引用。
+        // 必填引用在单例注册后只校验一次：缺失时按字段名断言，后续调用点直接解引用。
         private void ValidateReferences()
         {
-            if (fadeCanva == null)
+            Debug.Assert(fadeCanva != null,
+                $"{nameof(fadeCanva)} 未指定：切换时的过渡遮罩无法播放。", this);
+            Debug.Assert(loadEventSO != null,
+                $"{nameof(loadEventSO)} 未指定：场景切换请求无法广播。", this);
+            Debug.Assert(retryEventSO != null,
+                $"{nameof(retryEventSO)} 未指定：重试的整组重载无法订阅。", this);
+            Debug.Assert(sceneLoadedEvent != null,
+                $"{nameof(sceneLoadedEvent)} 未指定：画布与加载音效收不到场景加载完成通知。", this);
+            Debug.Assert(player != null,
+                $"{nameof(player)} 未指定：场景加载完成后不会设置玩家位置。", this);
+
+            // 启动场景组必填：容器为空时启动后没有内容场景。
+            Debug.Assert(firstSceneToLoad != null && firstSceneToLoad.Count > 0,
+                $"{nameof(firstSceneToLoad)} 未配置：启动后不会加载任何内容场景。", this);
+
+            for (int index = 0; index < firstSceneToLoad.Count; index++)
             {
-                Debug.LogError($"[{nameof(SceneChanger)}] fadeCanva 未指定：切换时的过渡遮罩无法播放。", this);
+                Debug.Assert(firstSceneToLoad[index] != null,
+                    $"{nameof(firstSceneToLoad)}[{index}] 为空：该场景组条目会被跳过。", this);
             }
 
-            if (loadEventSO == null)
+            // 过渡图片允许留空；配置后每一项都必须有效。
+            if (transitionImagesDuringFade != null)
             {
-                Debug.LogError($"[{nameof(SceneChanger)}] loadEventSO 未指定：场景切换请求无法广播。", this);
+                for (int index = 0; index < transitionImagesDuringFade.Length; index++)
+                {
+                    Debug.Assert(transitionImagesDuringFade[index] != null,
+                        $"{nameof(transitionImagesDuringFade)}[{index}] 为空：该过渡图片动画不会播放。", this);
+                }
             }
 
-            if (retryEventSO == null)
+            // 菜单与重置期间需要启停的对象允许留空；配置后每一项都必须是场景对象。
+            if (objectsToUnableWhileMenuOrReset != null)
             {
-                Debug.LogError($"[{nameof(SceneChanger)}] retryEventSO 未指定：重试的整组重载无法订阅。", this);
-            }
-
-            if (sceneLoadedEvent == null)
-            {
-                Debug.LogError($"[{nameof(SceneChanger)}] sceneLoadedEvent 未指定：画布与加载音效收不到场景加载完成通知。", this);
+                for (int index = 0; index < objectsToUnableWhileMenuOrReset.Length; index++)
+                {
+                    Debug.Assert(objectsToUnableWhileMenuOrReset[index] is GameObject,
+                        $"{nameof(objectsToUnableWhileMenuOrReset)}[{index}] 不是场景对象：该条目不会参与启停。", this);
+                }
             }
         }
 
@@ -168,12 +189,14 @@ namespace Core.Scripts.Scene
         private void PlayLoadingAnimation(string name)
         {
             fadeCanva.alpha = 1;
+            if (transitionImagesDuringFade == null)
+            {
+                return;
+            }
+
             foreach (Animator transitionImage in transitionImagesDuringFade)
             {
-                if (transitionImage != null)
-                {
-                    transitionImage.Play(name);
-                }
+                transitionImage.Play(name);
             }
         }
 
@@ -183,7 +206,6 @@ namespace Core.Scripts.Scene
         /// <param name="newPosition">新位置坐标</param>
         private void SetPlayerPostion(Vector3 newPosition)
         {
-            if (player == null) return;
             player.transform.position = newPosition;
         }
 
@@ -211,7 +233,7 @@ namespace Core.Scripts.Scene
             isLoading = true;
 
             ForbidInput();
-            TimeManager.Instance.PauseGame();
+            TimeManager.RequiredInstance.PauseGame();
 
             OnBeforeSceneUnload(); // 玩法侧收尾钩子（如回血）
 
@@ -289,7 +311,7 @@ namespace Core.Scripts.Scene
                     if (targetFade && !isInitialScene)
                         PlayLoadingAnimation("FadeOut");
                     AllowInput();
-                    TimeManager.Instance.ForceResumeGame();
+                    TimeManager.RequiredInstance.ForceResumeGame();
                     isLoading = false;
                     yield break;
                 }
@@ -368,12 +390,14 @@ namespace Core.Scripts.Scene
 
         private void SetObjects(bool state)
         {
+            if (objectsToUnableWhileMenuOrReset == null)
+            {
+                return;
+            }
+
             foreach (Object obj in objectsToUnableWhileMenuOrReset)
             {
-                if (obj is GameObject go)
-                {
-                    go.SetActive(state);
-                }
+                ((GameObject)obj).SetActive(state);
             }
         }
 
@@ -397,7 +421,7 @@ namespace Core.Scripts.Scene
             isInitialScene = false;
             sceneLoadedEvent.RaiseSceneLoadedEvent(currentScene);
             AllowInput();
-            TimeManager.Instance.ForceResumeGame();
+            TimeManager.RequiredInstance.ForceResumeGame();
             isLoading = false; // 全部完成后才解锁，允许下一次加载请求
             SetPlayerPostion(targetPosition);
         }

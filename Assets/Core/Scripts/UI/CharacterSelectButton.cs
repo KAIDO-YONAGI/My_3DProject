@@ -29,13 +29,11 @@ namespace Core.Scripts.UI
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，订阅点直接解引用。
         private void ValidateReferences()
         {
-            if (targetButton == null)
-            {
-                Debug.LogError($"[{nameof(CharacterSelectButton)}] targetButton 未指定：点击不会转发角色切换。", this);
-            }
+            Debug.Assert(targetButton != null,
+                $"{nameof(targetButton)} 未指定：点击不会转发角色切换。", this);
         }
 
         private void OnEnable()
@@ -48,19 +46,10 @@ namespace Core.Scripts.UI
             targetButton.onClick.RemoveListener(OnClick);
         }
 
-        // 点击时转发编号；管理器缺失说明常驻场景未加载，请求无法落地。
+        // 点击时转发编号；管理器属于必需依赖，缺失时由 RequiredInstance 明确报告。
         private void OnClick()
         {
-            NetworkCharacterManager manager = NetworkCharacterManager.Instance;
-            if (manager == null)
-            {
-                Debug.LogWarning(
-                    $"[{nameof(CharacterSelectButton)}] 缺少 {nameof(NetworkCharacterManager)}，角色 {characterId} 的切换请求已忽略。",
-                    this);
-                return;
-            }
-
-            manager.RequestCharacter(characterId);
+            NetworkCharacterManager.RequiredInstance.RequestCharacter(characterId);
         }
     }
 }

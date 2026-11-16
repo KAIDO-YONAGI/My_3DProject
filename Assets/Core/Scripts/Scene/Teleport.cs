@@ -16,13 +16,31 @@ namespace Core.Scripts.Scene
         [SerializeField] private List<GameSceneSO> sceneToLoad = new();
         [SerializeField] private bool isToFade = true;
 
+        private void Awake()
+        {
+            ValidateReferences();
+        }
+
+        // 必填引用只校验一次：缺失时按字段名断言，触发回调直接解引用。
+        private void ValidateReferences()
+        {
+            Debug.Assert(sceneToLoad != null && sceneToLoad.Count > 0,
+                $"{nameof(sceneToLoad)} 未配置：进入触发器不会切换场景。", this);
+
+            for (int index = 0; index < sceneToLoad.Count; index++)
+            {
+                Debug.Assert(sceneToLoad[index] != null,
+                    $"{nameof(sceneToLoad)}[{index}] 为空：该场景组条目会被跳过。", this);
+            }
+        }
+
         private void OnTriggerEnter(Collider collider)
         {
             if (!collider.CompareTag(PlayerTag))
                 return;
 
             // 场景切换走 SceneChanger 的唯一入口；直接 Raise 事件只会通知订阅方，不会切场景
-            SceneChanger.Instance.RequestSceneLoad(sceneToLoad, newPosition, isToFade);
+            SceneChanger.RequiredInstance.RequestSceneLoad(sceneToLoad, newPosition, isToFade);
         }
     }
 }

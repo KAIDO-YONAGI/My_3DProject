@@ -19,13 +19,11 @@ namespace Core.Scripts.UI
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，订阅点直接解引用。
         private void ValidateReferences()
         {
-            if (escButton == null)
-            {
-                Debug.LogError($"[{nameof(ESCButton)}] escButton 未指定：点击不会关闭任何面板。", this);
-            }
+            Debug.Assert(escButton != null,
+                $"{nameof(escButton)} 未指定：点击不会关闭任何面板。", this);
         }
 
         private void OnEnable()
@@ -40,7 +38,7 @@ namespace Core.Scripts.UI
 
         private void OnESC()
         {
-            UIManager.Instance.RequestCanvasClose(canvasToESC);
+            UIManager.RequiredInstance.RequestCanvasClose(canvasToESC);
         }
     }
 }

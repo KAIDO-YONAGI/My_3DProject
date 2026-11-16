@@ -50,24 +50,16 @@ namespace Core.Scripts.Character.Interactions
             playerRoot = transform.root;
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，订阅点直接解引用。
-        /// <summary>报告缺失的游戏开始或重试事件引用。</summary>
+        // 必填引用只校验一次：缺失时按字段名断言，订阅点直接解引用。
+        /// <summary>断言游戏开始、攻击表现与重试事件引用已配置。</summary>
         private void ValidateReferences()
         {
-            if (gameStartEventSO == null)
-            {
-                Debug.LogError($"[{nameof(Attack)}] gameStartEventSO 未指定：攻击会一直处于拒绝状态。", this);
-            }
-
-            if (blastEventSO == null)
-            {
-                Debug.LogError($"[{nameof(Attack)}] blastEventSO 未指定：本地攻击表现事件不会发布。", this);
-            }
-
-            if (retryEventSO == null)
-            {
-                Debug.LogError($"[{nameof(Attack)}] retryEventSO 未指定：重试后不会恢复拒绝状态。", this);
-            }
+            Debug.Assert(gameStartEventSO != null,
+                $"{nameof(gameStartEventSO)} 未指定：攻击会一直处于拒绝状态。", this);
+            Debug.Assert(blastEventSO != null,
+                $"{nameof(blastEventSO)} 未指定：本地攻击表现事件不会发布。", this);
+            Debug.Assert(retryEventSO != null,
+                $"{nameof(retryEventSO)} 未指定：重试后不会恢复拒绝状态。", this);
         }
 
         /// <summary>启用时订阅攻击状态所需的开始与重试事件。</summary>
@@ -149,7 +141,7 @@ namespace Core.Scripts.Character.Interactions
         public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(transform.position, transform.forward);
-            return VoxelPlatformDestruction.Instance.ExplodeFromRay(
+            return VoxelPlatformDestruction.RequiredInstance.ExplodeFromRay(
                 ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
         }
 

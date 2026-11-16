@@ -20,18 +20,13 @@ namespace Core.Scripts.UI
             ValidateReferences();
         }
 
-        // 必填引用只校验一次：缺失时按字段名报错，点击流程直接解引用。
+        // 必填引用只校验一次：缺失时按字段名断言，点击流程直接解引用。
         private void ValidateReferences()
         {
-            if (button == null)
-            {
-                Debug.LogError($"[{nameof(RetryButton)}] button 未指定：点击不会被监听。", this);
-            }
-
-            if (retryEventSO == null)
-            {
-                Debug.LogError($"[{nameof(RetryButton)}] retryEventSO 未指定：重试事件无法广播。", this);
-            }
+            Debug.Assert(button != null,
+                $"{nameof(button)} 未指定：点击不会被监听。", this);
+            Debug.Assert(retryEventSO != null,
+                $"{nameof(retryEventSO)} 未指定：重试事件无法广播。", this);
         }
 
         private void OnEnable()
@@ -44,7 +39,7 @@ namespace Core.Scripts.UI
         }
         public void HandleRetry()//editor内由button组件绑定
         {
-            TimeManager.Instance.ForceResumeGame();
+            TimeManager.RequiredInstance.ForceResumeGame();
             retryEventSO.OnEventRaised();
         }
     }

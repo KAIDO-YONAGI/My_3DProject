@@ -24,6 +24,8 @@ namespace Core.Scripts.Networking.Sync
         private void Awake()
         {
             controller = GetComponent<PlayerCharacterController>();
+            Debug.Assert(controller != null,
+                $"{nameof(controller)} 缺失：运动快照无法读写。", this);
 
             // 同步方向：拥有者客户端发送到服务器，服务器再转发给其他观察者客户端。
             syncDirection = SyncDirection.ClientToServer;

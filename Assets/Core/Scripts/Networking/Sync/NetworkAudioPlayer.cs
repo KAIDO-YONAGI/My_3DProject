@@ -39,7 +39,7 @@ namespace Core.Scripts.Networking.Sync
             {
                 playbackPosition = worldPosition;
             }
-            AudioPlayerManager.Instance.PlaySfx(audioType, playbackPosition);
+            AudioPlayerManager.RequiredInstance.PlaySfx(audioType, playbackPosition);
         }
     }
 }

@@ -63,21 +63,16 @@ namespace Core.Scripts.Networking.CharacterPresentation
             presentationService = new CharacterPresentationService(this, presentations);
         }
 
-        // 角色资源是必填配置：缺失时按下标报错，表现装配流程直接解引用。
+        // 角色资源是必填配置：缺失时按下标断言，表现装配流程直接解引用。
         private void ValidateReferences()
         {
-            if (characters == null || characters.Length == 0)
-            {
-                Debug.LogError($"[{nameof(NetworkCharacterManager)}] characters 未配置：角色生成与切换都不可用。", this);
-                return;
-            }
+            Debug.Assert(characters != null && characters.Length > 0,
+                $"{nameof(characters)} 未配置：角色生成与切换都不可用。", this);
 
             for (int index = 0; index < characters.Length; index++)
             {
-                if (characters[index] == null)
-                {
-                    Debug.LogError($"[{nameof(NetworkCharacterManager)}] characters[{index}] 为空：该角色编号不可用。", this);
-                }
+                Debug.Assert(characters[index] != null,
+                    $"{nameof(characters)}[{index}] 为空：该角色编号不可用。", this);
             }
         }
 
