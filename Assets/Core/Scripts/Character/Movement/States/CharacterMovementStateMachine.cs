@@ -179,11 +179,6 @@ namespace Core.Scripts.Character.Movement.States
         /// </summary>
         public float TimeInState { get; private set; }
 
-        public bool CanJump(bool groundedBeforeMove)
-        {
-            return groundedBeforeMove;
-        }
-
         public CharacterMovementStateId Update(CharacterMovementStateContext context)
         {
             // 对外不暴露状态转换边沿：远程角色不跑状态机，边沿信息无法跨客户端复现，

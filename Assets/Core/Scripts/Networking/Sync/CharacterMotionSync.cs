@@ -62,9 +62,8 @@ namespace Core.Scripts.Networking.Sync
         public override void OnSerialize(
             NetworkWriter writer, bool initialState)
         {
-            //这是syncVar通道 如果不写 则特性不可用
-            //不过代价是占用每次8字节的带宽 
-            base.OnSerialize(writer, initialState);
+            // 本组件没有 SyncVar 与 SyncList，不调用基类序列化：
+            // 基类在增量同步时会写入 8 字节的空 SyncObject 脏位掩码，而本组件的字段全部手写。
             // 拥有者读取本地移动结果；服务器读取 OnDeserialize 保存的有效快照。
             CharacterMotion motion = controller.CurrentMotion;
 
@@ -85,7 +84,7 @@ namespace Core.Scripts.Networking.Sync
         public override void OnDeserialize(
             NetworkReader reader, bool initialState)
         {
-            base.OnDeserialize(reader, initialState);
+            // 与 OnSerialize 对称：不读取基类的空 SyncObject 脏位掩码。
             // 本地拥有者使用自己计算的状态。
             if (isOwned) 
                 return;

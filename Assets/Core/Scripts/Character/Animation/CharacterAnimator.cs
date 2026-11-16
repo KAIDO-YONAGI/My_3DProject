@@ -48,12 +48,13 @@ namespace Core.Scripts.Character.Animation
 
         /// <summary>
         /// 把 CharacterMotion 应用到 Animator。
+        /// 视觉实例的生命周期由 PlayerCharacterController 的绑定与解绑管理，这里不再检查 Animator 引用。
         /// Grounded 参数负责进入和退出 Jump，移动权重只负责 Grounded 内部的直接混合。
         /// </summary>
         public void Apply(CharacterMotion motion)
         {
-            // 模型切换期间旧 Animator 可能已被 Unity 销毁，避免把失效引用传给动画 API。
-            if (!initialized || animator == null)
+            // 初始化失败时保持不写参数，避免把无效值传给 Animator。
+            if (!initialized)
             {
                 return;
             }

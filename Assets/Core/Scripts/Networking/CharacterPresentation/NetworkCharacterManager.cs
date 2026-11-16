@@ -286,7 +286,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             {
                 if (cameraController != null)
                 {
-                    cameraController.enabled = enabled;
+                    cameraController.enabled = state;
                 }
             }
 
@@ -294,7 +294,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             {
                 if (listener != null)
                 {
-                    listener.enabled = enabled;
+                    listener.enabled = state;
                 }
             }
         }

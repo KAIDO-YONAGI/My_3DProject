@@ -25,6 +25,7 @@ namespace Core.Scripts.Networking.Sync
         private int characterId;
 
         // 缓存网络根的运动控制器，供表现管理器绑定模型动画和本地输入参考空间。
+        // 控制器与身份组件同属网络根 Prefab，只在 Awake 解析一次，后续回调直接使用。
         private PlayerCharacterController playerController;
 
         /// <summary>服务器确认的当前角色编号，对应管理器两套数组的下标。</summary>
@@ -33,11 +34,15 @@ namespace Core.Scripts.Networking.Sync
         /// <summary>当前网络玩家是否为此客户端的本地玩家。</summary>
         public bool IsLocalPlayerCharacter => isLocalPlayer;
 
-        /// <summary>按需查找并复用同一网络根上的运动控制器。</summary>
-        public PlayerCharacterController PlayerController =>
-            playerController != null
-                ? playerController
-                : playerController = GetComponent<PlayerCharacterController>();
+        /// <summary>同一网络根上的运动控制器，由 Awake 解析。</summary>
+        public PlayerCharacterController PlayerController => playerController;
+
+        private void Awake()
+        {
+            playerController = GetComponent<PlayerCharacterController>();
+            Debug.Assert(playerController != null,
+                $"{nameof(PlayerCharacterController)} 缺失：角色表现无法绑定动画与输入。", this);
+        }
 
         public override void OnStartServer()
         {

@@ -8,34 +8,38 @@ namespace Core.Scripts.Character.Control
 {
     /// <summary>
     /// 角色控制器的 Unity 生命周期入口。
-    /// 本类只负责组织“采集输入 -> CharacterMotor 位移 -> CharacterAnimator 表现”的顺序，
-    /// 具体运动算法、动画绑定分别由独立类型承担，骨骼表现由视觉实例管理。
+    /// 本类只负责组织“采集输入 -> CharacterMotor 位移 -> CharacterAnimator 表现”的顺序；
+    /// 运动对象在 Awake 建立，视觉实例的动画与输入参考由表现层在绑定阶段一次传入。
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     public class PlayerCharacterController : MonoBehaviour
     {
         [Header("场景引用")]
-        // animator 可以位于角色子节点；characterController 必须与本组件位于同一对象。
+        // 单机 Prefab 直接序列化 Animator；联机在视觉实例创建后由 BindModel 传入。
         [SerializeField] private Animator animator;
+
+        // 必须与本组件位于同一对象，RequireComponent 保证组件存在。
         [SerializeField] private CharacterController characterController;
 
-        // 显式指定后，移动方向会参考该物体；留空时 CharacterMotor 尝试使用主相机。
+        // 单机 Prefab 序列化输入相机；联机由 BindModel 传入本地视觉的输入相机。
         [SerializeField] private Transform inputSpace;
 
         [Header("移动")]
         // 参数对象只描述手感，实际速度状态保存在 CharacterMotor 中。
         [SerializeField] private CharacterMovementSettings movementSettings = new();
 
-        // 输入读取器按需创建 PlayerControls，只有真正读取输入的本地玩家才会占用输入资源。
+        // 输入读取器按需创建 PlayerControls：远程玩家不读输入，就不会占用输入资源。
         private readonly CharacterInputReader input = new();
 
-        // 两个运行时对象不参与序列化，分别管理运动状态和动画参数。
+        // 运动与动画对象在装配阶段创建，之后每帧只做位移和参数写入。
         private CharacterMotor motor;
         private CharacterAnimator animationDriver;
         private NetworkIdentity networkIdentity;
-        // 网络身份在根对象初始化时确定；查不到也缓存，避免单机角色每帧重查。
-        private bool networkIdentityInitialized;
-        //控制器保存快照，为网络包的接入留入口
+
+        // 视觉实例绑定完成前不模拟：联机本地玩家需要视觉相机作为输入参考。
+        private bool characterBound;
+
+        /// <summary>本帧运动结果：本地玩家写入本地模拟结果，远程玩家接收网络快照。</summary>
         public CharacterMotion CurrentMotion { get; private set; }
 
         /// <summary>
@@ -45,54 +49,98 @@ namespace Core.Scripts.Character.Control
         {
             CurrentMotion = new CharacterMotion(snapshot);
         }
-        // 添加组件或在 Inspector 重置时自动补齐最常见引用和默认配置。
-        private void Reset()
+
+        /// <summary>
+        /// 绑定视觉实例：动画与输入参考由表现层传入，控制器不查找场景对象。
+        /// 同一视觉实例的身份变化会再次调用本方法，只更新输入参考，不重建动画驱动。
+        /// </summary>
+        public void BindModel(Animator modelAnimator, Transform modelInputSpace)
         {
-            CacheReferences();
-            EnsureSettings();
+            // 模型替换必须先解绑：旧驱动仍引用旧 Animator，直接换绑会丢失落地衔接状态。
+            if (animationDriver != null && animator != modelAnimator)
+            {
+                Debug.LogError($"{name} 在未解绑的情况下更换了视觉模型，先调用 UnbindModel。", this);
+                return;
+            }
+
+            animator = modelAnimator;
+            inputSpace = modelInputSpace;
+
+            if (animationDriver == null)
+            {
+                var driver = new CharacterAnimator(animator);
+                if (!driver.Initialize())
+                {
+                    Debug.LogError($"{name} 的视觉模型缺少可用的 Animator Controller，动画不会更新。", this);
+                    return;
+                }
+
+                animationDriver = driver;
+            }
+
+            characterBound = true;
         }
 
-        // Awake 负责组装依赖
+        /// <summary>
+        /// 解除视觉绑定：表现层销毁视觉实例之前调用，之后不再驱动动画或读取输入参考。
+        /// </summary>
+        public void UnbindModel()
+        {
+            characterBound = false;
+            animationDriver = null;
+            animator = null;
+            inputSpace = null;
+        }
+
+        // 编辑器添加组件时补齐同对象引用；运行时不执行任何组件查找。
+        private void Reset()
+        {
+            characterController = GetComponent<CharacterController>();
+        }
+
         private void Awake()
         {
-            EnsureRuntimeState();
+            // 网络根下的视觉实例不承担运动与输入，其控制器由表现层在激活前停用。
+            if (!IsMotionOwner()) return;
+
+            // 专用服务器没有本地输入与相机，不创建运动对象。
+            if (IsDedicatedServer) return;
+
+            characterController = characterController != null
+                ? characterController
+                : GetComponent<CharacterController>();
+            if (characterController == null)
+            {
+                Debug.LogError($"{name} 缺少 CharacterController，角色无法位移。", this);
+                enabled = false;
+                return;
+            }
+
+            networkIdentity = GetComponent<NetworkIdentity>();
+            motor = new CharacterMotor(transform, characterController, movementSettings);
+
+            // 单机 Prefab 自带序列化 Animator 与输入参考；联机等待表现层 BindModel。
+            if (animator != null)
+            {
+                BindModel(animator, inputSpace);
+            }
         }
 
         private void Update()
         {
-            // 专用服务器只负责转发网络状态，不执行本地输入、重力和动画驱动，
-            // 否则无摄像头和本地输入的服务器会把网络玩家持续推落场景。
-            if (networkIdentity != null && NetworkServer.active && !NetworkClient.active)
-            {
-                return;
-            }
+            // 本机是该角色的模拟者，且视觉参考已绑定，才推进模拟与动画。
+            if (!characterBound || !CanSimulate()) return;
 
-            // 联机时只允许本地玩家采集输入；没有 NetworkIdentity 的单机角色仍沿用原有控制逻辑。
-            if (NetworkClient.isConnected && (networkIdentity == null || !networkIdentity.isLocalPlayer))
-            {
-                return;
-            }
-
-            // 网络模型是运行时挂载的，首次 Update 可能早于实例化后的依赖初始化，避免因此丢失移动能力。
-            if (motor == null || characterController == null)
-            {
-                return;
-            }
-
-            // 保持固定数据流，动画永远读取本帧移动后的碰撞与方向结果。
-            CharacterInput input = ReadInput();
-            CurrentMotion = motor.Tick(input, inputSpace, Time.deltaTime);
-            animationDriver?.Apply(CurrentMotion);
+            CharacterInput frameInput = ReadInput();
+            CurrentMotion = motor.Tick(frameInput, inputSpace, Time.deltaTime);
+            animationDriver.Apply(CurrentMotion);
         }
 
         private void LateUpdate()
         {
-            // 远程玩家不读取本地输入，动画由收到的运动快照驱动；首个快照到达前快照为默认的 Idle。
-            if (IsRemoteNetworkPlayer())
-            {
-                ApplyRemoteAnimation();
-            }
-
+            // 远程玩家的位置由变换同步驱动，动画只应用收到的运动快照。
+            if (!characterBound || !IsRemoteNetworkPlayer()) return;
+            animationDriver.Apply(CurrentMotion);
         }
 
         private void OnDestroy()
@@ -101,100 +149,46 @@ namespace Core.Scripts.Character.Control
             input.Dispose();
         }
 
-        // 自动引用只填补空字段，不覆盖 Inspector 中已经指定的对象。
-        private void CacheReferences()
+        /// <summary>
+        /// 本组件是否承担运动：网络根与单机角色承担，挂在网络根下的视觉实例不承担。
+        /// </summary>
+        private bool IsMotionOwner()
         {
-            if (characterController == null)
+            if (GetComponent<NetworkIdentity>() != null)
             {
-                characterController = GetComponent<CharacterController>();
+                return true;
             }
 
-            if (animator == null)
-            {
-                animator = GetComponentInChildren<Animator>();
-            }
+            return GetComponentInParent<NetworkIdentity>(true) == null;
         }
 
-        // 允许网络模型在运行时挂载后补齐 CharacterMotor 与动画驱动，单机 Prefab 仍沿用同一套初始化逻辑。
-        private bool EnsureRuntimeState()
-        {
-            CacheReferences();
-            EnsureSettings();
-            if (!networkIdentityInitialized)
-            {
-                networkIdentity = GetComponent<NetworkIdentity>();
-                networkIdentityInitialized = true;
-            }
+        // 专用服务器只转发网络状态，不执行输入、运动和动画驱动。
+        private static bool IsDedicatedServer => NetworkServer.active && !NetworkClient.active;
 
-            if (characterController == null)
+        /// <summary>
+        /// 本机是否该模拟这个角色：单机始终模拟；联机只有本地拥有者模拟。
+        /// </summary>
+        private bool CanSimulate()
+        {
+            if (IsDedicatedServer)
             {
                 return false;
             }
 
-            if (motor == null)
+            if (!NetworkClient.isConnected)
             {
-                motor = new CharacterMotor(transform, characterController, movementSettings);
+                return true;
             }
 
-            if (animationDriver == null && animator != null)
-            {
-                animationDriver = new CharacterAnimator(animator);
-                animationDriver.Initialize();
-            }
-
-            return true;
+            return networkIdentity != null && networkIdentity.isLocalPlayer;
         }
 
-        /// <summary>
-        /// 模型 Prefab 被替换后，重新绑定网络根对象使用的 Animator。
-        /// </summary>
-        public void RebindAnimator(Animator replacementAnimator)
-        {
-            animationDriver = null;
-            animator = replacementAnimator;
-
-            // 清空引用时只保留“无动画驱动”状态，避免 CacheReferences 又找回正在销毁的旧模型。
-            if (replacementAnimator != null)
-            {
-                EnsureRuntimeState();
-            }
-        }
-
-        /// <summary>
-        /// 绑定本地玩家的输入参考空间。
-        /// 共用角色 Prefab 自带相机，网络根对象必须读取这台相机的朝向，
-        /// 否则移动会退回 Camera.main 或根节点朝向，出现“转相机但前进方向不变”。
-        /// </summary>
-        public void RebindInputSpace(Transform replacementInputSpace)
-        {
-            // 远程角色传入 null，表示它不采集本地输入；本地角色传入共用视觉 Prefab 的相机。
-            inputSpace = replacementInputSpace;
-        }
-
+        // 联机时非本地拥有者的角色，其位置与动画都由网络数据驱动。
         private bool IsRemoteNetworkPlayer()
         {
             return NetworkClient.isConnected
                    && networkIdentity != null
                    && !networkIdentity.isLocalPlayer;
-        }
-
-        /// <summary>
-        /// 应用网络同步的远程运动状态。
-        /// 位置仍由 NetworkTransformReliable 驱动，远程角色不执行本地运动模拟。
-        /// </summary>
-        private void ApplyRemoteAnimation()
-        {
-            if (motor == null || characterController == null || animationDriver == null)
-            {
-                return;
-            }
-            animationDriver.Apply(CurrentMotion);
-        }
-
-        // Unity 旧序列化数据可能把可序列化类保存为 null，这里统一补回默认对象。
-        private void EnsureSettings()
-        {
-            movementSettings ??= new CharacterMovementSettings();
         }
 
         /// <summary>

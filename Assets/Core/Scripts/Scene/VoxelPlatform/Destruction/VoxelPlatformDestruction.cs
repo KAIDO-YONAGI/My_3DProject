@@ -10,11 +10,17 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
     /// <summary>一次攻击爆炸的结算结果。</summary>
     public readonly struct AttackResult
     {
-        /// <summary>本次爆炸中心；射线未命中有效平台时为空。</summary>
+        /// <summary>本次射线命中的世界坐标点，用作爆炸表现中心；射线未命中有效平台时为空。</summary>
         public Vector3? ExplosionCenter { get; }
 
-        /// <summary>本次爆炸中心相对目标平台根节点的位置。</summary>
+        /// <summary>本次爆炸结算使用的命中方块世界中心；射线未解析到方块时为空。</summary>
+        public Vector3? BlockCenter { get; }
+
+        /// <summary>命中点相对目标平台根节点的位置。</summary>
         public Vector3 PlatformLocalPosition { get; }
+
+        /// <summary>命中方块中心相对目标平台根节点的位置，远端据此复算破坏。</summary>
+        public Vector3 PlatformLocalBlockCenter { get; }
 
         /// <summary>命中并结算的平台稳定标识。</summary>
         public int PlatformId { get; }
@@ -25,12 +31,15 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
         /// <summary>本次爆炸使用的有效世界空间水平半径。</summary>
         public float Radius { get; }
 
-        /// <summary>创建包含世界中心、平台局部中心和结算数据的攻击结果。</summary>
-        internal AttackResult(Vector3? explosionCenter, Vector3 platformLocalPosition,
+        /// <summary>创建包含命中点、命中方块中心与结算数据的攻击结果。</summary>
+        internal AttackResult(Vector3? explosionCenter, Vector3? blockCenter,
+            Vector3 platformLocalPosition, Vector3 platformLocalBlockCenter,
             int platformId, int brokenBlockCount, float radius)
         {
             ExplosionCenter = explosionCenter;
+            BlockCenter = blockCenter;
             PlatformLocalPosition = platformLocalPosition;
+            PlatformLocalBlockCenter = platformLocalBlockCenter;
             PlatformId = platformId;
             BrokenBlockCount = brokenBlockCount;
             Radius = radius;
@@ -138,7 +147,7 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             }
         }
 
-        /// <summary>按平台根节点局部触发点、世界水平半径和平台注册 ID 结算爆炸。</summary>
+        /// <summary>按平台根节点局部爆炸中心、世界水平半径和平台注册 ID 结算爆炸。</summary>
         public AttackResult ExplodeAt(Vector3 platformLocalPosition, float radius, int platformId)
         {
             if (!IsFinite(platformLocalPosition) || !IsFinite(radius) || platformId <= 0)
@@ -150,16 +159,17 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             float effectiveRadius = Mathf.Max(0f, radius);
             Vector3 worldCenter = platform.transform.TransformPoint(platformLocalPosition);
             int broken = platform.Runtime.BreakBlocksAroundWorldCenter(worldCenter, effectiveRadius);
-            return new AttackResult(worldCenter, platformLocalPosition, platformId, broken, effectiveRadius);
+            return new AttackResult(worldCenter, worldCenter, platformLocalPosition, platformLocalPosition,
+                platformId, broken, effectiveRadius);
         }
 
-        /// <summary>从最近有效的平台射线命中结算爆炸，并返回目标平台标识与表面命中点。</summary>
+        /// <summary>从最近有效的平台射线命中结算爆炸，返回目标平台、表面命中点与命中方块中心。</summary>
         /// <param name="ray">用于查找可破坏平台的世界空间射线。</param>
         /// <param name="maxDistance">射线检测的最大世界距离。</param>
         /// <param name="layerMask">允许射线检测的物理层；碎块层会自动排除。</param>
         /// <param name="ignoredRoot">射线需要忽略的对象根节点及其子层级。</param>
-        /// <param name="radius">以命中位置为中心的世界 XZ 水平爆炸半径。</param>
-        /// <returns>包含命中中心、目标平台、实际半径和破坏数量；无有效平台命中时为空结果。</returns>
+        /// <param name="radius">以命中方块中心为圆心的世界 XZ 水平爆炸半径。</param>
+        /// <returns>包含命中点、命中方块中心、目标平台、实际半径和破坏数量；无有效平台命中时为空结果。</returns>
         public AttackResult ExplodeFromRay(Ray ray, float maxDistance, int layerMask,
             Transform ignoredRoot, float radius)
         {
@@ -195,14 +205,17 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             }
 
             if (!TryFindNearestPlatformHit(candidates, candidateCount, ignoredRoot,
-                    out VoxelPlatformRenderer platform, out RaycastHit hit))
-                return new AttackResult(null, default, 0, 0, effectiveRadius);
+                    out VoxelPlatformRenderer platform, out RaycastHit hit, out Vector3 blockLocalPosition))
+                return new AttackResult(null, null, default, default, 0, 0, effectiveRadius);
 
-            // 命中点作为中心，只调用命中平台自己的分块结算。
-            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(hit.point, effectiveRadius);
+            // 射线命中点常压在方块边界上，只按方块中心距离筛会漏掉命中的那块方块。
+            // 因此破坏结算以命中方块中心为圆心，真实命中点单独保留给爆炸表现。
+            Vector3 worldBlockCenter = platform.transform.TransformPoint(blockLocalPosition);
+            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(worldBlockCenter, effectiveRadius);
             int platformId = GetRegisteredPlatformId(platform);
             Vector3 platformLocalPosition = platform.transform.InverseTransformPoint(hit.point);
-            return new AttackResult(hit.point, platformLocalPosition, platformId, broken, effectiveRadius);
+            return new AttackResult(hit.point, worldBlockCenter, platformLocalPosition, blockLocalPosition,
+                platformId, broken, effectiveRadius);
         }
 
         /// <summary>把区域标记转换为体积，再只结算与这些体积物理重叠的平台。</summary>
@@ -231,12 +244,14 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
             return broken;
         }
 
-        /// <summary>从物理命中中选出最近且能解析到活动平台方块的命中。</summary>
+        /// <summary>从物理命中中选出最近且能解析到活动平台方块的命中，并返回命中方块的平台局部中心。</summary>
         private bool TryFindNearestPlatformHit(RaycastHit[] candidates, int count,
-            Transform ignoredRoot, out VoxelPlatformRenderer nearestPlatform, out RaycastHit nearestHit)
+            Transform ignoredRoot, out VoxelPlatformRenderer nearestPlatform, out RaycastHit nearestHit,
+            out Vector3 nearestBlockLocalPosition)
         {
             nearestPlatform = null;
             nearestHit = default;
+            nearestBlockLocalPosition = default;
             float nearestDistance = float.MaxValue;
             for (int index = 0; index < count; index++)
             {
@@ -250,12 +265,13 @@ namespace Core.Scripts.Scene.VoxelPlatform.Destruction
                 VoxelPlatformRenderer platform = collider.GetComponentInParent<VoxelPlatformRenderer>();
                 if (!platform || !platform.isActiveAndEnabled ||
                     !IsRegistered(platform) ||
-                    !platform.Runtime.TryGetBlockPosition(candidate, out _))
+                    !platform.Runtime.TryGetBlockPosition(candidate, out Vector3 blockLocalPosition))
                     continue;
 
                 nearestDistance = candidate.distance;
                 nearestPlatform = platform;
                 nearestHit = candidate;
+                nearestBlockLocalPosition = blockLocalPosition;
             }
 
             return nearestPlatform;

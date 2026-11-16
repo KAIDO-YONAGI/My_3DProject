@@ -39,6 +39,9 @@ namespace Core.Scripts.Character.Interactions
         // 相机挂在角色 Prefab 内，根节点即角色边界，用来排除射线穿过的自身碰撞体。
         private Transform playerRoot;
 
+        // 网络角色根上的身份组件：远程角色也带相机与攻击组件，需要据此跳过本地输入。
+        private NetworkIdentity characterIdentity;
+
         // 以 Mirror 本地玩家身份为键缓存网络组件，玩家切换时再重新查找。
         private NetworkIdentity cachedLocalPlayer;
         private NetworkBlastManager networkBlastManager;
@@ -48,6 +51,7 @@ namespace Core.Scripts.Character.Interactions
         {
             ValidateReferences();
             playerRoot = transform.root;
+            characterIdentity = playerRoot.GetComponent<NetworkIdentity>();
         }
 
         // 必填引用只校验一次：缺失时按字段名断言，订阅点直接解引用。
@@ -92,6 +96,11 @@ namespace Core.Scripts.Character.Interactions
         /// <summary>检查攻击状态、输入和光标归属，满足条件时执行一次准心爆炸。</summary>
         private void Update()
         {
+            // 远程角色的相机与攻击组件同样处于启用状态，但它们共享本机输入设备。
+            if (!IsLocalCharacter())
+            {
+                return;
+            }
             // 拒绝标志置位时整段攻击逻辑直接返回。
             if (attackRejected)
                 return;
@@ -102,16 +111,26 @@ namespace Core.Scripts.Character.Interactions
                 return;
             //本地构造射线并提交 返回的结果提供给RPC
             AttackResult result = AttackFromCrosshair();
-            if (!result.ExplosionCenter.HasValue || result.PlatformId <= 0) return;
+            if (!result.ExplosionCenter.HasValue || !result.BlockCenter.HasValue || result.PlatformId <= 0)
+                return;
 
+            // 真实命中点用于表现，命中方块中心用于结算，远端按同一份数据复现。
             AttackRequestPack request = new AttackRequestPack(
-                AttackType.Explosion, result.PlatformLocalPosition, 1, result.Radius, result.PlatformId);
+                AttackType.Explosion, result.PlatformLocalPosition, result.PlatformLocalBlockCenter,
+                1, result.Radius, result.PlatformId);
             SubmitNetworkAttack(request);
 
             // 本地表现事件放在攻击回路末尾，供特效和音效订阅。
             blastEventSO.OnEventRaised(request);
         }
  
+        // 本地角色指本机控制的那一个：单机模式全部算本地，联机只认本机拥有的网络根。
+        private bool IsLocalCharacter()
+        {
+            return !NetworkClient.isConnected
+                   || (characterIdentity != null && characterIdentity.isLocalPlayer);
+        }
+
         /// <summary>按本地玩家身份刷新网络组件缓存，并在联机 Ready 后提交攻击命令。</summary>
         private void SubmitNetworkAttack(AttackRequestPack request)
         {
@@ -137,7 +156,7 @@ namespace Core.Scripts.Character.Interactions
             }
         }
 
-        /// <summary>从准心提交射线爆炸，并把爆炸中心、半径和破坏数量返回给调用方。</summary>
+        /// <summary>从准心提交射线爆炸，并把真实命中点、命中方块中心和破坏数量返回给调用方。</summary>
         public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(transform.position, transform.forward);

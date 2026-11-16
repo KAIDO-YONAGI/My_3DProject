@@ -20,8 +20,9 @@ namespace Core.Scripts.Networking.Sync
         [ClientRpc(includeOwner = false)]
         private void RpcRequestAttack(AttackRequestPack request)
         {
+            // 破坏按命中方块中心复算，表现用的是请求里的真实命中点。
             AttackResult result = VoxelPlatformDestruction.RequiredInstance.ExplodeAt(
-                request.PlatformLocalPosition, request.Radius, request.PlatformId);
+                request.PlatformLocalBlockCenter, request.Radius, request.PlatformId);
             if (!result.ExplosionCenter.HasValue) return;
             blastEvent.OnEventRaised(request);
         }

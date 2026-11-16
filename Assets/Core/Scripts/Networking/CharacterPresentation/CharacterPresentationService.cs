@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera;
-using Core.Scripts.Character.Control;
 using Core.Scripts.Character.Presentation;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;
@@ -45,9 +44,11 @@ namespace Core.Scripts.Networking.CharacterPresentation
                 && currentInstance.CharacterId == requestedCharacterId
                 && currentInstance.SourcePrefab == prefab)
             {
+                // 同一实例身份变化：只刷新相机开关与输入参考，不重建视觉和动画驱动。
                 if (currentInstance.CameraIsLocal != isLocalPlayer)
                 {
                     ConfigureLocalCamera(player, currentInstance);
+                    BindCharacter(player, currentInstance.Visual);
                 }
 
                 return;
@@ -70,15 +71,15 @@ namespace Core.Scripts.Networking.CharacterPresentation
             characterInstance.transform.localScale = Vector3.one;
 
             CharacterVisual visual = characterInstance.GetComponent<CharacterVisual>();
-            if (visual == null || !visual.TryValidate(isLocalPlayer, out issue))
+            if (visual == null)
             {
-                characterInstance.SetActive(false);
                 Object.Destroy(characterInstance);
-                Debug.LogError($"角色 {requestedCharacterId} 的资源 {prefab.name} 实例配置无效：{issue}。", manager);
+                Debug.LogError($"角色 {requestedCharacterId} 的实例缺少 CharacterVisual。", characterInstance);
                 return;
             }
 
-            manager.RemoveCharacter(player);
+            // 替换旧实例：先解除旧视觉的动画与输入绑定，再销毁它。
+            RemoveCharacter(player);
             ConfigureNetworkCharacterComponents(visual);
 
             // 每类相机组件由视觉资产保存，后续身份配置直接使用当前实例的引用。
@@ -96,24 +97,14 @@ namespace Core.Scripts.Networking.CharacterPresentation
             ConfigureLocalCamera(player, presentation);
             presentations[player] = presentation;
             characterInstance.SetActive(true);
-            player.PlayerController.RebindAnimator(visual.Animator);
+            BindCharacter(player, visual);
         }
 
-        /// <summary>解除网络根的动画和输入引用，销毁视觉实例并移除玩家的表现状态。</summary>
+        /// <summary>解除网络根的动画与输入绑定，销毁视觉实例并移除玩家的表现状态。</summary>
         public void RemoveCharacter(CharacterIdSync player)
         {
-            if (player == null)
-            {
-                return;
-            }
-
             // 先解除引用，再销毁这些引用所属的视觉实例。
-            PlayerCharacterController controller = player.PlayerController;
-            if (controller != null)
-            {
-                controller.RebindInputSpace(null);
-                controller.RebindAnimator(null);
-            }
+            player.PlayerController.UnbindModel();
 
             if (presentations.TryGetValue(player, out CharacterPresentationState presentation)
                 && presentation != null
@@ -146,8 +137,22 @@ namespace Core.Scripts.Networking.CharacterPresentation
 
         private static void ConfigureNetworkCharacterComponents(CharacterVisual visual)
         {
+            // 视觉实例不承担运动：控制器与碰撞体在激活前停用，运动由网络根负责。
             visual.StandaloneController.enabled = false;
             visual.MovementCollider.enabled = false;
+        }
+
+        // 把视觉实例交给网络根控制器：本地玩家带上输入相机，远程玩家只绑定动画。
+        private static void BindCharacter(CharacterIdSync player, CharacterVisual visual)
+        {
+            Transform inputSpace = null;
+            if (player.IsLocalPlayerCharacter)
+            {
+                Debug.Assert(visual.InputCamera != null, "本地玩家视觉缺少输入相机。", visual);
+                inputSpace = visual.InputCamera.transform;
+            }
+
+            player.PlayerController.BindModel(visual.Animator, inputSpace);
         }
 
         private static void ConfigureLocalCamera(
@@ -173,11 +178,6 @@ namespace Core.Scripts.Networking.CharacterPresentation
                 cameraController.enabled = enableLocalCamera;
             }
 
-            // 本地玩家以当前实例显式配置的 Camera 作为输入参考，远程玩家清空该引用。
-            UnityEngine.Camera localCamera = enableLocalCamera
-                ? presentation.Visual.InputCamera
-                : null;
-            player.PlayerController.RebindInputSpace(localCamera != null ? localCamera.transform : null);
             presentation.CameraIsLocal = enableLocalCamera;
         }
     }

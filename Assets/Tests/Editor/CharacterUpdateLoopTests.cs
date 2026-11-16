@@ -50,7 +50,7 @@ public class CharacterUpdateLoopTests
         Component controller = CreateController();
         CreateAnimator(controller.transform);
 
-        Invoke(controller, "ApplyRemoteAnimation");
+        Invoke(controller, "LateUpdate");
 
         Assert.That(Field(controller, "animator"), Is.Null);
         Assert.That(Field(controller, "animationDriver"), Is.Null);
@@ -61,11 +61,11 @@ public class CharacterUpdateLoopTests
     {
         Component controller = CreateController();
         Animator animator = CreateAnimator(controller.transform);
-        Invoke(controller, "RebindAnimator", animator);
+        Invoke(controller, "BindModel", animator, null);
         RuntimeAnimatorController configuredController = animator.runtimeAnimatorController;
 
-        Invoke(controller, "RebindAnimator", new object[] { null });
-        Invoke(controller, "ApplyRemoteAnimation");
+        Invoke(controller, "UnbindModel");
+        Invoke(controller, "LateUpdate");
 
         Assert.That(Field(controller, "animator"), Is.Null);
         Assert.That(Field(controller, "animationDriver"), Is.Null);
@@ -79,7 +79,7 @@ public class CharacterUpdateLoopTests
         object motor = Field(controller, "motor");
         Animator animator = CreateAnimator(controller.transform);
 
-        Invoke(controller, "RebindAnimator", animator);
+        Invoke(controller, "BindModel", animator, null);
         object driver = Field(controller, "animationDriver");
 
         Assert.That(Field(controller, "motor"), Is.SameAs(motor));
@@ -141,8 +141,9 @@ public class CharacterUpdateLoopTests
         first.runtimeAnimatorController = shared;
         second.runtimeAnimatorController = shared;
 
-        Invoke(controller, "RebindAnimator", first);
-        Invoke(controller, "RebindAnimator", second);
+        Invoke(controller, "BindModel", first, null);
+        Invoke(controller, "UnbindModel");
+        Invoke(controller, "BindModel", second, null);
         Assert.That(first.runtimeAnimatorController, Is.SameAs(shared));
         Assert.That(second.runtimeAnimatorController, Is.SameAs(shared));
 
@@ -211,9 +212,7 @@ public class CharacterUpdateLoopTests
     {
         GameObject root = CreateObject("CharacterUpdateLoopTest");
         root.AddComponent<CharacterController>();
-        Component controller = root.AddComponent(RuntimeType("Control.PlayerCharacterController"));
-        Invoke(controller, "EnsureRuntimeState");
-        return controller;
+        return root.AddComponent(RuntimeType("Control.PlayerCharacterController"));
     }
 
     private Animator CreateAnimator(Transform parent = null)
@@ -243,8 +242,16 @@ public class CharacterUpdateLoopTests
     private static void Apply(
         object driver, bool grounded, bool sprintHeld, float weight, Vector2? direction = null)
     {
+        Type stateIdType = RuntimeType("Movement.States.CharacterMovementStateId");
+        object state = !grounded
+            ? Enum.Parse(stateIdType, "Falling")
+            : sprintHeld
+                ? Enum.Parse(stateIdType, "Sprint")
+                : weight > 0.0001f
+                    ? Enum.Parse(stateIdType, "Run")
+                    : Enum.Parse(stateIdType, "Idle");
         object motion = Activator.CreateInstance(
-            RuntimeType("Animation.CharacterMotion"), grounded, sprintHeld, direction ?? Vector2.up, weight);
+            RuntimeType("Animation.CharacterMotion"), state, direction ?? Vector2.up, weight);
         Invoke(driver, "Apply", motion);
     }
 

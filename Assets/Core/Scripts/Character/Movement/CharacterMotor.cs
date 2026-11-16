@@ -61,7 +61,7 @@ namespace Core.Scripts.Character.Movement
             }
 
             // 起跳许可只看移动前是否贴地；JumpPressed 只在按下那一帧为真，按住不会连跳。
-            bool jumpStarted = stateMachine.CanJump(groundedBeforeMove) && input.JumpPressed;
+            bool jumpStarted = groundedBeforeMove && input.JumpPressed;
             // 起跳速度由目标跳跃高度和重力反推，作为本帧向上的初速度。
             if (jumpStarted)
             {
@@ -147,34 +147,19 @@ namespace Core.Scripts.Character.Movement
         }
 
         /// <summary>
-        /// 把二维输入轴转换为水平世界方向，使前后左右可以相对相机或指定参考物移动。
+        /// 把二维输入轴转换为水平世界方向。参考系由绑定阶段提供，缺失属于装配错误。
         /// </summary>
         private Vector3 ResolveMoveDirection(Vector2 moveInput, Transform inputSpace)
         {
-            Transform basis = inputSpace;
-            if (basis == null)
+            if (inputSpace == null)
             {
-                // 本地玩家的相机属于共用角色 Prefab；
-                // 即使相机是网络根对象的子节点，也必须用它作为前进方向基准。
-                UnityEngine.Camera mainCamera = UnityEngine.Camera.main;
-                if (mainCamera != null)
-                {
-                    basis = mainCamera.transform;
-                }
+                throw new System.InvalidOperationException(
+                    "CharacterMotor.Tick 需要输入参考系：绑定阶段应提供 inputSpace。");
             }
 
-            Vector3 forward;
-            Vector3 right;
-            if (basis != null)
-            {
-                forward = Vector3.ProjectOnPlane(basis.forward, Vector3.up).normalized;
-                right = Vector3.ProjectOnPlane(basis.right, Vector3.up).normalized;
-            }
-            else
-            {
-                forward = owner.forward;
-                right = owner.right;
-            }
+            // 参考物可能带俯仰，投影到水平面后再作为前进与右方向。
+            Vector3 forward = Vector3.ProjectOnPlane(inputSpace.forward, Vector3.up).normalized;
+            Vector3 right = Vector3.ProjectOnPlane(inputSpace.right, Vector3.up).normalized;
 
             // 斜向输入最大保持单位长度，避免斜走速度高于直走。
             Vector3 direction = forward * moveInput.y + right * moveInput.x;

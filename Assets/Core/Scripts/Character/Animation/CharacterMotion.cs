@@ -32,27 +32,6 @@ namespace Core.Scripts.Character.Animation
         {
         }
 
-        /// <summary>
-        /// 组合地面状态、冲刺意图、局部方向和移动权重，形成一次完整的动画更新输入。
-        /// </summary>
-        public CharacterMotion(
-            bool isGrounded,
-            bool wantsSprint,
-            Vector2 localDirection,
-            float locomotionWeight01)
-            : this(
-                !isGrounded
-                    ? CharacterMovementStateId.Falling
-                    : wantsSprint
-                        ? CharacterMovementStateId.Sprint
-                        : locomotionWeight01 > 0.0001f
-                            ? CharacterMovementStateId.Run
-                            : CharacterMovementStateId.Idle,
-                localDirection,
-                locomotionWeight01)
-        {
-        }
-
         // 离散状态由代码状态机产生，网络同步只需传递这个标识及其连续表现参数。
         public CharacterMovementStateId State { get; }
 
