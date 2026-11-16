@@ -4,6 +4,13 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：画布管理组件的必填引用改为断言
+
+- `UIManager`：`loadEventSO` 与 `toggleCanvasEvents` 改为必填断言，`inputBindings` 保留可留空语义并断言已配置项；画布查找删除空条目判空。
+- `ESCMenuManager`、`GameOverCanvasManager`、`RetryButton`、`ESCButton`、`CharacterSelectButton`、`ButtonSceneToggler` 的必填引用改为断言；必需的 `TimeManager`、`UIManager`、`NetworkCharacterManager`、`SceneChanger` 访问改用 `RequiredInstance`。
+- 验证：`Assembly-CSharp` 以 Unity 2022.3.62f3 的 Roslyn 编译，退出码 `0`；`UIManager`、`ESCMenuManager`、`GameOverCanvasManager`、`ESCButton`、`ButtonSceneToggler` 的脚本 GUID 在 `Assets/Core` 的场景与 Prefab 中零命中，`RetryButton` 的 `button` 与 `retryEventSO` 引用非空。未运行 EditMode 与 PlayMode 测试。
+- Project 维护计数：`3/5 → 4/5`。
+
 ## 2026-11-09：准备 xLua 与 Rider Lua 开发依赖
 
 - 来源：Tencent/xLua 官方标签 `2.1.16_android_16kb`，提交 `cc2bfc0d79018c4a274b4fe2ff346c57586eefc1`。`Assets/XLua/` 保存运行库、生成器、Unity 默认配置、辅助模块、许可与依赖说明；Windows x64 原生库位于 `Assets/Plugins/x86_64/xlua.dll`。

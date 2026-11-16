@@ -6,6 +6,14 @@
 
 跨知识域结构变更和根索引维护记录在此；业务证据记录到对应知识域的 `DeveloperLog.md`。
 
+## 2026-11-16：新增 Architecture 知识域并落地空值处理规则
+
+- 变动性质：跨知识域结构变更，新增顶层分类 `Architecture` 与子域 `Architecture.Composition`。
+- 根索引：`Router.md` 的功能域路由新增单例、序列化引用校验、空值分类、Awake 断言与初始化顺序一条，功能域导航新增 `Architecture`；`Workflow/WorkflowInstance.json` 的分类加入 `Architecture` 与 `Architecture.Composition`；`RULES.md` 的代码修改新增单例访问、序列化引用校验与可选引用三条规则。
+- 业务证据：`Architecture/Composition/DeveloperLog.md`、`Scene/DeveloperLog.md`、`Character/DeveloperLog.md`、`Multiplayer/DeveloperLog.md`、`Project/DeveloperLog.md`。
+- 验证：以 Unity 2022.3.62f3 的 Roslyn 与 `Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp` 编译 `Assembly-CSharp`，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告。工程由已打开的 Unity 编辑器持有锁，未运行 EditMode 与 PlayMode 测试。
+- 维护计数：根结构变更不计数。
+
 ## 2026-10-20：拆解 GamePlayFrameWork 并按功能重组 Core 目录
 
 - 变动性质：跨功能域，涉及 Project 资产目录布局与 Scene 场景框架路径。

@@ -58,11 +58,13 @@
 | Blender、经典石材、不规则预切 Cube、粒子资源与预览 | `Project/Project_Guide.md`、`Scene/Scene_Guide.md` |
 | Mirror 参数、玩家 Prefab、联机验证和构建产物 | `Project/Mirror_KCP_Config.md` |
 | 路由、租约、维护周期、文档分类 | `Workflow/Workflow_Guide.md`、`Workflow/Concurrency_Guide.md` |
+| 单例、序列化引用校验、空值分类、Awake 断言、初始化顺序 | `Architecture/Router.md` |
 
 ## 功能域导航
 
 | 功能域 | Router |
 |---|---|
+| `Architecture` | `Architecture\Router.md` |
 | `Character` | `Character\Router.md` |
 | `Multiplayer` | `Multiplayer\Router.md` |
 | `Scene` | `Scene\Router.md` |

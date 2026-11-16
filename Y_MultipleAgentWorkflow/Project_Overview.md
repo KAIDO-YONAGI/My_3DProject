@@ -67,6 +67,7 @@ InitialScene
 - `Assets/Plugins/Mirror/`：Mirror 96.11.2 与 KCP 源码。
 - `Assets/Plugins/DynamicBone/`：骨骼跟随（发辫等）的第三方实现。
 - `D:/Unity/Releases/3D_MultiplayerGame/`：客户端与专用服务器构建输出根目录。
+- 单例访问、序列化引用校验与空值分类约定：`Architecture/Composition/Composition_Guide.md`。
 
 ## 代码模块地图
 

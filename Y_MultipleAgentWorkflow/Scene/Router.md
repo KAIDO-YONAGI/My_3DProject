@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-SCENE`
 状态：`Active`
-维护计数：`3/5`
-最后更新：`2026-10-28`
+维护计数：`4/5`
+最后更新：`2026-11-16`
 
 ## 维护规则
 
@@ -24,6 +24,7 @@
 | 角色模型与动画配置 | `../Character/Character_Guide.md` |
 | 玩家生成与网络身份 | `../Multiplayer/Multiplayer_Guide.md` |
 | Unity 版本与 Build Settings 配置 | `../Project/Project_Guide.md` |
+| 场景组件的必填引用校验、Awake 断言与单例访问 | `../Architecture/Composition/Composition_Guide.md` |
 
 ## 下级导航
 

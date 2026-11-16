@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`3/5`
-最后更新：`2026-11-09`
+维护计数：`4/5`
+最后更新：`2026-11-16`
 
 ## 维护规则
 
@@ -32,6 +32,7 @@
 | 场景列表与场景职责 | `../Scene/Scene_Guide.md` |
 | 角色 Prefab 与移动配置 | `../Character/Character_Guide.md` |
 | 网络组件布局与同步字段 | `../Multiplayer/Multiplayer_Guide.md` |
+| 画布与按钮组件的必填引用校验、Awake 断言与单例访问 | `../Architecture/Composition/Composition_Guide.md` |
 
 ## 下级导航
 

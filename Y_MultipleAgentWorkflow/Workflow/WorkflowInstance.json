@@ -8,6 +8,8 @@
   "projectValidationMode": "None",
   "categories": [
     "Workflow",
+    "Architecture",
+    "Architecture.Composition",
     "Character",
     "Multiplayer",
     "Scene",

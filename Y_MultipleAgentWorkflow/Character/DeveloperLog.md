@@ -4,6 +4,13 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：角色与音频组件的必填引用改为断言
+
+- `Attack` 的 `blastEventSO`、`gameStartEventSO`、`retryEventSO` 改为 `Debug.Assert`，爆炸结算改用 `VoxelPlatformDestruction.RequiredInstance`。
+- `AudioTriggerManager.feedbackEvent` 改为断言；单机模式解析玩家改用 `NetworkCharacterManager.RequiredInstance`，联机模式玩家尚未生成时保留可空返回。
+- 验证：`Assembly-CSharp` 以 Unity 2022.3.62f3 的 Roslyn 编译，退出码 `0`；`Main Camera.prefab` 的 `Attack` 三个事件引用与 `PersistentScene` 的 `AudioTriggerManager.feedbackEvent` 引用均非空。未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：复核 `Character_Guide.md` 的角色链路与准心攻击章节，校验写法与行为描述不冲突，结论为 `reviewed-no-change`。Character 维护计数 `4/5 → 5/5`，达到阈值后重置为 `0/5`。
+
 ## 2026-10-28：攻击请求改用平台局部位置与平台 ID
 
 - `Attack` 在爆炸中心有效且平台 ID 为正时发布请求，请求携带平台局部位置、世界水平半径与平台 ID。

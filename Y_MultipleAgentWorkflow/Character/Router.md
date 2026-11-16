@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-CHARACTER`
 状态：`Active`
-维护计数：`4/5`
-最后更新：`2026-10-28`
+维护计数：`0/5`
+最后更新：`2026-11-16`
 
 ## 维护规则
 
@@ -27,6 +27,7 @@
 | Mirror 本地玩家归属与玩家网络行为 | `../Multiplayer/Multiplayer_Guide.md` |
 | 场景加载与单机联机表现切换 | `../Scene/Scene_Guide.md` |
 | 工程版本、包与 Build Settings | `../Project/Project_Guide.md` |
+| 角色与音频组件的必填引用校验、Awake 断言与单例访问 | `../Architecture/Composition/Composition_Guide.md` |
 
 ## 下级导航
 

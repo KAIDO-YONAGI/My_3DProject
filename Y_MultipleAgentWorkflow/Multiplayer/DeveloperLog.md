@@ -4,6 +4,13 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：网络组件的必填引用与必需单例访问
+
+- `CharacterMotionSync` 在 `Awake` 断言同物体 `PlayerCharacterController`；`NetworkBlastManager.blastEvent` 改为断言。
+- `CharacterIdSync` 的服务器初始化、默认编号上报、角色请求与装配路径改用 `NetworkCharacterManager.RequiredInstance`，`OnStopClient` 保留允许暂缺的 `Instance` 判空并注明原因；`NetworkAudioPlayer` 改用 `AudioPlayerManager.RequiredInstance`。
+- 验证：`Assembly-CSharp` 以 Unity 2022.3.62f3 的 Roslyn 编译，退出码 `0`；`NetworkPlayer.prefab` 中 `CharacterMotionSync` 与 `PlayerCharacterController` 位于同一根对象，`blastEvent` 引用非空。未运行网络 PlayMode 测试。
+- 文档与计数：复核 `Multiplayer_Guide.md` 的当前组件与源码字段说明章节，结论为 `reviewed-no-change`。Multiplayer 维护计数达到 `5/5` 后复核并重置为 `0/5`，本次计入 `1/5`。
+
 ## 2026-10-28：攻击请求携带平台标识，出生点按连接占用分配
 
 - `AttackRequestPack` 改为携带平台 ID、相对平台根节点的局部位置、伤害与世界水平半径；`BlastEventSO` 复用同一请求包作为表现载荷。

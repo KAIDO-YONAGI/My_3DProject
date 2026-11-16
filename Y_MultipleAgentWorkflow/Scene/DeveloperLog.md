@@ -4,6 +4,14 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-16：场景组与体素平台的必填引用改为断言
+
+- `SceneChanger`：`fadeCanva`、三个事件、`player`、`firstSceneToLoad` 改为断言；新增过渡图片与菜单对象的已配置项断言；删除玩家定位、过渡图片元素与菜单对象类型的判空，`SetObjects` 直接使用 `GameObject` 转换。
+- `InitialLoad.persistentScenes`、`SceneToggler.sceneToLoad`、`VoxelPlatformRegister.platforms` 与 `registerEvent`、`VoxelPlatformBlastTrigger.regions`、`VoxelPlatformDestruction.platformRegisterEvent` 改为断言；`VoxelPlatformRegister` 在 `Awake` 校验，运行时只保留场景归属检查；`VoxelPlatformDestruction` 用 `subscribed` 标记替代 `OnDestroy` 中的资产判空。
+- 必需的 `SceneChanger` 与 `TimeManager` 访问改用 `RequiredInstance`。
+- 验证：`Assembly-CSharp` 以 Unity 2022.3.62f3 的 Roslyn 编译，退出码 `0`；`PersistentScene` 的 `SceneChanger` 字段、`InitialScene` 的 `InitialLoad`、`VoxelArena` 的 `VoxelPlatformRegister` 与触发器引用逐项核对为非空。未运行 EditMode 与 PlayMode 测试。
+- Scene 维护计数：`3/5 → 4/5`。
+
 ## 2026-10-28：平台注册事件接入破坏注册表
 
 - 新增 `PlatformRegister` 与 `PlatformRegisterEventSO`：平台所属场景在加载完成后逐项发布平台根组件、网络 ID 与所属场景。

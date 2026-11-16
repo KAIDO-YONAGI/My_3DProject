@@ -2,8 +2,8 @@
 
 文档 ID：`BUS-MULTIPLAYER`
 状态：`Active`
-维护计数：`5/5`
-最后更新：`2026-10-28`
+维护计数：`1/5`
+最后更新：`2026-11-16`
 
 ## 维护规则
 
@@ -21,6 +21,7 @@
 | 客户端输入和角色移动 | `../Character/Character_Guide.md` |
 | 角色模型装配与相机归属 | `../Scene/Scene_Guide.md` |
 | 场景列表与 Build Settings | `../Scene/Scene_Guide.md` |
+| 网络组件的必填引用校验、Awake 断言与必需单例访问 | `../Architecture/Composition/Composition_Guide.md` |
 
 ## 下级导航
 
