@@ -6,14 +6,12 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 */
 
-namespace XLua.LuaDLL
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace XLua
 {
-
-    using System;
-    using System.Runtime.InteropServices;
-    using System.Text;
-    using XLua;
-
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || XLUA_GENERAL || (UNITY_WSA && !UNITY_EDITOR)
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate int lua_CSFunction(IntPtr L);

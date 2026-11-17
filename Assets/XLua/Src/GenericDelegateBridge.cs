@@ -7,7 +7,7 @@
 */
 
 using System;
-using LuaAPI = XLua.LuaDLL.Lua;
+using LuaAPI = XLua.Lua;
 
 namespace XLua {
 	public partial class DelegateBridge : DelegateBridgeBase {

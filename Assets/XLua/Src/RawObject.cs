@@ -12,10 +12,7 @@ namespace XLua
     {
         object Target { get; }
     }
-}
 
-namespace XLua.Cast
-{
     public class Any<T> : RawObject
     {
         T mTarget;
