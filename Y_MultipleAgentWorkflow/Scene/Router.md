@@ -40,7 +40,7 @@
 - `Assets/Core/Scenes/TestScenes/MultiplayerSampleScene 1.unity`
 - `Assets/Core/Scenes/TestScenes/MinecraftClassicPreview.unity`
 - `Assets/Core/Scenes/VoxelArena.unity`
-- `Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs`
+- `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs`
 - `Assets/Core/Scripts/Scene/`
 - `Assets/Core/SO/`
 - `Assets/Core/Prefabs/Characters/`

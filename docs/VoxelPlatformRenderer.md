@@ -25,7 +25,7 @@
 
 组件里的 `bakedBlocks` 记录每块的位置、矩阵、资源与初始状态；`bakedChunks` 记录每个分块的表面、碰撞对象及网格引用。启用时把方块记录复制为运行状态，破坏修改副本；重新加载烘焙状态会复原布局。
 
-代码：[平台入口与生命周期](../Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs#L39)、[数据结构](../Assets/Core/Scripts/Scene/VoxelPlatform/Data/VoxelPlatformData.cs#L39)、[排除区域识别](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L20)。
+代码：[平台入口与生命周期](../Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs#L39)、[数据结构](../Assets/Core/Scripts/VoxelPlatform/Data/VoxelPlatformData.cs#L39)、[排除区域识别](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L20)。
 
 ## 2. 整套优化如何配合
 
@@ -60,7 +60,7 @@
 
 实现边界：剔面通过替换三角形索引完成，保留原顶点属性；视觉没有做贪心面合并。碰撞使用完整方块网格，与剔面后的视觉网格分别生成，Collider 数量减少也不等于碰撞三角形同步减少。
 
-代码：[视觉合批](../Assets/Core/Scripts/Scene/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs#L76)、[剔面与变体缓存](../Assets/Core/Scripts/Scene/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L43)、[碰撞合并](../Assets/Core/Scripts/Scene/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs#L54)、[烘焙生成](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L14)、[源层级清理](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L149)。
+代码：[视觉合批](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs#L76)、[剔面与变体缓存](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L43)、[碰撞合并](../Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs#L54)、[烘焙生成](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L14)、[源层级清理](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L149)。
 
 ## 3. 怎样定位方块和重建
 
@@ -74,11 +74,11 @@
 | `Occupied` | 位置键 → 活动且可遮挡邻面的方块，供邻居查询 |
 | `Chunks` | 分块键 → 该分块的方块列表，供局部重建 |
 
-位置键是 `RoundToInt(局部中心 × PositionPrecision)`；分块键是各轴分别计算 `FloorToInt(局部中心 / ChunkSize)`。前者把小数中心量化为整数键，后者确定重建范围，尺寸单位属于平台局部空间。常量取值见 [VoxelPlatformGeometry.cs](../Assets/Core/Scripts/Scene/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L11)。
+位置键是 `RoundToInt(局部中心 × PositionPrecision)`；分块键是各轴分别计算 `FloorToInt(局部中心 / ChunkSize)`。前者把小数中心量化为整数键，后者确定重建范围，尺寸单位属于平台局部空间。常量取值见 [VoxelPlatformGeometry.cs](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L11)。
 
 这些键都是 `Vector3Int`，与 GameObject 名称无关。烘焙方块没有逐块对象引用，通过位置键找到的是方块记录；分块级的视觉和碰撞对象由烘焙分块记录引用。按中心查询先查 `Occupied`，未命中再检查所属局部 chunk 的方块记录，以覆盖已破坏或不参与遮挡的方块。攻击另有世界 XZ chunk 列索引，按爆炸中心邻接扩展候选。
 
-代码：[采集矩阵和键](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L42)、[运行表与查找](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L24)。
+代码：[采集矩阵和键](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L42)、[运行表与查找](../Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L24)。
 
 ### 命中解析与局部重建
 
@@ -99,7 +99,7 @@
 
 攻击查询只检查水平爆炸圆相交的世界 chunk 列及其中方块中心；爆炸后的占据索引只更新状态变化方块，受影响分块的重建仍需要遍历该分块内活动方块。区域触发器按世界体积映射到局部 chunk 范围。大量破坏还会同时实例化碎块、生成网格并更新 MeshCollider，合批后的静态帧率不能代表破坏帧耗时。
 
-代码：[命中反查](../Assets/Core/Scripts/Scene/VoxelPlatform/Collision/VoxelPlatformHitResolver.cs#L11)、[批量破坏](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L170)、[受影响分块与占据索引](../Assets/Core/Scripts/Scene/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L235)。
+代码：[命中反查](../Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformHitResolver.cs#L11)、[批量破坏](../Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L170)、[受影响分块与占据索引](../Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs#L235)。
 
 ## 4. 怎么编辑平台和烘焙
 
@@ -142,7 +142,7 @@
 
 移动或旋转**平台根**，所有局部数据和子对象一起跟随，无须重烘。改变参与烘焙的单块布局，需要重新烘焙。`CombinedSurface`、`CombinedCollision` 是生成结果，直接移动它们会破坏网格与方块记录的对应关系。
 
-代码：[Prefab 与场景烘焙入口](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L14)、[输入筛选](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L27)、[整体替换记录](../Assets/Core/Scripts/Scene/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L24)。
+代码：[Prefab 与场景烘焙入口](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L14)、[输入筛选](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformSourceCollector.cs#L27)、[整体替换记录](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L24)。
 
 ## 5. 接入破坏与碎片表现
 
@@ -181,7 +181,7 @@ int broken = VoxelPlatformDestruction.Instance.BreakRegions(regions, collisionDu
 
 `VoxelPlatformBlastTrigger` 将触发事件接到同一入口；区域字段留空时收集子碰撞体，再退到自身碰撞体。它还承接开局事件、平台刚体与围栏行为，使用时应按当前组件职责配置引用。
 
-代码：[平台局部方块接口](../Assets/Core/Scripts/Scene/VoxelPlatform/VoxelPlatformRenderer.cs#L118)、[爆炸与区域结算](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformDestruction.cs#L21)、[触发器](../Assets/Core/Scripts/Scene/VoxelPlatform/Destruction/VoxelPlatformBlastTrigger.cs#L49)。
+代码：[平台局部方块接口](../Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs#L118)、[爆炸与区域结算](../Assets/Core/Scripts/VoxelPlatform/Destruction/VoxelPlatformDestruction.cs#L21)、[触发器](../Assets/Core/Scripts/VoxelPlatform/Destruction/VoxelPlatformBlastTrigger.cs#L49)。
 
 ### 碎块脚本挂在哪里
 
@@ -207,6 +207,6 @@ Cube 根
 
 时长覆盖只对现有 `FragmentBurst` 生效，在启用 `Fragments` 前写入；自定义脚本需要自行接收同等参数。碎块实例递归设置为 `Debris` 层，攻击射线可用 `VoxelPlatformRenderer.DebrisMask` 排除。现有寿命逻辑销毁 `Fragments` 分组，外层 Cube 实例在恢复或平台清理时回收。
 
-代码：[实例装配与启用顺序](../Assets/Core/Scripts/Scene/VoxelPlatform/Fragments/VoxelPlatformFragments.cs#L22)、[刚体、碰撞与寿命](../Assets/Core/Scripts/Scene/VoxelPlatform/Fragments/FragmentBurst.cs#L26)。
+代码：[实例装配与启用顺序](../Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs#L22)、[刚体、碰撞与寿命](../Assets/Core/Scripts/VoxelPlatform/Fragments/FragmentBurst.cs#L26)。
 
 项目级职责见 [Project Guide](../Y_MultipleAgentWorkflow/Project/Project_Guide.md#圆形平台资源)，场景中的区域划分见 [Scene Guide](../Y_MultipleAgentWorkflow/Scene/Scene_Guide.md#minecraftclassicplatform)。
