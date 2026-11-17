@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Data
+namespace Core.Scripts.VoxelPlatform.Data
 {
     /// <summary>保存单个方块的运行状态、几何索引、渲染设置和可选源对象引用。</summary>
     class VoxelPlatformBlock

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Baking;
-using Core.Scripts.Scene.VoxelPlatform.Data;
-using Core.Scripts.Scene.VoxelPlatform.Destruction;
-using Core.Scripts.Scene.VoxelPlatform.Runtime;
+using Core.Scripts.VoxelPlatform.Baking;
+using Core.Scripts.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Destruction;
+using Core.Scripts.VoxelPlatform.Runtime;
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform
+namespace Core.Scripts.VoxelPlatform
 {
     /// <summary>
     /// 平台的生命周期和局部方块状态入口。ExecuteAlways 使编辑视图也维护合并表面；

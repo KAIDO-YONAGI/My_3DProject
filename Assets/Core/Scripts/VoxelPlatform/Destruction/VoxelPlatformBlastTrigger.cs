@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Core.Scripts.SO;
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Destruction
+namespace Core.Scripts.VoxelPlatform.Destruction
 {
     /// <summary>
     /// 触发器驱动的破坏入口：本物体上的触发器负责开火，标记碰撞体负责划出破碎区域，

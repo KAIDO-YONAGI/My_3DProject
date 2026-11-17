@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Data;
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Rendering
+namespace Core.Scripts.VoxelPlatform.Rendering
 {
     /// <summary>处理方块几何和邻接面剔除，并缓存源网格的可见面变体。</summary>
     class VoxelPlatformGeometry

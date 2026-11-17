@@ -19,10 +19,10 @@ public class VoxelPlatformRendererTests
     [SetUp]
     public void SetUp()
     {
-        surfaceType = Type.GetType("Core.Scripts.Scene.VoxelPlatform.VoxelPlatformRenderer, Assembly-CSharp");
+        surfaceType = Type.GetType("Core.Scripts.VoxelPlatform.VoxelPlatformRenderer, Assembly-CSharp");
         Assert.That(surfaceType, Is.Not.Null, "平台需要可刷新外表面的渲染组件。");
         destructionType = Type.GetType(
-            "Core.Scripts.Scene.VoxelPlatform.Destruction.VoxelPlatformDestruction, Assembly-CSharp");
+            "Core.Scripts.VoxelPlatform.Destruction.VoxelPlatformDestruction, Assembly-CSharp");
         Assert.That(destructionType, Is.Not.Null, "平台爆炸入口需要可用。");
         root = new GameObject("Platform");
         material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -790,7 +790,7 @@ public class VoxelPlatformRendererTests
     private GameObject AddEditableRegion(Vector3 position)
     {
         Type exclusionType = Type.GetType(
-            "Core.Scripts.Scene.VoxelPlatform.Baking.VoxelPlatformBakeExclusion, Assembly-CSharp");
+            "Core.Scripts.VoxelPlatform.Baking.VoxelPlatformBakeExclusion, Assembly-CSharp");
         Assert.That(exclusionType, Is.Not.Null, "可编辑区域需要显式排除烘焙的标记。");
         var group = new GameObject("CenterDisk");
         group.transform.SetParent(root.transform, false);

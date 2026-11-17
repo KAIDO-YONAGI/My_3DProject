@@ -2,7 +2,7 @@ using Core.Scripts.Character.Input;
 using Core.Scripts.Common;
 using Core.Scripts.Networking.Sync;
 using Core.Scripts.SO;
-using Core.Scripts.Scene.VoxelPlatform.Destruction;
+using Core.Scripts.VoxelPlatform.Destruction;
 using Mirror;
 using UnityEngine;
 

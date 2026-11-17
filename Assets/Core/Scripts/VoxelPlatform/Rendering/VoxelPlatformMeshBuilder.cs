@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Collision;
-using Core.Scripts.Scene.VoxelPlatform.Data;
-using Core.Scripts.Scene.VoxelPlatform.Runtime;
+using Core.Scripts.VoxelPlatform.Collision;
+using Core.Scripts.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Rendering
+namespace Core.Scripts.VoxelPlatform.Rendering
 {
     /// <summary>按分块和材质生成可见表面，并协调对应分块的碰撞刷新。</summary>
     class VoxelPlatformMeshBuilder

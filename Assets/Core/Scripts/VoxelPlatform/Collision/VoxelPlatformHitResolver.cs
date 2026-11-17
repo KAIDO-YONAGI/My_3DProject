@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Data;
-using Core.Scripts.Scene.VoxelPlatform.Rendering;
+using Core.Scripts.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Rendering;
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Collision
+namespace Core.Scripts.VoxelPlatform.Collision
 {
     /// <summary>根据合并碰撞命中点反查对应的活动方块局部位置。</summary>
     static class VoxelPlatformHitResolver

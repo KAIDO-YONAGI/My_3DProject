@@ -1,5 +1,5 @@
-using Core.Scripts.Scene.VoxelPlatform.Destruction;
 using Core.Scripts.SO;
+using Core.Scripts.VoxelPlatform.Destruction;
 using Mirror;
 using UnityEngine;
 

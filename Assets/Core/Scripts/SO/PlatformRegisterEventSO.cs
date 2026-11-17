@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 using UnityScene = UnityEngine.SceneManagement.Scene;
+using Core.Scripts.VoxelPlatform;
 
-namespace Core.Scripts.Scene.VoxelPlatform
+namespace Core.Scripts.SO
 {
     /// <summary>向场景常驻的破坏管理器发布平台、网络 ID 与所属场景。</summary>
     [CreateAssetMenu(fileName = "PlatformRegisterEvent", menuName = "Events/Platform Register")]

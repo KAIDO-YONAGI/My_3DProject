@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Data;
-using Core.Scripts.Scene.VoxelPlatform.Runtime;
+using Core.Scripts.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Collision
+namespace Core.Scripts.VoxelPlatform.Collision
 {
     /// <summary>使用完整方块网格构建静态分块碰撞，并维护碰撞体到 chunk 的索引。</summary>
     class VoxelPlatformCollisionBuilder

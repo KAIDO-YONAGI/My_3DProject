@@ -1,10 +1,10 @@
 using System.IO;
 using System.Linq;
-using Core.Scripts.Scene.VoxelPlatform;
-using Core.Scripts.Scene.VoxelPlatform.Baking;
+using Core.Scripts.VoxelPlatform.Baking;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Core.Scripts.VoxelPlatform;
 
 /// <summary>提供平台网格烘焙的 Unity 编辑器菜单入口，并写回 Prefab 或场景资产。</summary>
 public static class VoxelPlatformRendererBaker

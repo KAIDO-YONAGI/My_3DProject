@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityScene = UnityEngine.SceneManagement.Scene;
+using Core.Scripts.SO;
 
-namespace Core.Scripts.Scene.VoxelPlatform
+namespace Core.Scripts.VoxelPlatform
 {
     /// <summary>集中配置同场景平台引用和网络 ID，并在场景加载后发布注册事件。</summary>
     public sealed class VoxelPlatformRegister : MonoBehaviour

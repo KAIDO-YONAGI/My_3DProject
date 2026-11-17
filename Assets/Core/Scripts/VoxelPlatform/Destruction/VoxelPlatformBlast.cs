@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Destruction
+namespace Core.Scripts.VoxelPlatform.Destruction
 {
     /// <summary>
     /// 区域触发器使用的世界空间体积。标记碰撞体按世界包围盒参与判定，球形碰撞体使用缩放后的真实半径。

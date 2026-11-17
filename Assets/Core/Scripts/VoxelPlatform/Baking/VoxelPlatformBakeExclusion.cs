@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Baking
+namespace Core.Scripts.VoxelPlatform.Baking
 {
     /// <summary>
     /// 保留当前节点及其子节点的独立方块，供场景编辑和单独的交互逻辑使用。

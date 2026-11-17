@@ -407,6 +407,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2799884101124989967, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
+      propertyPath: blastRadius
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2799884101124989967, guid: db3e9d4b9b42464c845a578b7cd27f1d, type: 3}
       propertyPath: rejectAttackOnGameStart
       value: 0
       objectReference: {fileID: 0}

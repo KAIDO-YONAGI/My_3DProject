@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Data;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-namespace Core.Scripts.Scene.VoxelPlatform.Fragments
+namespace Core.Scripts.VoxelPlatform.Fragments
 {
     /// <summary>按需创建和回收方块碎片实例，并管理碎片相对平台的装配位置。</summary>
     class VoxelPlatformFragments

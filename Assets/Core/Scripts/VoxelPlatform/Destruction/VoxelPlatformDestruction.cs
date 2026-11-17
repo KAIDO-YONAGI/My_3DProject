@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Core.Scripts.Common;
+using Core.Scripts.SO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityScene = UnityEngine.SceneManagement.Scene;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Destruction
+namespace Core.Scripts.VoxelPlatform.Destruction
 {
     /// <summary>一次攻击爆炸的结算结果。</summary>
     public readonly struct AttackResult

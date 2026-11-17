@@ -1,12 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using Core.Scripts.Scene.VoxelPlatform.Data;
-using Core.Scripts.Scene.VoxelPlatform.Rendering;
-using Core.Scripts.Scene.VoxelPlatform.Runtime;
+using Core.Scripts.VoxelPlatform.Data;
+using Core.Scripts.VoxelPlatform.Rendering;
+using Core.Scripts.VoxelPlatform.Runtime;
 using UnityEngine;
 
-namespace Core.Scripts.Scene.VoxelPlatform.Baking
+namespace Core.Scripts.VoxelPlatform.Baking
 {
     /// <summary>将平台源布局转换为可序列化的方块、表面和碰撞分块数据。</summary>
     static class VoxelPlatformBaking
