@@ -93,7 +93,7 @@ CharacterInputReader（PlayerControls.inputactions）
 - 状态树为「根 → 地面/空中 → 叶子」三层：`Idle`、`Run`、`Sprint` 是地面子树的叶子，`Rising`、`Falling` 是空中子树的叶子。三个父状态只参与转换解析，不进入 `CharacterMovementStateId`，因此五个同步数值仍是 `Idle=0`、`Run=1`、`Sprint=2`、`Rising=3`、`Falling=4`，网络线格式与分层前一致。
 - 转换规则按子树的共有部分上提。根状态承担起跳，起跳当帧清零离地计时，先于地面子树判定，向上速度因此不会在贴地判定中被当作 `Run` 或 `Idle`。地面父状态承担非跳跃离地与 `Idle`、`Run`、`Sprint` 三态解析。空中父状态承担接地与按竖直速度方向解析 `Rising`、`Falling`。非跳跃的短暂离地在 `CharacterMovementSettings.airborneTolerance` 窗口内仍按地面状态解析，超出窗口后进入空中子树，下坡与台阶造成的悬空帧因此不会误播跳跃动画。离地容忍窗口只在地面子树内生效，空中子树按移动后是否真实接地判定，主动起跳后窗口内保持空中状态。
 - 转换以当前叶子为起点、按最近公共祖先执行：退出旧分支自下而上、进入新分支自上而下，全部在当帧同步完成，不占用额外帧；同一子树内的兄弟切换不会退出公共祖先。
-- 分层状态机框架位于 `Assets/Core/Scripts/StateMachine/`（程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`），提供同步的 `OnEnter`、`OnExit`、`OnUpdate` 钩子，不使用异步任务。角色状态当前未在钩子上挂业务副作用：运动仍由 `CharacterMotor` 承担，表现仍由 `CharacterAnimator` 承担。
+- 分层状态机框架位于 `Assets/Core/Scripts/Character/StateMachine/`（程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`），提供同步的 `OnEnter`、`OnExit`、`OnUpdate` 钩子，不使用异步任务。角色状态当前未在钩子上挂业务副作用：运动仍由 `CharacterMotor` 承担，表现仍由 `CharacterAnimator` 承担。
 - 状态机对外暴露 `CurrentStateId` 与 `TimeInState`（进入当前状态后累计的时长，不含本帧，由状态机维护、`CharacterMotor` 每帧回填进上下文），状态据此实现「持续 N 秒后转换」这类规则。
 - 状态机**不对外暴露状态转换边沿**，边沿信息无法跨客户端复现；需要落地这类边沿的表现层自行比较相邻两帧快照，本地与远程才有一致语义。
 - `CharacterMotor` 在移动前读取 `CharacterController.isGrounded` 决定跳跃许可，依次处理跳跃、目标水平速度、加减速与空中控制和重力，每帧只调用一次 `CharacterController.Move`，再清除顶碰上升速度、处理接地拉力、维护非跳跃离地计时并更新代码状态。
@@ -194,7 +194,7 @@ CharacterInputReader（PlayerControls.inputactions）
 ## 目录约定
 
 - 角色脚本按功能归入 `Assets/Core/Scripts/Character/Control/`、`Input/`、`Movement/`、`Movement/States/`、`Animation/`、`Presentation/`、`Interactions/`。移动参数随运动代码，动画驱动位于 `Animation/`，角色覆盖资产位于 `Assets/Core/Animations/Characters/`。
-- 通用分层状态机框架归入 `Assets/Core/Scripts/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`，`autoReferenced` 使其可被运行时与测试引用；角色专用的状态节点留在 `Movement/States/`，不放进框架目录。新增状态的写法和联网需同步改动的清单见该目录 `README.md`。
+- 通用分层状态机框架归入 `Assets/Core/Scripts/Character/StateMachine/`，带独立程序集 `Core.FrameWork.StateMachine`，`autoReferenced` 使其可被运行时与测试引用；角色专用的状态节点留在 `Movement/States/`，不放进框架目录。新增状态的写法和联网需同步改动的清单见该目录 `README.md`。
 - 相机位于 `Assets/Core/Scripts/Camera/`。
 - 网络脚本位于 `Assets/Core/Scripts/Networking/`：`Connection/` 放自动连接，`Sync/` 放角色编号与运动同步，`CharacterPresentation/` 放角色表现装配。
 - 第三方插件统一放 `Assets/Plugins/`：`Mirror/` 带 asmdef，`DynamicBone/` 无 asmdef，编译进 `Assembly-CSharp-firstpass`，被角色 Prefab 以 GUID 引用。

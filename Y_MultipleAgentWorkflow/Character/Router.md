@@ -17,7 +17,7 @@
 | 角色运动算法和输入数据流 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/` |
 | Animator 混合树、跳跃转换与角色 Override Controller | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取共用 Controller 与 `Assets/Core/Animations/Characters/` |
 | Idle、Run、Sprint、Rising、Falling、状态机与状态内混合 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Movement/States/` |
-| 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
+| 分层状态机框架、层级状态节点与状态生命周期钩子 | `Character_Guide.md`、`../Project/Project_Guide.md`，并读取 `Assets/Core/Scripts/Character/StateMachine/` 与 `Assets/Tests/Editor/HierarchicalStateMachineTests.cs` |
 | 输入资产、动作表、相机朝向参数与光标规则 | `Character_Guide.md`，并读取 `Assets/Core/Input/` |
 | 准心攻击、相机射线与方块破坏交互 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Character/Interactions/` 与 `Assets/Core/Prefabs/Main Camera.prefab` |
 | 相机轨道状态、世界姿态、最终候选避让与转向积分 | `Character_Guide.md`，并读取 `Assets/Core/Scripts/Camera/` 与相机回归测试 |
@@ -40,7 +40,7 @@
 - `Assets/Core/Scripts/Character/`
 - `Assets/Core/Scripts/Character/Control/`
 - `Assets/Core/Scripts/Character/Movement/States/`
-- `Assets/Core/Scripts/StateMachine/`
+- `Assets/Core/Scripts/Character/StateMachine/`
 - `Assets/Tests/Editor/CharacterMovementStateMachineTests.cs`
 - `Assets/Tests/Editor/HierarchicalStateMachineTests.cs`
 - `Assets/Tests/Editor/CharacterUpdateLoopTests.cs`
@@ -58,7 +58,7 @@
 - `path:Assets/Core/Scripts/Character`
 - `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `path:Assets/Core/Animations/Characters`
-- `path:Assets/Core/Scripts/StateMachine`
+- `path:Assets/Core/Scripts/Character/StateMachine`
 - `path:Assets/Core/Scripts/Camera`
 - `path:Assets/Core/Input`
 - `path:Assets/Plugins/DynamicBone`

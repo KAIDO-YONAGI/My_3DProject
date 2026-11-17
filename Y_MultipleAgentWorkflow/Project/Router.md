@@ -53,7 +53,7 @@
 - `Assets/Core/Shaders/Toon/`
 - `Assets/ToonEditor/`
 - `Assets/Core/Scripts/Audio/`
-- `Assets/Core/Scripts/StateMachine/`
+- `Assets/Core/Scripts/Character/StateMachine/`
 - `Assets/Rendering/`
 - `Assets/Tests/`
 - `Assets/Terrain/`
@@ -83,7 +83,7 @@
 - `path:Assets/Core/Shaders`
 - `path:Assets/ToonEditor`
 - `path:Assets/Core/Scripts/Audio`
-- `path:Assets/Core/Scripts/StateMachine`
+- `path:Assets/Core/Scripts/Character/StateMachine`
 - `path:Assets/Core/Models/Resources/CharacterLocomotion.controller`
 - `path:Assets/Core/Animations/Characters`
 - `path:Assets/Core/Prefabs/MinecraftClassic`
