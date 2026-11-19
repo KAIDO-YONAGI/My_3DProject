@@ -141,9 +141,11 @@ namespace Core.Scripts.Networking.Sync
                 reason = $"移动权重越界：{weight}";
             }
 
+#if UNITY_EDITOR
             Debug.LogWarning(
                 $"[CharacterMotionSync] 丢弃异常运动快照：{reason}。控制器保留上一份有效快照。",
                 this);
+#endif
         }
     }
 }

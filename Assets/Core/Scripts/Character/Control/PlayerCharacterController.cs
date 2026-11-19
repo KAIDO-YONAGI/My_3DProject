@@ -16,7 +16,8 @@ namespace Core.Scripts.Character.Control
     {
         [Header("场景引用")]
         // 单机 Prefab 直接序列化 Animator；联机在视觉实例创建后由 BindModel 传入。
-        [SerializeField] private Animator animator;
+        [SerializeField]
+        private Animator animator;
 
         // 必须与本组件位于同一对象，RequireComponent 保证组件存在。
         [SerializeField] private CharacterController characterController;
@@ -26,7 +27,8 @@ namespace Core.Scripts.Character.Control
 
         [Header("移动")]
         // 参数对象只描述手感，实际速度状态保存在 CharacterMotor 中。
-        [SerializeField] private CharacterMovementSettings movementSettings = new();
+        [SerializeField]
+        private CharacterMovementSettings movementSettings = new();
 
         // 输入读取器按需创建 PlayerControls：远程玩家不读输入，就不会占用输入资源。
         private readonly CharacterInputReader input = new();
@@ -59,7 +61,9 @@ namespace Core.Scripts.Character.Control
             // 模型替换必须先解绑：旧驱动仍引用旧 Animator，直接换绑会丢失落地衔接状态。
             if (animationDriver != null && animator != modelAnimator)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"{name} 在未解绑的情况下更换了视觉模型，先调用 UnbindModel。", this);
+#endif
                 return;
             }
 
@@ -71,7 +75,9 @@ namespace Core.Scripts.Character.Control
                 var driver = new CharacterAnimator(animator);
                 if (!driver.Initialize())
                 {
+#if UNITY_EDITOR
                     Debug.LogError($"{name} 的视觉模型缺少可用的 Animator Controller，动画不会更新。", this);
+#endif
                     return;
                 }
 
@@ -111,7 +117,9 @@ namespace Core.Scripts.Character.Control
                 : GetComponent<CharacterController>();
             if (characterController == null)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"{name} 缺少 CharacterController，角色无法位移。", this);
+#endif
                 enabled = false;
                 return;
             }

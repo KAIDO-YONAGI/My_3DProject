@@ -171,9 +171,11 @@ namespace Core.Scripts.Networking.CharacterPresentation
                 return;
             }
 
+#if UNITY_EDITOR
             Debug.LogWarning(
                 $"本地玩家尚未生成，角色 {requestedCharacterId} 的切换请求已忽略。",
                 this);
+#endif
         }
 
         // 当前是否由场景单机角色承担角色表现，连接重试阶段仍为 true。
@@ -200,9 +202,11 @@ namespace Core.Scripts.Networking.CharacterPresentation
         {
             if (!IsValidCharacterId(requestedCharacterId))
             {
+#if UNITY_EDITOR
                 Debug.LogWarning(
                     $"无法切换单机角色：编号 {requestedCharacterId} 缺少对应的完整角色 Prefab 配置。",
                     this);
+#endif
                 return;
             }
 
@@ -211,7 +215,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
             string issue = "Prefab 根节点缺少 CharacterVisual";
             if (configuredVisual == null || !configuredVisual.TryValidate(true, out issue))
             {
+#if UNITY_EDITOR
                 Debug.LogError($"单机角色 {requestedCharacterId} 的资源 {prefab.name} 配置无效：{issue}。", prefab);
+#endif
                 return;
             }
 

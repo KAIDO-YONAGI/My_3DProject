@@ -80,7 +80,9 @@ namespace Core.Scripts.VoxelPlatform
                 PlatformReference reference = platforms[index];
                 if (reference.renderer.gameObject.scene != scene)
                 {
+#if UNITY_EDITOR
                     Debug.LogError("平台注册项必须引用当前场景中的平台根组件。", this);
+#endif
                     continue;
                 }
 

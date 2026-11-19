@@ -24,7 +24,9 @@ public class CharacterVisualEditor : Editor
                 }
                 else
                 {
+#if UNITY_EDITOR
                     Debug.LogWarning("请指定头骨和发辫根节点，并在模型初始姿势下保存偏移。", visual);
+#endif
                 }
             }
         }

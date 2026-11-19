@@ -52,7 +52,9 @@ namespace Core.Scripts.Networking.Connection
             // 与基类行为一致：一个连接只允许一个玩家对象，重复请求直接报错返回。
             if (conn.identity != null)
             {
+#if UNITY_EDITOR
                 Debug.LogError("There is already a player for this connection.");
+#endif
                 return;
             }
 
@@ -67,9 +69,11 @@ namespace Core.Scripts.Networking.Connection
             // 生成失败时玩家对象没有进入网络世界：销毁它并输出日志，避免留下一个没人管的实例。
             if (!NetworkServer.AddPlayerForConnection(conn, player))
             {
+#if UNITY_EDITOR
                 Debug.LogError(
                     $"[{nameof(NetworkSpawnManager)}] 连接 {conn.connectionId} 的玩家生成失败。",
                     this);
+#endif
                 Destroy(player);
                 return;
             }

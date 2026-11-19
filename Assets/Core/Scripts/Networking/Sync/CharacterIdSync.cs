@@ -127,9 +127,11 @@ namespace Core.Scripts.Networking.Sync
             if (!manager.IsValidCharacterId(requestedCharacterId))
             {
                 // 拒收时保留服务器当前编号并留下可定位的日志，避免角色编号被静默丢弃。
+#if UNITY_EDITOR
                 Debug.LogWarning(
                     $"[{nameof(CharacterIdSync)}] 角色编号 {requestedCharacterId} 未通过服务端校验，保留编号 {characterId}。",
                     this);
+#endif
                 return;
             }
 

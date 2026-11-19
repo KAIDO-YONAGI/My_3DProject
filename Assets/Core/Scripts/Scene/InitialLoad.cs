@@ -9,8 +9,7 @@ namespace Core.Scripts.Scene
     /// <summary>注册并在启动时异步加载配置的常驻场景。</summary>
     public class InitialLoad : MonoBehaviour
     {
-        [Tooltip("启动时以叠加模式加载并持续保留的场景。")]
-        public List<GameSceneSO> persistentScenes = new();
+        [Tooltip("启动时以叠加模式加载并持续保留的场景。")] public List<GameSceneSO> persistentScenes = new();
 
         private void Awake()
         {
@@ -42,7 +41,10 @@ namespace Core.Scripts.Scene
                 string sceneName = sceneReference.sceneName;
                 if (string.IsNullOrWhiteSpace(sceneName))
                 {
-                    Debug.LogError($"InitialLoad cannot load '{sceneReference.name}' because it has no scene assigned.");
+#if UNITY_EDITOR
+                    Debug.LogError(
+                        $"InitialLoad cannot load '{sceneReference.name}' because it has no scene assigned.");
+#endif
                     continue;
                 }
 
@@ -52,7 +54,10 @@ namespace Core.Scripts.Scene
 
                 if (!Application.CanStreamedLevelBeLoaded(sceneName))
                 {
-                    Debug.LogError($"InitialLoad cannot load scene '{sceneName}'. Assign a scene in its GameSceneSO first.");
+#if UNITY_EDITOR
+                    Debug.LogError(
+                        $"InitialLoad cannot load scene '{sceneName}'. Assign a scene in its GameSceneSO first.");
+#endif
                     continue;
                 }
 

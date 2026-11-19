@@ -393,7 +393,9 @@ namespace Core.Scripts.UI.SystemCanvasManagers
             ToggleCanvasEventSO eventSO = FindToggleEvent(target);
             if (eventSO == null)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"[{nameof(UIManager)}] {target} 未在 toggleCanvasEvents 中登记，开关请求无法广播。", this);
+#endif
                 return;
             }
 

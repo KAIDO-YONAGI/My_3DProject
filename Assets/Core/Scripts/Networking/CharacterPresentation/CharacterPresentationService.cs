@@ -32,9 +32,11 @@ namespace Core.Scripts.Networking.CharacterPresentation
             bool hasPrefab = manager.TryGetCharacterPrefab(requestedCharacterId, out prefab);
             if (player == null || !manager.isActiveAndEnabled || !hasPrefab)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning(
                     $"无法加载联机角色：编号 {requestedCharacterId} 缺少完整角色 Prefab 配置。",
                     manager);
+#endif
                 return;
             }
 
@@ -60,7 +62,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
             string issue = "Prefab 根节点缺少 CharacterVisual";
             if (configuredVisual == null || !configuredVisual.TryValidate(isLocalPlayer, out issue))
             {
+#if UNITY_EDITOR
                 Debug.LogError($"角色 {requestedCharacterId} 的资源 {prefab.name} 配置无效：{issue}。", prefab);
+#endif
                 return;
             }
 
@@ -76,7 +80,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
             if (visual == null)
             {
                 Object.Destroy(characterInstance);
+#if UNITY_EDITOR
                 Debug.LogError($"角色 {requestedCharacterId} 的实例缺少 CharacterVisual。", characterInstance);
+#endif
                 return;
             }
 

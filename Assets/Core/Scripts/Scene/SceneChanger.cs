@@ -21,8 +21,8 @@ namespace Core.Scripts.Scene
 
         [SerializeField] private float fadeDuration = 1f;
 
-        [Tooltip("启动时自动加载的初始场景组。按列表顺序以 Additive 模式加载，通常配置为菜单场景组。")]
-        [SerializeField] private List<GameSceneSO> firstSceneToLoad = new();
+        [Tooltip("启动时自动加载的初始场景组。按列表顺序以 Additive 模式加载，通常配置为菜单场景组。")] [SerializeField]
+        private List<GameSceneSO> firstSceneToLoad = new();
 
         [SerializeField] private PlayerSpawnEventSO playerSpawnEvent;
         [SerializeField] private CanvasGroup fadeCanva;
@@ -210,14 +210,18 @@ namespace Core.Scripts.Scene
         {
             if (scenes == null || scenes.Count == 0)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning("[SceneChanger] 收到空场景组加载请求，已忽略。");
+#endif
                 return;
             }
 
             // 加载窗口内拒绝新请求，避免同一时间启动多条卸载/加载协程。
             if (isLoading)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"[SceneChanger] 加载进行中，忽略新的加载请求: {scenes[0].name}");
+#endif
                 return;
             }
 
@@ -246,6 +250,7 @@ namespace Core.Scripts.Scene
                 if (scene != null)
                     return scene.initialPosition;
             }
+
             return Vector3.zero;
         }
 
@@ -253,7 +258,9 @@ namespace Core.Scripts.Scene
         /// 玩法侧收尾钩子：框架不依赖具体玩法，切场前的回血、状态复位等
         /// 由宿主项目继承 SceneChanger 重写本方法实现。
         /// </summary>
-        protected virtual void OnBeforeSceneUnload() { }
+        protected virtual void OnBeforeSceneUnload()
+        {
+        }
 
         /// <summary>
         /// 重试请求回调：重载当前所在场景组。
@@ -287,8 +294,10 @@ namespace Core.Scripts.Scene
                 if (PersistentSceneRegistry.IsPersistent(scene.Asset) ||
                     PersistentSceneRegistry.IsPersistent(loaded.name))
                 {
+#if UNITY_EDITOR
                     Debug.LogWarning(
                         $"[SceneChanger] Skipped unload of registered persistent scene '{loaded.name}'.");
+#endif
                     currentScenes.RemoveAt(i);
                     continue;
                 }
@@ -298,7 +307,9 @@ namespace Core.Scripts.Scene
 
                 if (loaded.IsValid() && loaded.isLoaded)
                 {
+#if UNITY_EDITOR
                     Debug.LogError($"[SceneChanger] Scene '{loaded.name}' is still loaded. Scene switch aborted.");
+#endif
                     if (targetFade && !isInitialScene)
                         PlayLoadingAnimation("FadeOut");
                     AllowInput();
@@ -306,6 +317,7 @@ namespace Core.Scripts.Scene
                     isLoading = false;
                     yield break;
                 }
+
                 currentScenes.RemoveAt(i);
             }
 
@@ -330,9 +342,11 @@ namespace Core.Scripts.Scene
 
                 if (!Application.CanStreamedLevelBeLoaded(scene.sceneName))
                 {
+#if UNITY_EDITOR
                     Debug.LogError(
                         $"[SceneChanger] Scene '{scene.sceneName}' ({scene.name}) is not in Build Settings; " +
                         "add it via File > Build Settings before loading. Skipped.");
+#endif
                     continue;
                 }
 
@@ -365,7 +379,9 @@ namespace Core.Scripts.Scene
 
                 if (!loaded.IsValid() || !loaded.isLoaded)
                 {
+#if UNITY_EDITOR
                     Debug.LogError($"[SceneChanger] Scene '{scene.sceneName}' did not finish loading.");
+#endif
                     continue;
                 }
 
@@ -374,9 +390,11 @@ namespace Core.Scripts.Scene
                     firstLoaded = scene;
                     loadedScene = loaded;
                 }
+
                 currentScenes.Add(new LoadedScene(scene, loaded));
             }
-            OnLoadCompleted(firstLoaded, targetFade,targetPosition);
+
+            OnLoadCompleted(firstLoaded, targetFade, targetPosition);
         }
 
         private void SetObjects(bool state)
@@ -399,7 +417,7 @@ namespace Core.Scripts.Scene
         /// <param name="loadedTarget">本次加载的场景组首个场景</param>
         /// <param name="targetFade">本次加载是否需要播放淡出动画</param>
         /// <param name="targetPosition">加载后再设置玩家位置</param>
-        private void OnLoadCompleted(GameSceneSO loadedTarget, bool targetFade,Vector3 targetPosition)
+        private void OnLoadCompleted(GameSceneSO loadedTarget, bool targetFade, Vector3 targetPosition)
         {
             // 不变量：currentScene 赋值必须在 sceneLoadedEvent 广播之前——
             // 订阅方（画布管理器/存档系统等）经 GetCurrentGameScene() 回读

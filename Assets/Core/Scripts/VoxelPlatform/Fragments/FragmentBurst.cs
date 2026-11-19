@@ -10,16 +10,20 @@ namespace Core.Scripts.VoxelPlatform.Fragments
     [DisallowMultipleComponent]
     public class FragmentBurst : MonoBehaviour
     {
-        [Tooltip("每个碎块离开容器中心的速度，单位为米每秒。")]
-        [SerializeField, Min(0f)] private float outwardSpeed = 2f;
-        [Tooltip("附加在碎块上的向上速度，单位为米每秒。")]
-        [SerializeField, Min(0f)] private float upwardSpeed = 1f;
-        [Tooltip("碎块飞离原方块体积前关闭碰撞的时长，单位为秒。")]
-        [SerializeField, Min(0f)] private float escapeTime = 0.25f;
-        [Tooltip("碎块分组从启用到销毁的时长，单位为秒。")]
-        [SerializeField, Min(0.1f)] private float lifetime = 6f;
+        [Tooltip("每个碎块离开容器中心的速度，单位为米每秒。")] [SerializeField, Min(0f)]
+        private float outwardSpeed = 2f;
+
+        [Tooltip("附加在碎块上的向上速度，单位为米每秒。")] [SerializeField, Min(0f)]
+        private float upwardSpeed = 1f;
+
+        [Tooltip("碎块飞离原方块体积前关闭碰撞的时长，单位为秒。")] [SerializeField, Min(0f)]
+        private float escapeTime = 0.25f;
+
+        [Tooltip("碎块分组从启用到销毁的时长，单位为秒。")] [SerializeField, Min(0.1f)]
+        private float lifetime = 6f;
 
         private readonly List<Collider> pieceColliders = new();
+
         // 爆破接口按次指定的有碰撞时长；未指定时沿用 escapeTime 的无碰撞窗口。
         private float collisionDuration = -1f;
 
@@ -30,7 +34,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
 
             pieceColliders.Clear();
             // 指定了有碰撞时长时，碎块生成即有碰撞，到期再关；否则沿用原来的无碰撞窗口。
-            bool collideFromSpawn = collisionDuration >= 0f;
+            bool collideFromSpawn = collisionDuration > 0f;
             Vector3 origin = transform.position;
             foreach (Transform node in transform)
             {
@@ -63,14 +67,16 @@ namespace Core.Scripts.VoxelPlatform.Fragments
         private void EnablePieceCollisions()
         {
             foreach (Collider pieceCollider in pieceColliders)
-                if (pieceCollider) pieceCollider.enabled = true;
+                if (pieceCollider)
+                    pieceCollider.enabled = true;
         }
 
         // 有碰撞时长到期：碎块退出物理，但仍保留到 lifetime 结束。
         private void DisablePieceCollisions()
         {
             foreach (Collider pieceCollider in pieceColliders)
-                if (pieceCollider) pieceCollider.enabled = false;
+                if (pieceCollider)
+                    pieceCollider.enabled = false;
         }
 
         /// <summary>覆盖本次实例的有碰撞时长，供爆破接口按次指定；须在碎片节点启用前调用。</summary>

@@ -102,7 +102,9 @@ namespace Core.Scripts.VoxelPlatform.Destruction
         {
             if (platform == null || platformId <= 0 || !scene.IsValid() || !scene.isLoaded)
             {
+#if UNITY_EDITOR
                 Debug.LogError("拒绝无效的平台注册请求。", this);
+#endif
                 return;
             }
 
@@ -118,7 +120,9 @@ namespace Core.Scripts.VoxelPlatform.Destruction
 
                 if (registered.Id == platformId)
                 {
+#if UNITY_EDITOR
                     Debug.LogError("平台列表存在重复 Platform Id，拒绝注册：" + platformId, platform);
+#endif
                     return;
                 }
             }
@@ -259,7 +263,7 @@ namespace Core.Scripts.VoxelPlatform.Destruction
                 RaycastHit candidate = candidates[index];
                 Collider collider = candidate.collider;
                 if (!collider || (ignoredRoot &&
-                    (collider.transform == ignoredRoot || collider.transform.IsChildOf(ignoredRoot))) ||
+                                  (collider.transform == ignoredRoot || collider.transform.IsChildOf(ignoredRoot))) ||
                     candidate.distance >= nearestDistance)
                     continue;
 
@@ -315,7 +319,9 @@ namespace Core.Scripts.VoxelPlatform.Destruction
 
                 if (match && match != registered.Renderer)
                 {
+#if UNITY_EDITOR
                     Debug.LogError("平台列表中存在重复 Platform Id，拒绝结算：" + platformId, this);
+#endif
                     return null;
                 }
 
