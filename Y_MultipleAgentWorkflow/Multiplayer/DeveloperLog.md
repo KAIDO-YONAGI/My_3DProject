@@ -4,6 +4,14 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-19：网络玩家组件拆入 NetworkGamePlayModule 预制件
+
+- `NetworkPlayer.prefab` 根节点不再承载 `NetworkAudioPlayer` 与 `NetworkBlastManager`，两者移入根节点下嵌套的 `NetworkGamePlayModule.prefab`；模块在 NetworkPlayer 中通过 `m_RemovedComponents` 移除自带的 `NetworkIdentity`，网络身份与同步仍由根节点提供。
+- `Attack` 移入独立的 `GamePlayModule.prefab`。角色装配链路停用视觉实例内的单机模块副本，并通过 `NetworkCharacterManager.gameplayModulePrefab` 只为本地拥有者实例化玩家根上的 `GamePlayModule` 并绑定输入相机；远程角色不装配。
+- `Attack` 与 `AudioPlayerManager` 查找网络组件改为 `GetComponentInChildren`，以适配网络组件位于 `NetworkGamePlayModule` 子对象。
+- 验证：以 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译 `Assembly-CSharp` 源集，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告；`NetworkPlayer.prefab`、`GamePlayModule.prefab`、`NetworkGamePlayModule.prefab` 与两份完整角色 Prefab 锚点无重复。未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Multiplayer_Guide.md` 当前组件与角色装配、`Sync_Protocol.md` 兼容性规则、`Project_Guide.md` 玩家 Prefab 组件清单同步；Multiplayer 维护计数 `2/5 → 3/5`。
+
 ## 2026-11-16：爆炸请求同时携带真实命中点与命中方块中心
 
 - `AttackRequestPack` 新增 `PlatformLocalBlockCenter`（平台局部坐标）；`PlatformLocalPosition` 保持为真实命中点，只用于爆炸表现。

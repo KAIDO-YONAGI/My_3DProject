@@ -31,7 +31,7 @@
 - `CharacterMotionSync`：同步运动表现快照（状态编号、局部方向、动画权重），拥有者上行、服务器校验并转发、远程客户端据此驱动动画。线格式与约束见 `Sync_Protocol.md` 的「运动表现」一节。
 - `NetworkAudioPlayer`：接收 `AudioPlayerManager` 转交的本地音效请求，仅由本地拥有者通过 Command 上行音效类型和可选位置，服务器经 ClientRpc 转发给观察者，拥有者由 `includeOwner = false` 排除。
 - `NetworkBlastManager`：接收本地 `Attack` 直接调用的 `CommandAttack`，请求携带平台 ID、平台局部位置、伤害与世界水平半径；服务器通过 `RpcRequestAttack` 通知其他观察者按同一平台 ID 结算，远端结算有效时发布 `BlastEventSO` 表现通知。
-- `NetworkPlayer.prefab`：承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer` 和 `NetworkBlastManager`。
+- `NetworkPlayer.prefab`：根节点承载 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync` 与 `PlayerSpawnPointReceiver`；根节点下嵌套 `Assets/Core/Prefabs/NetworkGamePlayModule.prefab`，承载 `NetworkAudioPlayer` 与 `NetworkBlastManager`；`Attack` 所在的 `GamePlayModule.prefab` 由组装链路只为本地拥有者装配。
 - `NetworkManager.prefab`：承载 Mirror `NetworkManager`、`NetworkManagerHUD`、`KcpTransport` 和 `AutoStartClient`。
 - `NetworkStartPosition`：常驻场景中的两个网络出生点。
 
@@ -39,9 +39,9 @@
 
 `NetworkSpawnManager` 是 `NetworkManager` 的扩展实现，在基类出生点机制上增加服务端占用记录：优先分配未被占用的出生点，玩家数超过出生点数时回到基类的随机与轮转规则；连接断开与服务器停止时释放占用。
 
-`FeedbackEventSO` 是跨模块的音效请求入口，载荷为 `AudioRequest`，包含音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅该事件并负责本地播放；联网且存在本地玩家时，再把请求交给该玩家的 `NetworkAudioPlayer`。网络组件只校验本地拥有者与客户端 Ready 状态，随后通过 Command 和 ClientRpc 向其他观察者转发。
+`FeedbackEventSO` 是跨模块的音效请求入口，载荷为 `AudioRequest`，包含音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅该事件并负责本地播放；联网且存在本地玩家时，再把请求交给该玩家 `GamePlayModule` 上的 `NetworkAudioPlayer`。网络组件只校验本地拥有者与客户端 Ready 状态，随后通过 Command 和 ClientRpc 向其他观察者转发。
 
-`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager`；本地玩家变化时重新获取组件。本地射线爆炸结算成功后，直接调用其 `CommandAttack` 提交 `AttackRequestPack`，并在本地攻击回路末尾将同一个载荷发布到 `BlastEventSO`。两条管线不再维护独立字段结构；`PlatformLocalPosition` 相对目标平台根节点，`Radius` 为世界单位的水平半径。服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按平台 ID 与局部位置重建世界爆炸中心并结算，随后发布同一载荷供表现订阅者使用；拥有者不接收 RPC，因此本地表现只触发一次。
+`Attack` 以 `NetworkClient.localPlayer` 为键在玩家层级内缓存 `NetworkBlastManager`；本地玩家变化时重新获取组件。本地射线爆炸结算成功后，直接调用其 `CommandAttack` 提交 `AttackRequestPack`，并在本地攻击回路末尾将同一个载荷发布到 `BlastEventSO`。两条管线不再维护独立字段结构；`PlatformLocalPosition` 相对目标平台根节点，`Radius` 为世界单位的水平半径。服务器通过 `RpcRequestAttack(includeOwner = false)` 让远端观察者按平台 ID 与局部位置重建世界爆炸中心并结算，随后发布同一载荷供表现订阅者使用；拥有者不接收 RPC，因此本地表现只触发一次。
 
 ## 连接与玩家生成
 
@@ -73,8 +73,9 @@ AutoStartClient.StartClient
 7. 联机实例上的 `PlayerCharacterController` 与 `CharacterController` 停用，网络根负责输入、运动和碰撞。
 8. 网络根的 `PlayerCharacterController` 绑定视觉实例的 Animator 和动画配置。
 9. 本地 Camera、`ThirdPersonCamera` 和 `AudioListener` 启用并绑定为 `inputSpace`；远程对应组件保持关闭。
+10. 组装链路停用视觉 Prefab 内只服务单机的 `GamePlayModule` 副本，并只为本地拥有者实例化玩家根上的 `GamePlayModule`、绑定玩家根与本地输入相机；远程角色不装配。
 
-装配边界为：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机，网络同步组件只放在根节点。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
+装配边界为：Mirror 把远程视觉角色挂在带 `NetworkTransformReliable` 的 `NetworkPlayer` 根节点下，视觉子预制件只提供模型、动画配置和相机，网络同步组件只放在根节点；网络请求组件位于根节点下的 `NetworkGamePlayModule` 子对象，网络身份由根节点提供；`Attack` 所在的 `GamePlayModule` 只为本地拥有者装配，远程角色不装配。根控制器位于 `Character/Control/`，运动算法位于 `Character/Movement/`，五态代码位于 `Character/Movement/States/`。
 
 角色条目使用下标表达角色编号，每个下标保存一份完整角色 Prefab。默认编号取客户端本机 `NetworkCharacterManager.defaultCharacterId`，由本地玩家启动时上报；服务器自身的配置值是客户端未上报或上报编号无效时的兜底。角色资源对照见 `../Project/Project_Guide.md`。
 

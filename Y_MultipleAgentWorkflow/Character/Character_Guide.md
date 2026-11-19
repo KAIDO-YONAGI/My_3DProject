@@ -2,7 +2,7 @@
 
 文档 ID：`CHARACTER-GUIDE`
 状态：`Active`
-最后核验：`2026-10-20`
+最后核验：`2026-11-19`
 
 ## 维护规则
 
@@ -26,6 +26,7 @@
 - [输入归属](#输入归属)
 - [输入系统与光标规则](#输入系统与光标规则)
 - [准心交互](#准心交互)
+- [玩家数值与生命值](#玩家数值与生命值)
 - [目录约定](#目录约定)
 - [验证覆盖](#验证覆盖)
 
@@ -152,7 +153,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 网络出生点位于地形附近。Mirror 生成网络根后，`CharacterMotor` 持续计算重力并调用 `CharacterController.Move`。接地状态来自 `CharacterController.isGrounded` 和碰撞标志。
 
-玩家移动链路不调用位置传送，也不做运行时高度钳制。出生位置、`CharacterController` 尺寸、地形高度和重力共同决定落地结果。
+`SceneChanger` 在场景组加载完成后广播 `PlayerSpawnEventSO`，玩家根上的 `PlayerSpawnPointReceiver` 停用 `CharacterController` 后写入广播位置；网络玩家只处理本地拥有者，远端玩家继续由网络同步驱动。移动链路本身不做运行时位置传送或高度钳制，出生位置、`CharacterController` 尺寸、地形高度和重力共同决定落地结果。
 
 ## 输入归属
 
@@ -182,7 +183,7 @@ CharacterInputReader（PlayerControls.inputactions）
 
 ## 准心交互
 
-`Attack` 挂在相机 Prefab 上，随嵌套实例进入两份完整角色 Prefab。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含可空的真实命中点、可空的命中方块中心、两者的平台局部位置、实际半径和破坏数量；射线未命中平台时两个中心都为空。
+`Attack` 位于 `GamePlayModule.prefab`（独立预制件），不再挂在相机 Prefab 上。联机时组装链路只为本地拥有者实例化该模块，并把 `Attack` 绑定到玩家根和本地视觉输入相机，远程角色不装配；单机角色的模块嵌在完整角色 Prefab 内，由模块在启动时按视觉层相机自行绑定。它从 `CharacterInputReader` 读取 `AttackPressed`，只在光标锁定期间生效；按住 `Alt` 或按 `Escape` 释放光标后，左键留给 UI。准心攻击调用方可直接使用 `AttackFromCrosshair()` 返回的 `AttackResult`，其中包含可空的真实命中点、可空的命中方块中心、两者的平台局部位置、实际半径和破坏数量；射线未命中平台时两个中心都为空。
 
 `Attack` 订阅 `Assets/Core/SO/Events/GameStartEventSO.asset`，该资产是 `VoidEventSO` 类型的事件通道，订阅关系在 `OnEnable` 建立、`OnDisable` 解除。事件不带载荷，由 `VoxelPlatformBlastTrigger` 在玩家进入触发器时广播。收到事件后 `Attack` 按 `rejectAttackOnGameStart` 开关置位内部拒绝标志，标志置位期间 `Update` 直接返回，不读攻击输入也不发射线，是否拒绝由接受方自己决定。
 
@@ -190,6 +191,15 @@ CharacterInputReader（PlayerControls.inputactions）
 
 射线命中最近的有效合并平台后，`AttackResult` 返回世界空间 `ExplosionCenter`（真实命中点）、世界空间 `BlockCenter`（命中方块中心）、两者的平台局部位置 `PlatformLocalPosition` 与 `PlatformLocalBlockCenter`，以及登记 ID。破坏以命中方块中心为圆心，按世界 XZ 平面圆形筛选方块中心，Y 高度不设上限；射线命中点常压在方块边界上，用方块中心作圆心保证命中的那块方块一定进入结算。从圆心所在的世界 chunk 列向邻接列扩展，只检查与圆相交的候选列，再按中心水平距离精确判断。`ExplodeAt` 接收平台局部的命中方块中心、世界水平半径与平台 ID，并转换为世界中心后结算；`ExplodeFromRay` 未命中有效平台时两个中心为空、平台 ID 为零、保留请求半径且破坏数为零。`Update` 在真实命中点与命中方块中心都有效且平台 ID 为正时读取 `NetworkClient.localPlayer`，按本地玩家身份变化缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。网络请求与 `BlastEventSO` 共用 `AttackRequestPack`，其中 `PlatformLocalPosition` 是真实命中点、`PlatformLocalBlockCenter` 是命中方块中心，两者都相对目标平台根节点，`Radius` 仍是世界单位；本地表现事件在攻击回路末尾发布，网络同步链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
 
+
+## 玩家数值与生命值
+
+- `StatsManager`（`Assets/Core/Scripts/Character/Stats/`）挂在常驻场景的 `PlayerStatsManager` 对象上，是 `YSingleton` 单例，持有本机玩家的运行时 `PlayerStatsModel`。初始值来自 `Assets/Core/SO/Stats/PlayerStats.asset`（`PlayerStatsSO`），运行时修改只经过 `StatsManager` 的写入口。
+- `PlayerStatsModel` 保存当前生命、生命上限、攻击伤害与移动速度，当前生命钳制在 `0` 到上限之间；生命值或上限变化触发 `HealthChanged`，伤害或速度变化触发 `StatsChanged`。
+- `PlayerDamageController` 与 `StatsManager` 挂在同一常驻对象上。它订阅 `Assets/Core/SO/Events/PlayerDamagedEvent.asset`（`PlayerDamagedEventSO`）扣除生命，生命归零时打开常驻场景的 `GameOverCanvas` 并忽略后续伤害；收到重试请求时先回满血，再由 `SceneChanger` 重载当前场景组。
+- `GameOverCanvas`（`Assets/Core/Scripts/UI/GameOverCanvas.cs`）是死亡画布组：`Show` 打开界面、释放光标并暂停游戏，`Hide` 收起并恢复时间；`RETRY` 按钮复用 `RetryButton` 广播重试事件，`SceneLoadedEvent` 到达后画布自动收起。它不经过 `UIManager` 与 `ToggleCanvasEventSO`，显隐由组件直接控制。占位视觉由内置 UI Sprite 与 TMP 默认字体组成，不引用美术资源。
+- 伤害源只调用 `PlayerDamagedEventSO.OnPlayerDamaged(damage)` 上报数值，不感知数值系统。HUD 画布上的 `HealthView` 托管纯 C# 的 `HealthController`，订阅 `HealthChanged` 刷新 `HP:当前/上限` 文本。
+- 每个客户端只维护本机玩家的一份数值，远端代理不参与扣血与死亡判定，血量不做跨端同步。
 
 ## 目录约定
 

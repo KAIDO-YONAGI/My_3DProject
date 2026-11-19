@@ -4,6 +4,31 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-19：出生位置事件化与 GamePlayModule 预制件拆分
+
+- `SceneChanger` 移除序列化的 `player` 引用与 `SetPlayerPostion`，改为在场景加载完成后广播 `Assets/Core/SO/Events/PlayerSpawnEvent.asset`（`PlayerSpawnEventSO`）。玩家预制件上的 `PlayerSpawnPointReceiver` 订阅该事件，停用 `CharacterController` 后写入位置；网络玩家只处理本地拥有者，视觉实例与模块子物体跳过。
+- 新增 `Assets/Core/Prefabs/GamePlayModule.prefab`（`Attack` 与 `GameplayModule` 绑定组件）与 `Assets/Core/Prefabs/NetworkGamePlayModule.prefab`（`NetworkBlastManager`、`NetworkAudioPlayer` 与 `NetworkIdentity`）。`Attack` 新增 `aimSource`、`playerRoot` 与 `Bind`，由模块绑定到玩家根与本地输入相机。`Main Camera.prefab` 移除 `Attack`；`NetworkPlayer.prefab` 根节点移除 `NetworkAudioPlayer` 与 `NetworkBlastManager`，改为嵌套 `NetworkGamePlayModule` 并通过 `m_RemovedComponents` 移除其 `NetworkIdentity`。
+- 两份完整角色 Prefab 嵌套 `GamePlayModule` 供单机角色使用；网络组装链路停用视觉实例内的模块副本，并通过 `NetworkCharacterManager.gameplayModulePrefab` 只为本地拥有者实例化玩家根上的 `GamePlayModule`；远程角色不装配。`Attack` 与 `AudioPlayerManager` 改为在玩家层级内查找 `NetworkBlastManager`、`NetworkAudioPlayer`。
+- 验证：以 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译 `Assembly-CSharp` 源集，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告；`PersistentScene` 与 `NetworkPlayer`、`GamePlayModule`、两份完整角色 Prefab 的锚点均无重复，新增脚本、资产与嵌套 Prefab 引用均可解析。未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Character_Guide.md` 的准心交互与高度物理两节同步；`Multiplayer_Guide.md`、`Sync_Protocol.md` 与 `Project_Guide.md` 的组件清单同步。Character 维护计数 `3/5 → 4/5`；Multiplayer 维护计数 `2/5 → 3/5`。
+
+## 2026-11-19：死亡界面改为独立的 GameOver 占位画布组
+
+- 新增 `Assets/Core/Scripts/UI/GameOverCanvas.cs`：常驻场景中的死亡画布组，`Show` 打开画布、释放光标并暂停游戏，`Hide` 收起并恢复时间；订阅 `SceneLoadedEventSO`，场景重载完成后自动收起。
+- `PersistentScene` 新增 `GameOverCanvas` 根画布，由 `CanvasGroup`、占位背景图、`GAME OVER` 文本与 `RETRY` 按钮组成。占位视觉使用内置 UI Sprite 与 TMP 默认字体，不引用美术资源；`RETRY` 按钮挂 `RetryButton` 并复用现有 `RetryRequestEvent`。
+- `PlayerDamageController` 不再访问 `UIManager`，改为序列化 `GameOverCanvas` 引用；引用留空时死亡只暂停游戏。工程未挂接画布框架时，`UIManager.RequiredInstance` 会抛 `InvalidOperationException`，该调用点已移除。
+- 验证：以 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译 `Assembly-CSharp` 源集，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告；`Library/ScriptAssemblies/Assembly-CSharp.dll` 包含 `GameOverCanvas` 类型与 `gameOverCanvas` 字段。`PersistentScene` 共 131 个锚点无重复，新增脚本、资产与场景引用均可解析。未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Character_Guide.md` 玩家数值与生命值一节同步死亡画布方案；Character 维护计数 `2/5 → 3/5`。
+
+## 2026-11-19：移植玩家生命值与数值系统
+
+- 新增 `Assets/Core/Scripts/Character/Stats/`：`PlayerStatsData`、`IPlayerStatsReadOnly`、`PlayerStatsModel`、`StatsManager`、`PlayerDamageController`、`HealthController`、`HealthView`。`StatsManager` 挂在常驻场景的 `PlayerStatsManager` 上，持有本机玩家的运行时模型；`PlayerDamageController` 订阅受击广播扣血，生命归零时请求 GameOver 画布，重试请求先回满血。
+- 新增 `Assets/Core/SO/Stats/PlayerStats.asset`（`PlayerStatsSO`）与 `Assets/Core/SO/Events/PlayerDamagedEvent.asset`（`PlayerDamagedEventSO`）。前者保存生命值、伤害与速度的初始值，后者是伤害源广播通道。
+- `PersistentScene` 的 `PlayerStatsManager` 挂载 `StatsManager` 与 `PlayerDamageController`；HUD 画布新增 `HealthText`，由 `HealthView` 显示 `HP:当前/上限`。
+- 移植范围保留生命值、伤害与速度三项数值及其事件；经验、等级、技能点、击退眩晕、存档接入与属性面板 UI 不在本次范围。联机口径为每个客户端各自维护本机玩家数值，不做跨端同步。
+- 验证：Unity 2022.3.62f3 编辑器重新编译 `Assembly-CSharp`，`Library/ScriptAssemblies/Assembly-CSharp.dll`（16:50:15）包含全部新增类型；`Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp`（16:50:14）列出全部新增源文件。`PersistentScene` 内新增脚本与资产引用均可解析，新增 `.asset` 与 `.meta` 成对存在。未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Character_Guide.md` 新增「玩家数值与生命值」一节；Character 维护计数 `1/5 → 2/5`。
+
 ## 2026-11-17：CharacterMovementSettings 序列化字段补充 Tooltip
 
 - `CharacterMovementSettings` 的 11 个 `[SerializeField]` 字段各补充一条 `[Tooltip]`，写明单位、取值约束与生效条件。字段名、默认值与 `Min`、`Range` 校验保持原样，Inspector 中的配置方式不变。

@@ -234,10 +234,9 @@ Rider 的 Lua 编辑支持由 EmmyLua2 提供，并依赖 LSP4IJ。本机 Rider 
 5. `PlayerCharacterController`
 6. `CharacterIdSync`
 7. `CharacterMotionSync`
-8. `NetworkAudioPlayer`
-9. `NetworkBlastManager`
+8. `PlayerSpawnPointReceiver`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；`NetworkAudioPlayer` 和 `NetworkBlastManager` 位于网络行为末尾，分别转发音效请求和攻击爆炸请求，并在远端爆炸结算后发布表现通知。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；根节点下嵌套 `NetworkGamePlayModule.prefab` 实例，其中的 `NetworkAudioPlayer` 和 `NetworkBlastManager` 分别转发音效请求和攻击爆炸请求，并在远端爆炸结算后发布表现通知；`Attack` 所在的 `GamePlayModule.prefab` 由组装链路只为本地拥有者装配。
 
 ## 角色表现资源
 

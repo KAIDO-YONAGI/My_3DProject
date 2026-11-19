@@ -130,11 +130,11 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
   → 远端结算有效时发布 BlastEventSO
 ```
 
-`NetworkBlastManager` 挂在 `NetworkPlayer` 根节点。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、命中方块中心与世界半径完成爆炸，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
+`NetworkBlastManager` 位于 `NetworkPlayer` 根节点下的 `NetworkGamePlayModule` 子对象，网络身份由根节点提供。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、命中方块中心与世界半径完成爆炸，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
 
 ## 兼容性规则
 
 客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
-`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`NetworkAudioPlayer`、`NetworkBlastManager`。追加网络组件时保持原 NetworkBehaviour 顺序，只在根节点末尾追加。
+`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`PlayerSpawnPointReceiver`；`NetworkAudioPlayer` 与 `NetworkBlastManager` 位于根节点下的 `NetworkGamePlayModule` 子对象。追加网络行为组件时保持原 NetworkBehaviour 顺序，网络行为追加到 `NetworkGamePlayModule` 的组件末尾。
 
