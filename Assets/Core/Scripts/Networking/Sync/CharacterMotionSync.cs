@@ -85,14 +85,15 @@ namespace Core.Scripts.Networking.Sync
             NetworkReader reader, bool initialState)
         {
             // 与 OnSerialize 对称：不读取基类的空 SyncObject 脏位掩码。
-            // 本地拥有者使用自己计算的状态。
-            if (isOwned) 
-                return;
-            
-            // 读取顺序和写入顺序完全一致。
+            // 读取顺序和写入顺序完全一致。初始 Spawn 时本地拥有者也已标记 isOwned，
+            // 因此先读完三个字段再决定是否应用，保证读取字节数与 OnSerialize 一致。
             byte state = reader.ReadByte();
             Vector2 direction = reader.ReadVector2();
             float weight = reader.ReadFloat();
+
+            // 本地拥有者使用自己计算的状态，读到的快照直接丢弃。
+            if (isOwned)
+                return;
 
             // 校验状态编号、方向范围和权重，同时排除非有限数值。
             // 方向长度平方允许少量浮点误差；异常数据直接返回，控制器保留上一份有效快照。

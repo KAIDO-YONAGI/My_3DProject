@@ -4,6 +4,14 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-19：修复 CharacterMotionSync 初始 Spawn 反序列化字节数不一致
+
+- 现象：玩家 Spawn 时 Console 报 `NetworkPlayer(Clone) (netId=1/2): CharacterMotionSync OnDeserialize size mismatch. It read 0 bytes ... 00 vs. 0D`。
+- 根因：`CharacterMotionSync.OnDeserialize` 在读取线格式字段之前执行 `if (isOwned) return;`。Mirror 在 `NetworkClient.ApplySpawnPayload` 中先设置 `identity.isOwned = message.isOwner`（`Assets/Plugins/Mirror/Core/NetworkClient.cs:1164`）再反序列化初始状态（同文件 :1186），本地拥有者因此跳过 13 字节读取（`byte` + `Vector2` + `float`），与服务器 `OnSerialize` 写入的 13 字节不一致。
+- 修复：`OnDeserialize` 先按线格式读完运动状态、局部方向和动画权重三个字段，再对本地拥有者丢弃快照，读取字节数与写入保持一致。
+- 验证：以 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译 `Assembly-CSharp` 源集，退出码 `0`，仅保留既有 `AutoStartClient` 未使用字段警告；未运行 PlayMode 网络测试。
+- 文档与计数：`Sync_Protocol.md` 的「运动表现」补充拥有者读取规则；Multiplayer 维护计数 `3/5 → 4/5`。
+
 ## 2026-11-19：网络玩家组件拆入 NetworkGamePlayModule 预制件
 
 - `NetworkPlayer.prefab` 根节点不再承载 `NetworkAudioPlayer` 与 `NetworkBlastManager`，两者移入根节点下嵌套的 `NetworkGamePlayModule.prefab`；模块在 NetworkPlayer 中通过 `m_RemovedComponents` 移除自带的 `NetworkIdentity`，网络身份与同步仍由根节点提供。
