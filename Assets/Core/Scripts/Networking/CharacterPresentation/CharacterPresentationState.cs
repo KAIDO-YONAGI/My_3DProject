@@ -1,4 +1,5 @@
 using Core.Scripts.Camera;
+using Core.Scripts.Character;
 using Core.Scripts.Character.Presentation;
 using UnityEngine;
 
@@ -16,5 +17,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
         public AudioListener[] Listeners;
         public ThirdPersonCamera[] CameraControllers;
         public CharacterVisual Visual;
+        // 本地玩家装配的玩法模块实例；远程玩家为 null。
+        public GameplayModule GameplayModule;
     }
 }

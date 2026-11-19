@@ -15,8 +15,7 @@ GameObject:
   - component: {fileID: 8461200035157734512}
   - component: {fileID: 4149387868693482790}
   - component: {fileID: 95206578619514682}
-  - component: {fileID: 3607670348531104721}
-  - component: {fileID: -7924336954259411091}
+  - component: {fileID: 8410000000000000012}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Player
@@ -36,7 +35,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 8}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1533861367194924086
@@ -176,7 +176,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
---- !u!114 &3607670348531104721
+--- !u!114 &8410000000000000012
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -185,27 +185,70 @@ MonoBehaviour:
   m_GameObject: {fileID: 1215133417561776989}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4dad747651d4426bd7c42b494dc6e99, type: 3}
+  m_Script: {fileID: 11500000, guid: a36f5d36c54b417595bb343d011f6158, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMethod: 0
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
---- !u!114 &-7924336954259411091
-MonoBehaviour:
+  playerSpawnEvent: {fileID: 11400000, guid: e3296f7b647340afb42dd1896bec5040, type: 2}
+--- !u!1001 &8410000000000000010
+PrefabInstance:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5140318935887353899}
+    m_Modifications:
+    - target: {fileID: 8410000000000000001, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_Name
+      value: NetworkGamePlayModule
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8410000000000000007, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+--- !u!4 &8 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8410000000000000002, guid: f6ccb0ac95aa41548bb4c0cc38436afa, type: 3}
+  m_PrefabInstance: {fileID: 8410000000000000010}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1215133417561776989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fab02f164800d9b4395f4c96463bae41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMethod: 0
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
-  blastEvent: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}

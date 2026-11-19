@@ -15,6 +15,14 @@ namespace Core.Scripts.Character.Interactions
     [DisallowMultipleComponent]
     public class Attack : MonoBehaviour
     {
+        [Header("绑定")]
+        [Tooltip("攻击射线起点与朝向，由 GameplayModule 绑定到本地相机；留空时使用自身 Transform。")]
+        [SerializeField]
+        private Transform aimSource;
+
+        [Tooltip("玩家根节点，由 GameplayModule 绑定；留空时取所在层级的根节点。")] [SerializeField]
+        private Transform playerRoot;
+
         [Header("检测")] [Tooltip("从角色位置起算的可破坏距离，超出后不再命中方块。")] [SerializeField, Min(0.1f)]
         private float reachDistance = 5f;
 
@@ -36,9 +44,6 @@ namespace Core.Scripts.Character.Interactions
         // 开局事件到达后置位的拒绝标志：置位期间不读攻击输入，也不发射线。
         private bool attackRejected = true;
 
-        // 相机挂在角色 Prefab 内，根节点即角色边界，用来排除射线穿过的自身碰撞体。
-        private Transform playerRoot;
-
         // 网络角色根上的身份组件：远程角色也带相机与攻击组件，需要据此跳过本地输入。
         private NetworkIdentity characterIdentity;
 
@@ -46,12 +51,23 @@ namespace Core.Scripts.Character.Interactions
         private NetworkIdentity cachedLocalPlayer;
         private NetworkBlastManager networkBlastManager;
 
-        /// <summary>检查事件引用并记录角色根节点，用于计算射线距离和排除自身。</summary>
+        /// <summary>检查事件引用并解析射线参考，用于计算射线距离和排除自身。</summary>
         private void Awake()
         {
             ValidateReferences();
-            playerRoot = transform.root;
+            if (playerRoot == null) playerRoot = transform.root;
+            if (aimSource == null) aimSource = transform;
             characterIdentity = playerRoot.GetComponent<NetworkIdentity>();
+        }
+
+        /// <summary>由 GameplayModule 在组装完成后绑定玩家根与射线参考。</summary>
+        /// <param name="targetPlayerRoot">玩家根节点，非空时覆盖序列化值。</param>
+        /// <param name="targetAimSource">攻击射线参考，非空时覆盖序列化值。</param>
+        public void Bind(Transform targetPlayerRoot, Transform targetAimSource)
+        {
+            if (targetPlayerRoot != null) playerRoot = targetPlayerRoot;
+            if (targetAimSource != null) aimSource = targetAimSource;
+            characterIdentity = playerRoot != null ? playerRoot.GetComponent<NetworkIdentity>() : null;
         }
 
         // 必填引用只校验一次：缺失时按字段名断言，订阅点直接解引用。
@@ -146,7 +162,7 @@ namespace Core.Scripts.Character.Interactions
                 if (cachedLocalPlayer != localPlayer)
                 {
                     cachedLocalPlayer = localPlayer;
-                    networkBlastManager = localPlayer.GetComponent<NetworkBlastManager>();
+                    networkBlastManager = localPlayer.GetComponentInChildren<NetworkBlastManager>(true);
                 }
 
                 if (networkBlastManager != null && networkBlastManager.isLocalPlayer && NetworkClient.ready)
@@ -159,7 +175,7 @@ namespace Core.Scripts.Character.Interactions
         /// <summary>从准心提交射线爆炸，并把真实命中点、命中方块中心和破坏数量返回给调用方。</summary>
         public AttackResult AttackFromCrosshair()
         {
-            Ray ray = new Ray(transform.position, transform.forward);
+            Ray ray = new Ray(aimSource.position, aimSource.forward);
             return VoxelPlatformDestruction.RequiredInstance.ExplodeFromRay(
                 ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
         }
@@ -169,7 +185,7 @@ namespace Core.Scripts.Character.Interactions
         private float ResolveMaxDistance()
         {
             float originDistance = playerRoot != null
-                ? Vector3.Distance(transform.position, playerRoot.position)
+                ? Vector3.Distance(aimSource.position, playerRoot.position)
                 : 0f;
             return originDistance + reachDistance;
         }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core.Scripts.Camera;
+using Core.Scripts.Character;
 using Core.Scripts.Character.Presentation;
 using Core.Scripts.Networking.Sync;
 using UnityEngine;
@@ -49,6 +50,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
                 {
                     ConfigureLocalCamera(player, currentInstance);
                     BindCharacter(player, currentInstance.Visual);
+                    UpdateGameplayModule(player, currentInstance, isLocalPlayer);
                 }
 
                 return;
@@ -81,6 +83,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             // 替换旧实例：先解除旧视觉的动画与输入绑定，再销毁它。
             RemoveCharacter(player);
             ConfigureNetworkCharacterComponents(visual);
+            DisableEmbeddedGameplayModule(characterInstance);
 
             // 每类相机组件由视觉资产保存，后续身份配置直接使用当前实例的引用。
             var presentation = new CharacterPresentationState
@@ -98,6 +101,7 @@ namespace Core.Scripts.Networking.CharacterPresentation
             presentations[player] = presentation;
             characterInstance.SetActive(true);
             BindCharacter(player, visual);
+            UpdateGameplayModule(player, presentation, isLocalPlayer);
         }
 
         /// <summary>解除网络根的动画与输入绑定，销毁视觉实例并移除玩家的表现状态。</summary>
@@ -107,11 +111,14 @@ namespace Core.Scripts.Networking.CharacterPresentation
             player.PlayerController.UnbindModel();
 
             if (presentations.TryGetValue(player, out CharacterPresentationState presentation)
-                && presentation != null
-                && presentation.Instance != null)
+                && presentation != null)
             {
-                presentation.Instance.SetActive(false);
-                Object.Destroy(presentation.Instance);
+                RemoveGameplayModule(presentation);
+                if (presentation.Instance != null)
+                {
+                    presentation.Instance.SetActive(false);
+                    Object.Destroy(presentation.Instance);
+                }
             }
 
             presentations.Remove(player);
@@ -140,6 +147,55 @@ namespace Core.Scripts.Networking.CharacterPresentation
             // 视觉实例不承担运动：控制器与碰撞体在激活前停用，运动由网络根负责。
             visual.StandaloneController.enabled = false;
             visual.MovementCollider.enabled = false;
+        }
+
+        // 视觉 Prefab 自带的玩法模块只服务单机角色；网络玩家的玩法模块挂在网络根上，这里停用视觉内的副本。
+        private static void DisableEmbeddedGameplayModule(GameObject characterInstance)
+        {
+            GameplayModule[] embeddedModules = characterInstance.GetComponentsInChildren<GameplayModule>(true);
+            foreach (GameplayModule module in embeddedModules)
+            {
+                module.gameObject.SetActive(false);
+            }
+        }
+
+        // 本地玩家装配玩法模块并绑定攻击参考；远程玩家不装配该模块。
+        private void UpdateGameplayModule(
+            CharacterIdSync player,
+            CharacterPresentationState presentation,
+            bool isLocalPlayer)
+        {
+            if (!isLocalPlayer)
+            {
+                RemoveGameplayModule(presentation);
+                return;
+            }
+
+            if (presentation.GameplayModule == null)
+            {
+                GameObject prefab = manager.GameplayModulePrefab;
+                GameObject instance = Object.Instantiate(prefab, player.transform);
+                instance.name = prefab.name;
+                instance.transform.localPosition = Vector3.zero;
+                instance.transform.localRotation = Quaternion.identity;
+                instance.transform.localScale = Vector3.one;
+                presentation.GameplayModule = instance.GetComponent<GameplayModule>();
+            }
+
+            Transform aimSource = presentation.Visual.InputCamera != null
+                ? presentation.Visual.InputCamera.transform
+                : null;
+            presentation.GameplayModule.Bind(player.transform, aimSource);
+        }
+
+        // 远程玩家或角色实例替换时回收玩法模块。
+        private static void RemoveGameplayModule(CharacterPresentationState presentation)
+        {
+            if (presentation.GameplayModule != null)
+            {
+                Object.Destroy(presentation.GameplayModule.gameObject);
+                presentation.GameplayModule = null;
+            }
         }
 
         // 把视觉实例交给网络根控制器：本地玩家带上输入相机，远程玩家只绑定动画。

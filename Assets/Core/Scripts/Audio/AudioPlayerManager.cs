@@ -130,7 +130,7 @@ namespace Core.Scripts.Audio
             if (cachedLocalPlayer != localPlayer)
             {
                 cachedLocalPlayer = localPlayer;
-                cachedNetworkAudioPlayer = localPlayer.GetComponent<NetworkAudioPlayer>();
+                cachedNetworkAudioPlayer = localPlayer.GetComponentInChildren<NetworkAudioPlayer>(true);
             }
 
             if (cachedNetworkAudioPlayer != null)

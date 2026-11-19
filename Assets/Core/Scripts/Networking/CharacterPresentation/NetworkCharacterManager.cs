@@ -24,6 +24,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
         [Tooltip("服务端生成玩家时写入 SyncVar 的初始角色编号，对应角色资源条目下标。")] [SerializeField, Min(0)]
         private int defaultCharacterId;
 
+        [Header("玩法模块")] [Tooltip("本地玩家装配的玩法模块 Prefab；远程玩家不装配该模块。")] [SerializeField]
+        private GameObject gameplayModulePrefab;
+
         [Header("场景单机角色")] [Tooltip("常驻场景中的单机角色实例。联机时停用，单机时启用。")] [SerializeField]
         private GameObject standalonePlayer;
 
@@ -57,6 +60,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
         /// <summary>当前单机模式使用的角色实例，角色替换后始终指向新实例。</summary>
         public GameObject StandalonePlayer => standalonePlayer;
 
+        /// <summary>本地玩家装配的玩法模块 Prefab。</summary>
+        public GameObject GameplayModulePrefab => gameplayModulePrefab;
+
         protected override void OnSingletonInitialized()
         {
             ValidateReferences();
@@ -74,6 +80,9 @@ namespace Core.Scripts.Networking.CharacterPresentation
                 Debug.Assert(characters[index] != null,
                     $"{nameof(characters)}[{index}] 为空：该角色编号不可用。", this);
             }
+
+            Debug.Assert(gameplayModulePrefab != null,
+                $"{nameof(gameplayModulePrefab)} 未指定：本地玩家不会装配玩法模块。", this);
         }
 
         private void OnEnable()

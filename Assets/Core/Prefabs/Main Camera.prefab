@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 765475444499969239}
   - component: {fileID: 8421921640338078567}
   - component: {fileID: 7345079226577700762}
-  - component: {fileID: 6129470384128837465}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -170,23 +169,3 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!114 &6129470384128837465
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6910678098487493184}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3fe841c6d8ad3b4b96f7a7e6a3f1693, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  reachDistance: 5
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  blastRadius: 0.45
-  blastEventSO: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
-  gameStartEventSO: {fileID: 11400000, guid: b0d9719209a86864aa23461eb4b0324c, type: 2}
-  retryEventSO: {fileID: 11400000, guid: f223c4c8c8ff5932b9f5cf4000d886da, type: 2}

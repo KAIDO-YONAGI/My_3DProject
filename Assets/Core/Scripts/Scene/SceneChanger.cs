@@ -24,7 +24,7 @@ namespace Core.Scripts.Scene
         [Tooltip("启动时自动加载的初始场景组。按列表顺序以 Additive 模式加载，通常配置为菜单场景组。")]
         [SerializeField] private List<GameSceneSO> firstSceneToLoad = new();
 
-        [SerializeField] private GameObject player;
+        [SerializeField] private PlayerSpawnEventSO playerSpawnEvent;
         [SerializeField] private CanvasGroup fadeCanva;
 
         /// <summary>过渡动画播放器数组</summary>
@@ -113,8 +113,8 @@ namespace Core.Scripts.Scene
                 $"{nameof(retryEventSO)} 未指定：重试的整组重载无法订阅。", this);
             Debug.Assert(sceneLoadedEvent != null,
                 $"{nameof(sceneLoadedEvent)} 未指定：画布与加载音效收不到场景加载完成通知。", this);
-            Debug.Assert(player != null,
-                $"{nameof(player)} 未指定：场景加载完成后不会设置玩家位置。", this);
+            Debug.Assert(playerSpawnEvent != null,
+                $"{nameof(playerSpawnEvent)} 未指定：场景加载完成后玩家收不到出生位置。", this);
 
             // 启动场景组必填：容器为空时启动后没有内容场景。
             Debug.Assert(firstSceneToLoad != null && firstSceneToLoad.Count > 0,
@@ -198,15 +198,6 @@ namespace Core.Scripts.Scene
             {
                 transitionImage.Play(name);
             }
-        }
-
-        /// <summary>
-        /// 设置玩家位置
-        /// </summary>
-        /// <param name="newPosition">新位置坐标</param>
-        private void SetPlayerPostion(Vector3 newPosition)
-        {
-            player.transform.position = newPosition;
         }
 
         /// <summary>
@@ -423,7 +414,8 @@ namespace Core.Scripts.Scene
             AllowInput();
             TimeManager.RequiredInstance.ForceResumeGame();
             isLoading = false; // 全部完成后才解锁，允许下一次加载请求
-            SetPlayerPostion(targetPosition);
+            // 出生位置改为事件广播：场景加载完成后由玩家预制件上的接收器自行应用。
+            playerSpawnEvent.OnPlayerSpawn(targetPosition);
         }
 
         private void ForbidInput()
