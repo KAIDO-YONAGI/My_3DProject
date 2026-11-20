@@ -2,17 +2,38 @@ using System.Collections.Generic;
 using Core.Scripts.VoxelPlatform.Data;
 using UnityEngine;
 #if UNITY_EDITOR
+using System;
+using System.IO;
 using UnityEditor;
 #endif
 
 namespace Core.Scripts.VoxelPlatform.Fragments
 {
-    /// <summary>按需创建和回收方块碎片实例，并管理碎片相对平台的装配位置。</summary>
+    /// <summary>按需创建、复用和回收方块碎片实例，并管理碎片相对平台的装配位置。</summary>
     class VoxelPlatformFragments
     {
+        // 闲置实例上限按来源 Prefab 分别计算，超出上限的实例直接销毁，避免长期驻留占用内存。
+        private const int PoolCapacity = 16;
+
         private readonly VoxelPlatformRenderer owner;
         // 已破坏方块到碎块实例的映射，恢复和清空时据此回收。
         private readonly Dictionary<Vector3Int, GameObject> spawned = new();
+        // 活动实例到方块位置与来源 Prefab 的反查，寿命结束回调时据此归还到对应池。
+        private readonly Dictionary<GameObject, ActiveFragment> active = new();
+        // 闲置实例按来源 Prefab 分池，不同材质类型的碎块不会互相顶替。
+        private readonly Dictionary<GameObject, Stack<GameObject>> pool = new();
+
+        private readonly struct ActiveFragment
+        {
+            public readonly Vector3Int Position;
+            public readonly GameObject Prefab;
+
+            public ActiveFragment(Vector3Int position, GameObject prefab)
+            {
+                Position = position;
+                Prefab = prefab;
+            }
+        }
 
         internal VoxelPlatformFragments(VoxelPlatformRenderer owner)
         {
@@ -27,42 +48,69 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             // 容器首次破坏时才创建，整片平台不破坏就不产生碎块节点。
             if (!owner.FragmentRoot)
                 owner.FragmentRoot = owner.CreateRoot("FragmentsRuntime");
-            GameObject instance = UnityEngine.Object.Instantiate(block.FragmentPrefab);
+
+            GameObject instance = Take(block.FragmentPrefab);
+            if (!instance) return;
             instance.name = "Fragments_" + block.Position;
             // 碎块整体换到专属层，废墟里瞄准时射线不会被这些碰撞体占满。
             ApplyLayer(instance.transform, VoxelPlatformRenderer.DebrisLayer);
             // 先挂到容器再摆位，变换计算始终在平台局部空间里进行。
             instance.transform.SetParent(owner.FragmentRoot, false);
-            instance.SetActive(true);
             ApplyLocalMatrix(instance.transform, ResolveFragmentMatrix(block));
 
-            // 位置设置完成后再启用 Fragments，其 OnEnable 可安全读取碎块世界位置。
+            // 碎块节点启用前写入本轮的碰撞时长与回收入口，OnEnable 才用得到。
             Transform intact = FindChild(instance.transform, "Intact");
             if (intact) intact.gameObject.SetActive(false);
             Transform fragments = FindChild(instance.transform, "Fragments");
             if (fragments)
             {
-                // 爆破接口可以按次指定有碰撞时长，必须在启用前写入，OnEnable 才用得到。
-                if (collisionDuration.HasValue)
+                FragmentBurst burst = fragments.GetComponent<FragmentBurst>();
+                if (burst)
                 {
-                    FragmentBurst burst = fragments.GetComponent<FragmentBurst>();
-                    if (burst) burst.OverrideCollisionDuration(collisionDuration.Value);
+                    if (collisionDuration.HasValue) burst.OverrideCollisionDuration(collisionDuration.Value);
+                    burst.Bind(this, instance);
                 }
-
-                fragments.gameObject.SetActive(true);
             }
+
+            // 池内实例的碎块节点保持启用，激活根节点会立即触发 OnEnable；摆位与回收绑定已在前面完成。
+            instance.SetActive(true);
+            if (fragments && !fragments.gameObject.activeSelf) fragments.gameObject.SetActive(true);
 
             owner.FragmentRoot.gameObject.SetActive(true);
             spawned.Add(block.Position, instance);
+            active.Add(instance, new ActiveFragment(block.Position, block.FragmentPrefab));
         }
 
         internal void Remove(Vector3Int position)
         {
             // 没有记录说明该方块没被破坏过，直接返回。
             if (!spawned.TryGetValue(position, out GameObject instance)) return;
-            if (instance) VoxelPlatformRenderer.Release(instance);
             spawned.Remove(position);
+            if (active.TryGetValue(instance, out ActiveFragment entry))
+            {
+                active.Remove(instance);
+                Return(instance, entry.Prefab);
+            }
+            else if (instance)
+            {
+                // 活动表缺失说明实例已不再受平台管理，按无池路径释放。
+                VoxelPlatformRenderer.Release(instance);
+            }
+
             // 实例全部收回后关闭容器，场景里不留下空的运行时节点。
+            if (spawned.Count == 0 && owner.FragmentRoot)
+                owner.FragmentRoot.gameObject.SetActive(false);
+        }
+
+        /// <summary>寿命结束的实例交还平台：清理映射、停用并放回来源 Prefab 的闲置池。</summary>
+        internal void RecycleInstance(GameObject instance)
+        {
+            if (!instance || !active.TryGetValue(instance, out ActiveFragment entry)) return;
+            active.Remove(instance);
+            // 恢复流程可能已经先回收该位置，映射存在且仍指向本实例时才移除。
+            if (spawned.TryGetValue(entry.Position, out GameObject current) && current == instance)
+                spawned.Remove(entry.Position);
+            Return(instance, entry.Prefab);
             if (spawned.Count == 0 && owner.FragmentRoot)
                 owner.FragmentRoot.gameObject.SetActive(false);
         }
@@ -72,8 +120,48 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             // 复制键集合再遍历，Remove 会在遍历过程中修改字典。
             foreach (Vector3Int position in new List<Vector3Int>(spawned.Keys))
                 Remove(position);
+            // 活动实例已全部归还，闲置实例在这里统一销毁，平台停用后不残留 DontSave 对象。
+            foreach (Stack<GameObject> instances in pool.Values)
+                while (instances.Count > 0) VoxelPlatformRenderer.Release(instances.Pop());
+            pool.Clear();
+            active.Clear();
             // 逐个移除后容器可能已经自动关闭，这里再确认一次。
             if (owner.FragmentRoot) owner.FragmentRoot.gameObject.SetActive(false);
+        }
+
+        // 从来源 Prefab 的闲置池取实例，池空时实例化新对象完成动态扩容。
+        private GameObject Take(GameObject prefab)
+        {
+            if (pool.TryGetValue(prefab, out Stack<GameObject> instances))
+            {
+                while (instances.Count > 0)
+                {
+                    GameObject pooled = instances.Pop();
+                    if (pooled) return pooled;
+                }
+            }
+
+            // 新实例先保持关闭，装配与摆位完成后再启用。
+            GameObject created = UnityEngine.Object.Instantiate(prefab);
+            created.SetActive(false);
+            return created;
+        }
+
+        // 停用后放回来源 Prefab 的闲置池，超过上限时直接销毁。
+        private void Return(GameObject instance, GameObject prefab)
+        {
+            if (!instance) return;
+            // 停用触发 FragmentBurst.OnDisable，取消寿命计时并停掉刚体，复用时不继承上一轮状态。
+            instance.SetActive(false);
+            if (!pool.TryGetValue(prefab, out Stack<GameObject> instances))
+                pool.Add(prefab, instances = new Stack<GameObject>());
+            if (instances.Count >= PoolCapacity)
+            {
+                VoxelPlatformRenderer.Release(instance);
+                return;
+            }
+
+            instances.Push(instance);
         }
 
         // 资源层级深度由素材决定，按名字递归查找，避免写死路径。
@@ -132,7 +220,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
 #if UNITY_EDITOR
             // 指向原始 Cube 资源，避免平台剥离源层级后留下失效的场景对象引用。
             GameObject prefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(source);
-            if (prefab) return prefab;
+            if (prefab) return PureFragmentPrefab(prefab);
 #endif
             return source;
         }
@@ -143,5 +231,21 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             Transform container = intact ? intact.parent : null;
             return container && container.Find("Fragments") ? container : null;
         }
+
+#if UNITY_EDITOR
+        // 烘焙记录指向同目录的纯碎片 Prefab：Cube_stone → Fragments_stone。
+        private static GameObject PureFragmentPrefab(GameObject cubePrefab)
+        {
+            string path = AssetDatabase.GetAssetPath(cubePrefab);
+            string name = Path.GetFileNameWithoutExtension(path);
+            // 不遵循 Cube_ 命名的资源保持原引用，避免把无关 Prefab 当成碎块来源。
+            if (!name.StartsWith("Cube_", StringComparison.Ordinal)) return cubePrefab;
+            string fragmentPath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty,
+                "Fragments_" + name.Substring("Cube_".Length) + ".prefab");
+            GameObject fragmentPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fragmentPath);
+            // 纯碎片 Prefab 缺失时退回原 Cube，旧资源仍可完成烘焙。
+            return fragmentPrefab ? fragmentPrefab : cubePrefab;
+        }
+#endif
     }
 }

@@ -2,7 +2,7 @@
 
 文档 ID：`BUS-PROJECT`
 状态：`Active`
-维护计数：`0/5`
+维护计数：`2/5`
 最后更新：`2026-11-20`
 
 ## 维护规则
@@ -21,7 +21,7 @@
 | 音效请求与攻击表现事件、空间坐标和播放器对象池 | `Project_Guide.md`、`../Multiplayer/Sync_Protocol.md` |
 | Prefab 组件组成 | `Project_Guide.md` |
 | 经典石材、Blender、Cell Fracture、不规则预切 Cube 与粒子材质 | `Project_Guide.md`；资源预览同时读取 `../Scene/Scene_Guide.md` |
-| 圆形平台、编辑器烘焙、轻量方块、合并碰撞、相邻面剔除与延迟碎块 | `Project_Guide.md`、`../Scene/Scene_Guide.md` |
+| 圆形平台、编辑器烘焙、轻量方块、合并碰撞、相邻面剔除、纯碎片 Prefab 与碎块实例池 | `Project_Guide.md`、`../Scene/Scene_Guide.md` |
 | 平台渲染功能拆分、命中定位与破碎脚本接入 | `Project_Guide.md`；操作示例见 `../../docs/VoxelPlatformRenderer.md` |
 | 按体积批量破坏、标记碰撞体与触发器结算 | `Project_Guide.md`，并读取 `Assets/Core/Scripts/VoxelPlatform/Destruction/` |
 | 平台局部保留独立方块、排除烘焙与中央区域编辑 | `Project_Guide.md`、`../Scene/Scene_Guide.md`；操作示例见 `../../docs/VoxelPlatformRenderer.md` |

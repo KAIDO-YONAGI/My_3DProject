@@ -316,15 +316,20 @@ public class VoxelPlatformRendererTests
     }
 
     [Test]
-    public void NestedPrefabBakeReferencesOriginalCubeAssetForFragments()
+    public void NestedPrefabBakeReferencesPureFragmentPrefabWithoutIntact()
     {
         const string cubePath =
             "Assets/Core/Prefabs/MinecraftClassic/Cube_stone.prefab";
+        const string fragmentPath =
+            "Assets/Core/Prefabs/MinecraftClassic/Fragments_stone.prefab";
         const string wrapperPath = "Assets/Tests/Editor/PlatformOptimization/FragmentReferenceTest.prefab";
         GameObject instance = null;
         try
         {
             var cubePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(cubePath);
+            var fragmentPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fragmentPath);
+            Assert.That(fragmentPrefab, Is.Not.Null, "Cube 需要配套的纯碎片 Prefab。");
+            Assert.That(fragmentPrefab.transform.Find("Intact"), Is.Null);
             var nestedCube = (GameObject)PrefabUtility.InstantiatePrefab(cubePrefab);
             nestedCube.transform.SetParent(root.transform, false);
             var wrapper = PrefabUtility.SaveAsPrefabAsset(root, wrapperPath);
@@ -335,15 +340,39 @@ public class VoxelPlatformRendererTests
                 BindingFlags.NonPublic | BindingFlags.Instance).GetValue(instanceSurface);
             foreach (var block in saved)
             {
-                var fragmentPrefab = (GameObject)block.GetType().GetField("FragmentPrefab").GetValue(block);
-                Assert.That(AssetDatabase.GetAssetPath(fragmentPrefab), Is.EqualTo(cubePath));
-                Assert.That(fragmentPrefab, Is.SameAs(cubePrefab));
+                var storedPrefab = (GameObject)block.GetType().GetField("FragmentPrefab").GetValue(block);
+                Assert.That(AssetDatabase.GetAssetPath(storedPrefab), Is.EqualTo(fragmentPath));
+                Assert.That(storedPrefab, Is.SameAs(fragmentPrefab));
             }
         }
         finally
         {
             if (instance) UnityEngine.Object.DestroyImmediate(instance);
             AssetDatabase.DeleteAsset(wrapperPath);
+        }
+    }
+
+    [Test]
+    public void PureFragmentPrefabsOmitIntactAndKeepBurst()
+    {
+        Type burstType = Type.GetType(
+            "Core.Scripts.VoxelPlatform.Fragments.FragmentBurst, Assembly-CSharp");
+        Assert.That(burstType, Is.Not.Null, "碎块表现脚本需要存在于运行程序集。");
+        string[] names =
+        {
+            "Fragments_stone",
+            "Fragments_stonebrick",
+            "Fragments_stonebrick_cracked",
+            "Fragments_stonebrick_mossy"
+        };
+        foreach (string name in names)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/Core/Prefabs/MinecraftClassic/" + name + ".prefab");
+            Assert.That(prefab, Is.Not.Null, name);
+            Assert.That(prefab.transform.Find("Intact"), Is.Null, name + " 不应包含完整方块。");
+            Assert.That(prefab.GetComponentsInChildren(burstType, true).Length, Is.EqualTo(1), name);
+            Assert.That(prefab.GetComponentsInChildren<MeshCollider>(true).Length, Is.EqualTo(16), name);
         }
     }
 
@@ -364,6 +393,54 @@ public class VoxelPlatformRendererTests
         Assert.That(runtimeFragments, Is.Not.Null);
         Assert.That(runtimeFragments.GetComponentsInChildren<Transform>(true)
             .Any(child => child.name == "Node_000"), Is.True);
+    }
+
+    [Test]
+    public void FragmentPoolReusesInstanceAfterRestoreAndBreak()
+    {
+        AddCubeWithFragments(Vector3.zero);
+        var bake = surfaceType.GetMethod("Bake", BindingFlags.Public | BindingFlags.Instance);
+        bakedMeshes.AddRange((Mesh[])bake.Invoke(surface, null));
+        Invoke("UseBakedSurface");
+        var setBlockActive = surfaceType.GetMethod("SetBlockActive", BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.That((bool)setBlockActive.Invoke(surface, new object[] { Vector3.zero, false }), Is.True);
+        Transform runtime = root.transform.Find("FragmentsRuntime");
+        Assert.That(runtime, Is.Not.Null);
+        Assert.That(runtime.childCount, Is.EqualTo(1));
+        GameObject instance = runtime.GetChild(0).gameObject;
+
+        // 恢复方块：实例停用后留在池里，不再立刻销毁。
+        Assert.That((bool)setBlockActive.Invoke(surface, new object[] { Vector3.zero, true }), Is.True);
+        Assert.That(runtime.childCount, Is.EqualTo(1));
+        Assert.That(runtime.GetChild(0).gameObject, Is.SameAs(instance));
+        Assert.That(instance.activeSelf, Is.False);
+
+        // 再次破坏：从池里取回同一个实例，层级里不会多出副本。
+        Assert.That((bool)setBlockActive.Invoke(surface, new object[] { Vector3.zero, false }), Is.True);
+        Assert.That(runtime.childCount, Is.EqualTo(1));
+        Assert.That(runtime.GetChild(0).gameObject, Is.SameAs(instance));
+        Assert.That(instance.activeSelf, Is.True);
+    }
+
+    [Test]
+    public void PlatformClearFlushesFragmentPool()
+    {
+        AddCubeWithFragments(Vector3.zero);
+        var bake = surfaceType.GetMethod("Bake", BindingFlags.Public | BindingFlags.Instance);
+        bakedMeshes.AddRange((Mesh[])bake.Invoke(surface, null));
+        Invoke("UseBakedSurface");
+        var setBlockActive = surfaceType.GetMethod("SetBlockActive", BindingFlags.Public | BindingFlags.Instance);
+        Assert.That((bool)setBlockActive.Invoke(surface, new object[] { Vector3.zero, false }), Is.True);
+        Assert.That(root.transform.Find("FragmentsRuntime").childCount, Is.EqualTo(1));
+
+        object runtime = GetRuntime();
+        MethodInfo clear = runtime.GetType().GetMethod("Clear", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(clear, Is.Not.Null, "运行状态需要统一的清理入口。");
+        clear.Invoke(runtime, null);
+
+        // 清空时池内实例一并销毁，平台停用后不残留碎块对象。
+        Assert.That(root.transform.Find("FragmentsRuntime").childCount, Is.Zero);
     }
 
     [Test]

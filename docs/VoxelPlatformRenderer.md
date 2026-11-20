@@ -11,7 +11,7 @@
 ├─ CombinedSurface       合并后的 MeshRenderer，按分块、材质划分
 ├─ CombinedCollision     合并后的 MeshCollider，按分块划分
 ├─ CenterDisk            第一层保留的独立方块区，带烘焙排除标记
-└─ FragmentsRuntime      第一次破坏时创建，收纳碎块实例
+└─ FragmentsRuntime      第一次破坏时创建，收纳从纯碎片 Prefab 复用的碎块实例
 ```
 
 平台有两种方块表示：
@@ -48,8 +48,10 @@
 | 分块碰撞    | 每个分块合并活动方块的完整网格，减少 Collider 对象数量                          |
 | 编辑器烘焙   | 提前完成几何采集、剔面和合并，运行时加载已保存结果                                 |
 | 移除源层级   | 烘焙成品以方块记录代替逐块 GameObject，也移除其预切碎块层级，减少加载与组件初始化负担          |
-| 延迟生成碎块  | 只为实际破坏的方块实例化碎块；完整平台不预建碎块实例                                |
+| 延迟生成碎块  | 只为实际破坏的方块提供碎块实例；完整平台不预建碎块实例                                |
+| 碎块实例复用  | 碎块按来源纯碎片 Prefab 分池，寿命结束、恢复方块与平台清理时归还；池空才实例化扩容 |
 | 批量归并    | 一次调用统一更新占据索引，用 `HashSet` 去重受影响分块，每个分块重建一次                 |
+| 重建复用    | 分块重建复用分组字典、实例数组与合并网格；运行时表面与碰撞对象回收进池，下次重建直接取用，避免重复创建对象与组件 |
 | 跳过源对象轮询 | 无源对象的烘焙平台直接跳过逐块 Transform、启停状态检查                          |
 
 空间分块服务于**剔除与更新的局部性**：附近几何放在一起，摄像机只看到局部区域时，可以按较小的 Renderer 范围剔除；打掉一块时，也只重建附近分块。分块越大，合并越充分，单次更新范围也越大。实际绘制次数还受材质 Pass、阴影等渲染流程影响。
@@ -60,7 +62,7 @@
 
 实现边界：剔面通过替换三角形索引完成，保留原顶点属性；视觉没有做贪心面合并。碰撞使用完整方块网格，与剔面后的视觉网格分别生成，Collider 数量减少也不等于碰撞三角形同步减少。
 
-代码：[视觉合批](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs#L76)、[剔面与变体缓存](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L43)、[碰撞合并](../Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs#L54)、[烘焙生成](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L14)、[源层级清理](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L149)。
+代码：[视觉合批](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs#L90)、[剔面与变体缓存](../Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs#L43)、[碰撞合并](../Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs#L107)、[烘焙生成](../Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs#L14)、[源层级清理](../Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs#L149)。
 
 ## 3. 怎样定位方块和重建
 
@@ -87,7 +89,7 @@
   → VoxelPlatformDestruction 内部定位平台与碰撞分块
   → HitResolver：命中点转平台局部，再转每块的网格局部，比较包围盒距离
   → 返回命中方块的局部中心
-  → 区域触发器的内部批量接口：方块 Active=false，按需生成碎块
+  → 区域触发器的内部批量接口：方块 Active=false，从碎块池取用实例
   → 更新 Occupied
   → 收集自身分块和六向邻块所在分块，用 HashSet 去重
   → MeshBuilder.RebuildChunk：重新剔面、按材质合并视觉、重新合并碰撞
@@ -183,20 +185,22 @@ int broken = VoxelPlatformDestruction.Instance.BreakRegions(regions, collisionDu
 
 代码：[平台局部方块接口](../Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs#L118)、[爆炸与区域结算](../Assets/Core/Scripts/VoxelPlatform/Destruction/VoxelPlatformDestruction.cs#L21)、[触发器](../Assets/Core/Scripts/VoxelPlatform/Destruction/VoxelPlatformBlastTrigger.cs#L49)。
 
-### 碎块脚本挂在哪里
+### 碎块 Prefab 与脚本
 
-在原始 Cube Prefab 中保留以下约定：
+原始 Cube Prefab 保留完整方块与碎块两级：
 
 ```text
 Cube 根
 ├─ Intact                 完整方块
-└─ Fragments（初始停用）   挂 FragmentBurst 或自己的破碎表现脚本
+└─ Fragments（初始停用）   挂 FragmentBurst
    └─ 预切碎片             网格、Renderer、凸 MeshCollider
 ```
 
-破坏时，`VoxelPlatformFragments.Spawn` 实例化烘焙记录引用的 Cube Prefab，挂到 `FragmentsRuntime`，按保存的 **Cube 容器矩阵**摆位，关闭 `Intact`，最后启用 `Fragments`。因此表现脚本在 `Fragments.OnEnable` 中可以读取已就位的世界坐标，创建或接管刚体并施力。
+`Assets/Core/Prefabs/MinecraftClassic/` 中与每个 `Cube_<材质名>` 配对的 `Fragments_<材质名>.prefab` 是纯碎片 Prefab：沿用 Cube 容器根节点、嵌套 `Fragments` 节点与各材质覆盖，移除 `Intact` 及其渲染与碰撞组件。烘焙记录里的 `FragmentPrefab` 指向纯碎片 Prefab；`VoxelPlatformFragments.FindPrefab` 按 `Cube_` 前缀换成 `Fragments_` 资源，资源缺失时退回原 Cube。
 
-平台负责移除完整块、更新合并视觉与碰撞，以及在恢复和平台清理时回收碎块实例；表现脚本负责碎片的运动、碰撞时序和寿命。自定义表现替换 `FragmentBurst` 时，应避免两套脚本同时控制刚体。修改同一源 Prefab 的表现可供后续实例使用；改变方块引用的碎块 Prefab 或容器变换，则通过源布局重新烘焙更新记录。
+破坏时，`VoxelPlatformFragments.Spawn` 按来源 Prefab 从闲置池取实例，池空时实例化新对象完成扩容；实例挂到 `FragmentsRuntime`，按保存的 **Cube 容器矩阵**摆位，最后启用 `Fragments`。因此表现脚本在 `Fragments.OnEnable` 中可以读取已就位的世界坐标，创建或接管刚体并施力。
+
+平台负责移除完整块、更新合并视觉与碰撞，并维护碎块实例池：寿命结束、恢复方块和平台清理时把实例停用并归还对应 Prefab 的池，池按来源 Prefab 各留 16 个闲置实例，超出后销毁；平台清理会销毁整池，场景里不残留运行时碎块对象。表现脚本负责碎片的运动、碰撞时序和寿命。`FragmentBurst` 在寿命结束时通过 `Bind` 绑定的回收入口交还实例，不再销毁自身；再次启用时按首次记录的局部姿态复位预切片，并清掉上一轮刚体速度与延迟计时，平台在启用前写入本次的单次碰撞时长。自定义表现替换 `FragmentBurst` 时，需要接入同一回收约定，否则实例不回池。修改同一源 Prefab 的表现可供后续实例使用；改变方块引用的碎块 Prefab 或容器变换，则通过源布局重新烘焙更新记录。
 
 现有 `FragmentBurst` 的碰撞语义：
 
@@ -205,8 +209,8 @@ Cube 根
 | 省略 `collisionDuration` | 按 Prefab 的 `escapeTime` 先关闭碰撞，时间结束后恢复 |
 | 显式传入 `collisionDuration` | 生成时有碰撞，经过指定时长后关闭 |
 
-时长覆盖只对现有 `FragmentBurst` 生效，在启用 `Fragments` 前写入；自定义脚本需要自行接收同等参数。碎块实例递归设置为 `Debris` 层，攻击射线可用 `VoxelPlatformRenderer.DebrisMask` 排除。现有寿命逻辑销毁 `Fragments` 分组，外层 Cube 实例在恢复或平台清理时回收。
+时长覆盖只对现有 `FragmentBurst` 生效，在启用 `Fragments` 前写入；自定义脚本需要自行接收同等参数。碎块实例递归设置为 `Debris` 层，攻击射线可用 `VoxelPlatformRenderer.DebrisMask` 排除。
 
-代码：[实例装配与启用顺序](../Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs#L22)、[刚体、碰撞与寿命](../Assets/Core/Scripts/VoxelPlatform/Fragments/FragmentBurst.cs#L26)。
+代码：[实例装配、池与纯碎片 Prefab 解析](../Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs#L43)、[刚体、寿命、回收与复用复位](../Assets/Core/Scripts/VoxelPlatform/Fragments/FragmentBurst.cs#L38)。
 
 项目级职责见 [Project Guide](../Y_MultipleAgentWorkflow/Project/Project_Guide.md#圆形平台资源)，场景中的区域划分见 [Scene Guide](../Y_MultipleAgentWorkflow/Scene/Scene_Guide.md#minecraftclassicplatform)。

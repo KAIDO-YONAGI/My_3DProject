@@ -2,7 +2,7 @@
 
 文档 ID：`PROJECT-GUIDE`
 状态：`Active`
-最后核验：`2026-10-20`
+最后核验：`2026-11-20`
 
 ## 维护规则
 
@@ -121,21 +121,23 @@ Cube_<材质名>
 
 碎块由 Blender 官方 Cell Fracture 扩展的 Voronoi 单元算法生成，装配后共同填满原始 Cube。外表面保留完整 Cube 的 UV，切口使用石头材质。FBX 的材质槽顺序随节点变化，Prefab 材质映射按源材质名识别：`stonebrick` 对应当前方块的外表面材质，`stone` 对应切口材质。
 
+同目录的 `Fragments_<材质名>.prefab` 与每个 `Cube_<材质名>` 配对，沿用 Cube 容器根节点、嵌套 `Fragments` 节点与各材质覆盖，去掉 `Intact` 及其渲染与碰撞组件。平台烘焙记录引用纯碎片 Prefab，破坏时不再实例化完整方块部分。
+
 ### 圆形平台资源
 
 `Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 保存编辑用平台，由四种 `Cube_` Prefab 随机混铺组成。根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳外围方块。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 层级和嵌套 Prefab 引用。
 
-`Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和碎块 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。完整方块由轻量数据表示，运行版层级由合并视觉与合并碰撞组成，碎块在破坏时创建于 `FragmentsRuntime` 下。
+`Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和纯碎片 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。完整方块由轻量数据表示，运行版层级由合并视觉与合并碰撞组成，碎块在破坏时从实例池取得或扩容后置于 `FragmentsRuntime` 下。
 
 平台入口位于 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs`，承担生命周期、序列化入口和公开接口。协作类采用普通类组合，按功能归入 `Assets/Core/Scripts/VoxelPlatform/` 的子目录：
 
 | 子目录 | 职责 |
 |---|---|
 | `Data/` | 方块、烘焙表面、碰撞与分块记录 |
-| `Runtime/` | 运行状态门面、方块表与占据索引、分块重建、爆炸候选筛选、破坏结算、源对象同步 |
+| `Runtime/` | 运行状态门面、方块表与占据索引、分块重建、重建容器与合并数组复用、爆炸候选筛选、破坏结算、源对象同步 |
 | `Rendering/` | 单位方块判定、邻面掩码、网格变体与视觉合并 |
 | `Collision/` | 分块碰撞生成、碰撞网格生命周期与命中定位 |
-| `Fragments/` | 原 Cube 引用、延迟碎块实例与容器变换 |
+| `Fragments/` | 纯碎片 Prefab 解析、碎块实例池与容器变换 |
 | `Baking/` | 编辑布局收集、烘焙记录生成与网格结果整理 |
 
 `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Materials/MinecraftClassic/Generated/`，启用平台时直接复用。
@@ -158,7 +160,7 @@ Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并�
 
 触发器在 `OnTriggerEnter` 内先广播 `gameStartEventSO`，再调用 `Fire()`，订阅方在平台状态改变前收到通知；字段留空时只做区域结算。`Assets/Core/Scenes/VoxelArena.unity` 的 `GameStartTrigger` 引用 `Assets/Core/SO/Events/GameStartEventSO.asset`。
 
-破坏从原始 `Cube_` Prefab 创建碎块实例，按 Cube 容器变换放置，关闭 `Intact` 后启用 `Fragments`，恢复时销毁对应实例。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复。组件停用时清理临时网格和碎块，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
+破坏从纯碎片 Prefab 取得碎块实例：实例按来源 Prefab 分池，池空时实例化扩容，按 Cube 容器变换放置后启用 `Fragments`；恢复方块、寿命结束与平台清理都归还实例，平台停用销毁整池。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在碎块 Prefab 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复；寿命结束通过平台绑定的回收入口交还实例，复用时按首次记录复位预切片姿态与刚体状态。组件停用时清理临时网格并销毁碎块池，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
 
 两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
 

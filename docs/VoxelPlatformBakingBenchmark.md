@@ -126,7 +126,7 @@
 
 Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少”。合并后的 Renderer 继承阴影设置，这一变化与源对象合并方向一致，不能解释为统一关闭平台阴影，也不能直接换算为阴影 GPU 耗时下降 81.0%。依据：S-U / S-D、第 5.1 节。
 
-两侧 Saved by batching 均为 0。这里的网格合并通过 `Mesh.CombineMeshes` 预先生成合并对象，是否减少绘制批次应结合 Batches 的实测变化判断；不能由 Saved by batching 为 0 推断本次合批没有效果。依据：S-U / S-D、[网格合并实现](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:119)。
+两侧 Saved by batching 均为 0。这里的网格合并通过 `Mesh.CombineMeshes` 预先生成合并对象，是否减少绘制批次应结合 Batches 的实测变化判断；不能由 Saved by batching 为 0 推断本次合批没有效果。依据：S-U / S-D、[网格合并实现](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:137)。
 
 截图中显示的 FPS 接近翻倍，CPU main 与 render thread 的读数也更低。这些是两个截图时刻的显示值，持续平均 FPS 的提升幅度没查到，不作为简历中的稳定帧率成绩；简历优先使用 Batches、SetPass 的同视角计数变化，以及 CSV 的 300 帧耗时统计。依据：S-U / S-D、第 2 节。
 
@@ -143,27 +143,27 @@ Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少
 
 两个窗口各 300 帧，但物理模拟调用次数不同；因此累计耗时下降 51.4% 同时包含“调用变少”和“每次变便宜”两部分。以单次平均衡量，本次物理模拟改善为 11.8%，不能宣称物理算法效率提高 51.4%。调用次数差异的具体原因在 CSV 中没查到。依据：上表及 `Total Time / Count Total`。
 
-粗筛改善明显，窄相没有同步改善。这与“减少独立 Collider、仍保留完整碰撞网格”的实现方向相符，但两份汇总表不足以证明每个物理子阶段变化的独立成因。依据：上表；[完整网格与分块碰撞构建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs:60)。
+粗筛改善明显，窄相没有同步改善。这与“减少独立 Collider、仍保留完整碰撞网格”的实现方向相符，但两份汇总表不足以证明每个物理子阶段变化的独立成因。依据：上表；[完整网格与分块碰撞构建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs:76)。
 
 ## 5. 烘焙具体优化了什么
 
 ### 5.1 把逐方块渲染表示改成分块、按材质合并
 
-代码在每个空间分块内按材质分组，通过 `Mesh.CombineMeshes` 生成表面对象。参与烘焙的源 Cube 随后被剥离，运行时以合并表面表示完整平台，使 Renderer 管理和绘制提交工作从逐方块转向分块与材质组。依据：[材质分组](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:84)、[网格合并](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:119)、[源层级剥离](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)。
+代码在每个空间分块内按材质分组，通过 `Mesh.CombineMeshes` 生成表面对象。参与烘焙的源 Cube 随后被剥离，运行时以合并表面表示完整平台，使 Renderer 管理和绘制提交工作从逐方块转向分块与材质组。依据：[材质分组](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:108)、[网格合并](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:137)、[源层级剥离](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)。
 
 本次剔除平均耗时下降 58.1%、渲染提交下降 62.3%，普通绘制的 SRP Batcher 标记调用减少 69.4%，与上述机制的预期方向一致。这是本次数据支持最充分的一组收益；各措施独立贡献未做隔离测试，不能分别归因。依据：第 3.1、3.3 节。
 
-生成 Renderer 会继承源对象的投影与接收阴影设置；此处“烘焙”指平台几何和数据预生成。代码没有通过这个合并步骤统一关闭阴影，阴影收益的表述仍应保留第 3.2 节的中位数变化。依据：[渲染配置继承](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:129)。
+生成 Renderer 会继承源对象的投影与接收阴影设置；此处“烘焙”指平台几何和数据预生成。代码没有通过这个合并步骤统一关闭阴影，阴影收益的表述仍应保留第 3.2 节的中位数变化。依据：[渲染配置继承](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:149)。
 
 ### 5.2 六邻域剔除内部面，减少视觉几何
 
-代码查询六个方向的邻块，生成可见面掩码；完全遮挡的方块不生成视觉表面，其余方块根据掩码过滤三角形索引。同一源网格与掩码组合复用缓存的网格变体。依据：[邻块查询与变体缓存](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs:43)、[完全遮挡时跳过](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:92)。
+代码查询六个方向的邻块，生成可见面掩码；完全遮挡的方块不生成视觉表面，其余方块根据掩码过滤三角形索引。同一源网格与掩码组合复用缓存的网格变体。依据：[邻块查询与变体缓存](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs:43)、[完全遮挡时跳过](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformMeshBuilder.cs:107)。
 
 这是内部面剔除，代码保留原顶点属性并替换索引，没有实现相邻共面四边形的贪心合并。同视角截图的总绘制三角形从 296.9k 降至 271.8k，减少约 8.5%，方向与剔面机制相符；其中平台资产自身的三角形降幅和对应 GPU 耗时收益没查到。依据：[三角形过滤与网格复制](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs:71)、S-U / S-D、第 3.4 节。
 
 ### 5.3 按分块合并碰撞体，减少粗筛对象
 
-碰撞构建将分块内活动方块的完整网格合并，每个非空分块创建一个静态非凸 MeshCollider。视觉剔面与碰撞网格分别构建，碰撞仍保留完整方块几何。依据：[碰撞构建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs:54)。
+碰撞构建将分块内活动方块的完整网格合并，每个非空分块创建一个静态非凸 MeshCollider。视觉剔面与碰撞网格分别构建，碰撞仍保留完整方块几何。依据：[碰撞构建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Collision/VoxelPlatformCollisionBuilder.cs:76)。
 
 本次粗筛单次耗时下降 49.1%、物理模拟单次耗时下降 11.8%，与减少独立 Collider 的方向一致；窄相单次耗时上升 4.3%。因此可总结为“碰撞表示合并，粗筛及整体单次模拟开销下降”，不能写成“所有碰撞阶段加速”或“碰撞三角形减少 49.1%”。依据：第 4 节及上述构建代码。
 
@@ -171,7 +171,7 @@ Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少
 
 烘焙阶段完成源几何采集、可见面处理、网格合并，并保存方块记录与分块网格；运行时恢复索引、复用已保存网格，不重新采集源 Cube。依据：[烘焙保存](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs:34)、[运行时恢复](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs:42)。
 
-源层级剥离会移除参与烘焙的 Cube 容器及其预切碎块，带排除标记的对象保留。碎块实例和 `FragmentsRuntime` 容器在首次破坏时才创建，所以未破坏平台无需保留每块 Cube 的预切碎块实例层级。依据：[剥离与排除规则](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)、[碎块按需创建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:22)。
+源层级剥离会移除参与烘焙的 Cube 容器及其预切碎块，带排除标记的对象保留。碎块实例和 `FragmentsRuntime` 容器在首次破坏时才创建，实例来自纯碎片 Prefab，所以未破坏平台无需保留每块 Cube 的预切碎块实例层级。依据：[剥离与排除规则](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)、[碎块按需创建与实例池](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:43)。
 
 这些机制把几何生成工作移到编辑器，减少运行场景需要承载的源对象层级；资源加载、索引恢复与碰撞初始化仍有成本。启动时长、对象数量和驻留内存的实际降幅在本次数据中没查到，不能由稳态标记均值代替。依据：上述保存、恢复和剥离代码；CSV 导出字段。
 
@@ -182,7 +182,7 @@ Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少
 | 无源对象时跳过变换与启停轮询 | 有短路逻辑；`VoxelPlatformRenderer.LateUpdate` 两侧中位数均为 0.0015 ms，未显示可量化下降 | [轮询短路](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs:138)，U:280 / D:277 |
 | 网格变体缓存 | 能复用相同网格、掩码的结果；独立生成计时没查到 | [缓存命中](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs:61)，CSV 字段 |
 | 脏分块去重、受影响区域局部重建 | 属于变化和破坏后的更新机制；本次没有破坏，不能宣称破坏性能提高了多少 | [脏分块集合](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformChunkUpdates.cs:14)、[统一重建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformBlockBreaker.cs:25)，测试者说明 |
-| 碎块延迟实例化 | 未破坏时不创建碎块实例；破坏瞬间的实例化和刚体模拟性能未测 | [按需实例化](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:22)，测试者说明 |
+| 碎块延迟实例化与池复用 | 未破坏时不创建碎块实例；破坏瞬间的实例化、刚体模拟与实例池复用收益未测 | [按需创建与实例池](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:43)，测试者说明 |
 
 ## 6. GC 与结论边界
 

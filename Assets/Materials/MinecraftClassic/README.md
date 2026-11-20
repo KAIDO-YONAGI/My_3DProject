@@ -34,6 +34,8 @@ Cube_材质名
 
 `Intact` 保存完整 Cube 的网格、材质与 BoxCollider。`Fragments` 默认停用，保存十六个封闭的不规则碎块及各自的凸 MeshCollider。子块的局部位置表示装配位置，原点位于各自的体积质心。
 
+同目录的 `Fragments_<材质名>.prefab` 与每个 `Cube_<材质名>` 配对，沿用 Cube 容器根节点、嵌套 `Fragments` 节点和材质覆盖，去掉 `Intact` 及其渲染与碰撞组件。平台烘焙记录引用纯碎片 Prefab，破坏时不再实例化完整方块部分。
+
 `Models/Cube_FractureTemplate.fbx` 使用 Blender 官方 Cell Fracture 扩展中的 Voronoi 单元算法生成，随机种子为 `2607`。十六个碎块采用零间隙装配，总体积为一个立方单位。外表面保留完整 Cube 的局部 UV，切口使用石头材质。FBX 导入后的材质槽顺序随节点变化，外表面材质依据源材质名 `stonebrick` 对应，切口依据 `stone` 对应。
 
 Blender 源文件位于本机：
@@ -50,15 +52,15 @@ Blender 源文件位于本机：
 
 `Platform_Circle_R25.prefab` 是运行用平台，根节点的 `VoxelPlatformRenderer` 保存轻量方块数据，`CombinedSurface` 保存按空间分块、按材质合并并剔除紧邻面的表面，`CombinedCollision` 保存分块 MeshCollider。网格在编辑器中生成并保存在 `Generated/`，运行时直接复用。
 
-破坏时，平台根据方块记录从源 `Cube_` Prefab 创建实例，放置于 `FragmentsRuntime` 下，关闭 `Intact` 并启用 `Fragments`，同时更新受影响分块的视觉与碰撞。恢复时销毁该碎块实例并恢复完整方块。编辑步骤、代码职责与接入示例见 [平台合批、碰撞与破碎接入](../../../docs/VoxelPlatformRenderer.md)。
+破坏时，平台按方块记录从纯碎片 Prefab 的实例池取得或扩容碎块，放置于 `FragmentsRuntime` 下并启用 `Fragments`，同时更新受影响分块的视觉与碰撞。恢复方块、碎块寿命结束与平台清理时实例归还池，平台停用销毁整池。编辑步骤、代码职责与接入示例见 [平台合批、碰撞与破碎接入](../../../docs/VoxelPlatformRenderer.md)。
 
 ## 破坏控制器的接入约定
 
 Cube 根对象表示方块容器，子块名表示容器内的稳定编号。算法侧通过显式映射关联方块编号、子块编号与 Transform，编号独立于层级遍历顺序。
 
-攻击逻辑通过 `BreakBlockAtHit` 或局部方块中心调用 `BreakBlock`，由平台统一管理完整方块的表面、碰撞和碎块实例。破碎表现脚本挂在源 Cube 的 `Fragments` 节点，在 `OnEnable` 中接管已经就位的子块，配置刚体、受力与寿命。
+攻击逻辑通过 `BreakBlockAtHit` 或局部方块中心调用 `BreakBlock`，由平台统一管理完整方块的表面、碰撞和碎块实例。破碎表现脚本挂在碎块 Prefab 的 `Fragments` 节点，在 `OnEnable` 中接管已经就位的子块，配置刚体、受力与寿命。
 
-需要整组断裂时，破坏算法维护跨 Cube 的连通关系，让失去支撑的连通分量由共同刚体驱动。仅作表现的小碎屑适合使用粒子系统。碎块实例留在平台生成的层级内时，平台恢复与停用会清理这些实例；移出该层级的碎块由破坏控制器管理。
+需要整组断裂时，破坏算法维护跨 Cube 的连通关系，让失去支撑的连通分量由共同刚体驱动。仅作表现的小碎屑适合使用粒子系统。碎块实例位于平台生成的层级内时，恢复方块、寿命结束与平台停用都会回收实例，平台停用销毁实例池；移出该层级的碎块由破坏控制器管理。
 
 ## 粒子资源
 

@@ -4,6 +4,25 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-20：碎块实例池化与纯碎片 Prefab
+
+- `FragmentBurst` 不再在寿命结束时销毁自身，改为通过 `Bind` 绑定的平台回收入口交还实例；`OnDisable` 取消延迟调用并把刚体停回无运动状态，再次启用时按首次记录的局部姿态复位预切片、清空速度并重新施力。
+- `VoxelPlatformFragments` 增加按来源 Prefab 分池的实例池：`Take` 优先取闲置实例，池空时实例化扩容；恢复方块的 `Remove`、寿命结束的 `RecycleInstance` 与平台清理的 `Clear` 都归还实例，闲置池按 Prefab 各留 16 个实例，`Clear` 销毁整池。`FindPrefab` 在编辑器内按 `Cube_` 前缀解析到同目录 `Fragments_<材质名>.prefab`，缺失时退回原 Cube。
+- 新增 4 个纯碎片 Prefab：`Fragments_stone`、`Fragments_stonebrick`、`Fragments_stonebrick_cracked`、`Fragments_stonebrick_mossy`。每个由对应 `Cube_` Prefab 复制并移除 `Intact` 及其渲染与碰撞组件，保留容器根、嵌套 `Fragments` 节点与材质覆盖。`Platform_Circle_R25.prefab` 与 `VoxelArena.unity` 的 `FragmentPrefab` 烘焙引用按 GUID 迁移到新资产，共 1976 + 11776 条，根对象 fileID 不变，旧引用归零。
+- 测试：嵌套 Prefab 烘焙引用断言改为纯碎片 Prefab；新增纯碎片 Prefab 结构、实例池复用与 `Clear` 清池三项 EditMode 测试。
+- 修复：回收与复用复位时不再对已处于 kinematic 状态的刚体写 `velocity`/`angularVelocity`，改为先清零速度再设置 `isKinematic`，消除 `Setting linear velocity of a kinematic body is not supported` 报错。
+- 验证：`Assembly-CSharp` 与 `Core.EditorTests` 由 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译，退出码 `0`，仅保留既有 `AutoStartClient.autoConnectInPlayer` 未使用字段警告；修复后重新编译 `Assembly-CSharp` 仍为退出码 `0`；未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`docs/VoxelPlatformRenderer.md`、`docs/VoxelPlatformBakingBenchmark.md`、`Project_Guide.md`、`Scene_Guide.md` 同步纯碎片 Prefab 与实例池机制。Project 维护计数 `1/5 → 2/5`。
+
+## 2026-11-20：体素平台重建改为复用临时容器与运行时对象池
+
+- `VoxelPlatformMeshBuilder` 与 `VoxelPlatformCollisionBuilder` 的 `RebuildChunk` 不再每轮分配重建容器：按材质分组的字典、分组列表与碰撞实例列表提为字段，每轮清空复用；新增 `VoxelPlatformCombineBuffer` 按实例数分桶复用 `CombineInstance[]`，缓存上限 8 个数组，归还前清空网格引用。
+- 运行时生成的表面对象、碰撞对象与合并网格在分块重建时回收进池，`TakeSurfaceObject`、`TakeObject`、`TakeMesh` 优先取池，池上限 64；超出上限、平台 `Clear` 与烘焙开始前统一销毁。烘焙资产路径保持只隐藏不回收，烘焙复用池优先于运行时池。
+- `ClearChunk` 只解除分块映射，不清空表面列表：烘焙把 `Surfaces` 里的列表直接存进 `BakedChunks`，清空会破坏烘焙数据。分组顺序固定为释放分组列表后再释放网格变体。
+- 验证：`Assembly-CSharp` 由 Unity 2022.3.62f3 重新编译，Unity 日志无 `error CS`，`Library/ScriptAssemblies/Assembly-CSharp.dll` 时间戳 2026-11-20 16:19:06；MSBuild 对 `Assembly-CSharp.csproj` 编译退出码 `0`。EditMode 在 ParrelSync 副本 `My_3DProject_clone_0` 运行 `VoxelPlatformRendererTests` 42 项，28 通过、14 失败；14 项与 HEAD 基线一致：11 项为既有静态入口反射过期（`VoxelPlatformDestruction` 的 `ExplodeAt`、`ExplodeFromRay`、`BreakRegions` 已是实例方法），3 项为克隆内 `ParrelSyncAssetModificationProcessor` 阻断 Prefab 写入。独立工程副本基线为 31 通过、11 失败，克隆内再多 3 项阻断，通过数一致。
+- 覆盖重建路径的 `BakedSurfacesAreGroupedAndReusedAcrossActivationAndDamage`、`BakeCreatesOneMergedCollisionPerSpatialChunk`、`CollisionHitLooksUpOnlyBlocksFromItsChunk` 通过。
+- 文档与计数：`docs/VoxelPlatformRenderer.md` 的优化点表与代码链接、`docs/VoxelPlatformBakingBenchmark.md` 的机制依据链接、`Project_Guide.md` 的 `Runtime/` 职责同步。Project 维护计数 `1/5`。
+
 ## 2026-11-20：VoxelPlatformRuntime 按调用链拆分与 Clear 收敛
 
 - `VoxelPlatformRuntime` 拆为编排门面与 5 个协作类：`VoxelPlatformBlockTable` 维护分块表、占据索引与尺寸统计；`VoxelPlatformChunkUpdates` 归并受影响分块并保证每个分块重建一次；`VoxelPlatformBlastTargeting` 维护世界 XZ 列索引并筛选圆形与体积候选；`VoxelPlatformBlockBreaker` 停用方块、生成碎块并刷新占据与分块；`VoxelPlatformSourceSync` 负责源布局收集、20Hz 轮询与源渲染恢复。`VoxelPlatformMeshBuilder` 与 `VoxelPlatformCollisionBuilder` 改为只依赖方块表，运行状态的构造关系不再双向引用。

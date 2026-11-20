@@ -4,6 +4,13 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-20：VoxelArena 烘焙引用迁移到纯碎片 Prefab
+
+- `Assets/Core/Scenes/VoxelArena.unity` 中六个平台的 `FragmentPrefab` 烘焙引用从 `Cube_` Prefab 迁移到同目录 `Fragments_<材质名>` 纯碎片 Prefab，共 11776 条，根对象 fileID 与碎块矩阵不变。
+- 迁移后平台破坏从纯碎片 Prefab 的实例池取得碎块，`FragmentsRuntime` 收纳从池中取出或扩容的碎块实例，机制与 `../Project/Project_Guide.md` 的“圆形平台资源”一致。
+- 验证：`Assembly-CSharp` 与 `Core.EditorTests` 由 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 编译，退出码 `0`；引用迁移按 `FragmentPrefab` 行做 GUID 替换并统计，迁移前后均为 11776 条，旧 GUID 归零；未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Scene_Guide.md` 的 `MinecraftClassicPlatform` 一节同步实例池与回收语义。Scene 维护计数 `0/5 → 1/5`。
+
 ## 2026-11-16：平台破坏结算以命中方块中心为圆心
 
 - `VoxelPlatformDestruction.TryFindNearestPlatformHit` 同时返回命中方块的平台局部中心；`ExplodeFromRay` 经平台变换换成世界中心，作为 `BreakBlocksAroundWorldCenter` 的圆心，`AttackResult.ExplosionCenter` 保留射线真实命中点。
