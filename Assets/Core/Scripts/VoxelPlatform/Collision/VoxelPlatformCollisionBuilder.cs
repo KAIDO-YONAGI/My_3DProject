@@ -10,7 +10,7 @@ namespace Core.Scripts.VoxelPlatform.Collision
     class VoxelPlatformCollisionBuilder
     {
         private readonly VoxelPlatformRenderer owner;
-        private readonly VoxelPlatformRuntime runtime;
+        private readonly VoxelPlatformBlockTable blocks;
         // 分块到碰撞对象的映射，与表面表分开维护，两边生命周期互不依赖。
         internal readonly Dictionary<Vector3Int, VoxelPlatformCollisionSurface> Surfaces = new ();
         // 射线命中后按 Collider 直接取得所属 chunk，避免扫描整张碰撞分块表。
@@ -30,11 +30,11 @@ namespace Core.Scripts.VoxelPlatform.Collision
             return false;
         }
 
-        /// <summary>绑定平台与运行状态，创建碰撞构建器。</summary>
-        internal VoxelPlatformCollisionBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
+        /// <summary>绑定平台与方块表。</summary>
+        internal VoxelPlatformCollisionBuilder(VoxelPlatformRenderer owner, VoxelPlatformBlockTable blocks)
         {
             this.owner = owner;
-            this.runtime = runtime;
+            this.blocks = blocks;
         }
 
         /// <summary>创建并启用承载合并碰撞体的根节点。</summary>
@@ -60,7 +60,7 @@ namespace Core.Scripts.VoxelPlatform.Collision
             }
 
             // 兼容仅保存表面的烘焙数据；已有碰撞数据时直接复用资产。
-            if (Surfaces.Count == 0) runtime.ForEachChunk(RebuildChunk);
+            if (Surfaces.Count == 0) blocks.ForEachChunk(RebuildChunk);
         }
 
         /// <summary>重建一个 chunk 的完整方块网格碰撞体。</summary>
@@ -68,7 +68,7 @@ namespace Core.Scripts.VoxelPlatform.Collision
         {
             ClearChunk(chunk);
             // 分块里没有方块时，清完旧碰撞体就结束，不必生成空网格。
-            if (!runtime.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks)) return;
+            if (!blocks.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks)) return;
 
             // 碰撞保留完整方块网格，剔除后的表面会让被遮挡的接触面留下可以穿过的缝隙。
             var instances = new List<CombineInstance>();

@@ -127,12 +127,12 @@ Cube_<材质名>
 
 `Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和碎块 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。完整方块由轻量数据表示，运行版层级由合并视觉与合并碰撞组成，碎块在破坏时创建于 `FragmentsRuntime` 下。
 
-平台入口位于 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs`，承担生命周期、序列化入口和公开接口。协作类采用普通类组合，按功能归入 `Scene/VoxelPlatform/` 的子目录：
+平台入口位于 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs`，承担生命周期、序列化入口和公开接口。协作类采用普通类组合，按功能归入 `Assets/Core/Scripts/VoxelPlatform/` 的子目录：
 
 | 子目录 | 职责 |
 |---|---|
 | `Data/` | 方块、烘焙表面、碰撞与分块记录 |
-| `Runtime/` | 方块状态、占据索引和受影响分块调度 |
+| `Runtime/` | 运行状态门面、方块表与占据索引、分块重建、爆炸候选筛选、破坏结算、源对象同步 |
 | `Rendering/` | 单位方块判定、邻面掩码、网格变体与视觉合并 |
 | `Collision/` | 分块碰撞生成、碰撞网格生命周期与命中定位 |
 | `Fragments/` | 原 Cube 引用、延迟碎块实例与容器变换 |

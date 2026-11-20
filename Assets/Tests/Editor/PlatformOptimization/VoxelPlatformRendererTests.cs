@@ -432,7 +432,10 @@ public class VoxelPlatformRendererTests
             .GetValue(meshes);
         MethodInfo tryGetChunk = collisions.GetType().GetMethod("TryGetChunk", BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.That(tryGetChunk, Is.Not.Null);
-        MethodInfo tryGetChunkBlocks = runtime.GetType().GetMethod("TryGetChunkBlocks",
+        object blocks = runtime.GetType().GetField("blocks", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(runtime);
+        Assert.That(blocks, Is.Not.Null);
+        MethodInfo tryGetChunkBlocks = blocks.GetType().GetMethod("TryGetChunkBlocks",
             BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.That(tryGetChunkBlocks, Is.Not.Null);
 
@@ -446,7 +449,7 @@ public class VoxelPlatformRendererTests
         Assert.That((Vector3Int)arguments[1], Is.EqualTo(Vector3Int.zero));
 
         object[] blockArguments = { (Vector3Int)arguments[1], null };
-        Assert.That((bool)tryGetChunkBlocks.Invoke(runtime, blockArguments), Is.True);
+        Assert.That((bool)tryGetChunkBlocks.Invoke(blocks, blockArguments), Is.True);
         var blockList = (System.Collections.ICollection)blockArguments[1];
         Assert.That(blockList.Count, Is.EqualTo(1));
     }
@@ -462,9 +465,14 @@ public class VoxelPlatformRendererTests
         Type runtimeType = runtime.GetType();
         Assert.That(runtimeType.GetField("Blocks", BindingFlags.Public | BindingFlags.NonPublic |
             BindingFlags.Instance), Is.Null);
-        var chunksField = runtimeType.GetField("chunks", BindingFlags.NonPublic | BindingFlags.Instance);
+        var blocksField = runtimeType.GetField("blocks", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(blocksField, Is.Not.Null);
+        object blocks = blocksField.GetValue(runtime);
+        Assert.That(blocks.GetType().GetField("Blocks", BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.Instance), Is.Null);
+        var chunksField = blocks.GetType().GetField("chunks", BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.That(chunksField, Is.Not.Null);
-        var chunks = (System.Collections.IDictionary)chunksField.GetValue(runtime);
+        var chunks = (System.Collections.IDictionary)chunksField.GetValue(blocks);
         Assert.That(chunks.Count, Is.EqualTo(2));
         Assert.That(chunks.Contains(new Vector3Int(-1, 0, 0)), Is.True);
     }
@@ -527,12 +535,43 @@ public class VoxelPlatformRendererTests
         Assert.That(farX.activeSelf, Is.True);
         Assert.That(farZ.activeSelf, Is.True);
         object runtime = GetRuntime();
-        PropertyInfo candidateCount = runtime.GetType().GetProperty(
-            "LastHorizontalCandidateColumnCount",
+        object blastTargeting = runtime.GetType()
+            .GetField("blastTargeting", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(runtime);
+        Assert.That(blastTargeting, Is.Not.Null);
+        PropertyInfo candidateCount = blastTargeting.GetType().GetProperty(
+            "LastCandidateColumnCount",
             BindingFlags.NonPublic | BindingFlags.Instance);
         Assert.That(candidateCount, Is.Not.Null,
             "运行时应记录本次圆形查询实际检查的水平 chunk 列数。");
-        Assert.That((int)candidateCount.GetValue(runtime), Is.EqualTo(1));
+        Assert.That((int)candidateCount.GetValue(blastTargeting), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void RuntimeBreakAroundWorldCenterUsesOnlyNearbyColumns()
+    {
+        var nearby = AddCube(Vector3.zero);
+        var farX = AddCube(new Vector3(80, 0, 0));
+        var farZ = AddCube(new Vector3(0, 0, -80));
+        Invoke("Rebuild");
+
+        object runtime = GetRuntime();
+        MethodInfo breakAround = runtime.GetType().GetMethod("BreakBlocksAroundWorldCenter",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(breakAround, Is.Not.Null, "运行状态需要按世界中心结算破坏。");
+        int broken = (int)breakAround.Invoke(runtime, new object[] { Vector3.zero, 0.5f, null });
+
+        Assert.That(broken, Is.EqualTo(1));
+        Assert.That(nearby.activeSelf, Is.False);
+        Assert.That(farX.activeSelf, Is.True);
+        Assert.That(farZ.activeSelf, Is.True);
+        object blastTargeting = runtime.GetType()
+            .GetField("blastTargeting", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(runtime);
+        PropertyInfo candidateCount = blastTargeting.GetType().GetProperty(
+            "LastCandidateColumnCount",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(candidateCount, Is.Not.Null,
+            "运行时应记录本次圆形查询实际检查的水平 chunk 列数。");
+        Assert.That((int)candidateCount.GetValue(blastTargeting), Is.EqualTo(1));
     }
 
     [Test]
@@ -552,6 +591,54 @@ public class VoxelPlatformRendererTests
             Is.Not.Null);
         Assert.That(destructionType.GetMethod("ExplodeFromRay", BindingFlags.Public | BindingFlags.Static),
             Is.Not.Null);
+    }
+
+    [Test]
+    public void RuntimeCollaboratorsAreInternal()
+    {
+        string[] typeNames =
+        {
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformRuntime",
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformBlockTable",
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformChunkUpdates",
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformBlastTargeting",
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformBlockBreaker",
+            "Core.Scripts.VoxelPlatform.Runtime.VoxelPlatformSourceSync"
+        };
+        foreach (string typeName in typeNames)
+        {
+            Type type = Type.GetType(typeName + ", Assembly-CSharp");
+            Assert.That(type, Is.Not.Null, typeName + " 应存在于运行程序集。");
+            Assert.That(type.IsPublic, Is.False, typeName + " 不应成为公开 API。");
+        }
+    }
+
+    [Test]
+    public void RuntimeClearRestoresSourceRenderingAndIsRepeatable()
+    {
+        var intact = AddCube(Vector3.zero);
+        var sourceRenderer = intact.GetComponent<MeshRenderer>();
+        Invoke("Rebuild");
+        Assert.That(sourceRenderer.forceRenderingOff, Is.True);
+        Assert.That(Triangles(), Is.EqualTo(12));
+
+        object runtime = GetRuntime();
+        MethodInfo clear = runtime.GetType().GetMethod("Clear", BindingFlags.NonPublic | BindingFlags.Instance);
+        Assert.That(clear, Is.Not.Null, "运行状态需要统一的清理入口。");
+        clear.Invoke(runtime, null);
+
+        Assert.That(sourceRenderer.forceRenderingOff, Is.False);
+        Assert.That(Triangles(), Is.Zero);
+        Assert.That(root.transform.Find("CombinedSurface").gameObject.activeSelf, Is.False);
+
+        // 重复清理不抛异常，也不残留运行资源。
+        Assert.DoesNotThrow(() => clear.Invoke(runtime, null));
+        Assert.That(sourceRenderer.forceRenderingOff, Is.False);
+        Assert.That(Triangles(), Is.Zero);
+
+        Invoke("Rebuild");
+        Assert.That(sourceRenderer.forceRenderingOff, Is.True);
+        Assert.That(Triangles(), Is.EqualTo(12));
     }
 
     [Test]

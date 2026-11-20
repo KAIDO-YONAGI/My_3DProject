@@ -4,6 +4,16 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-20：VoxelPlatformRuntime 按调用链拆分与 Clear 收敛
+
+- `VoxelPlatformRuntime` 拆为编排门面与 5 个协作类：`VoxelPlatformBlockTable` 维护分块表、占据索引与尺寸统计；`VoxelPlatformChunkUpdates` 归并受影响分块并保证每个分块重建一次；`VoxelPlatformBlastTargeting` 维护世界 XZ 列索引并筛选圆形与体积候选；`VoxelPlatformBlockBreaker` 停用方块、生成碎块并刷新占据与分块；`VoxelPlatformSourceSync` 负责源布局收集、20Hz 轮询与源渲染恢复。`VoxelPlatformMeshBuilder` 与 `VoxelPlatformCollisionBuilder` 改为只依赖方块表，运行状态的构造关系不再双向引用。
+- 门面实例字段由 17 个降为 9 个，唯一集合字段是三条破坏入口共用的目标缓冲；`Occupied` 只以 `IReadOnlyDictionary` 暴露。`VoxelPlatformRuntime` 的 internal 入口名称与签名、`VoxelPlatformRenderer` 与 `VoxelPlatformDestruction` 的公开接口均保持原样，未新增 public 类型。
+- `Clear` 由 11 个清空语句加 5 处状态复位收敛为 6 个按对象归属的调用：源渲染恢复与源布局标记、表面/碰撞/网格变体释放、碎块回收、方块表清理、脏分块清理、世界列索引清理。6 个调用期缓冲改由各自写入方入口清空；`horizontalIndexTransform` 继续由初始化标志门控。
+- `VoxelPlatformGeometry` 新增 `TransformExtents`，局部半尺寸与世界包围盒共用同一段 3×3 绝对矩阵运算；`VisibleMask` 改为读取只读占据视图。
+- 测试：三处反射探针改读新结构；新增 `RuntimeCollaboratorsAreInternal`、`RuntimeClearRestoresSourceRenderingAndIsRepeatable`、`RuntimeBreakAroundWorldCenterUsesOnlyNearbyColumns`，直接覆盖内部类型可见性、`Clear` 幂等与源渲染恢复、圆形爆炸的相邻列筛选与候选列计数。
+- 验证：主工程 `Assembly-CSharp` 由 Unity 2022.3.62f3 重新编译，仅保留既有 `AutoStartClient` 未使用字段警告，`Library/ScriptAssemblies/Assembly-CSharp.dll`（2026-11-20 15:05:53）包含 5 个新类型；EditMode 在独立工程副本运行 `VoxelPlatformRendererTests` 42 项，31 项通过、11 项失败。失败断言全部落在既有测试的静态入口反射语句上：HEAD 中 `VoxelPlatformDestruction.ExplodeAt`、`ExplodeFromRay`、`BreakRegions` 已是 `YSingleton` 实例方法，测试 helper 仍按 `BindingFlags.Public | BindingFlags.Static` 查找，本次改动未触碰这些 helper（测试差异零命中），失败集合与本次重构无关。ParrelSync 克隆内运行会被 `ParrelSyncAssetModificationProcessor` 阻断 3 项 Prefab 保存测试，同一套测试在独立工程副本中通过。
+- 文档与计数：`docs/VoxelPlatformRenderer.md` 的索引表与代码链接、`docs/VoxelPlatformBakingBenchmark.md` 的机制依据链接、`Project_Guide.md` 的平台目录路径与 `Runtime/` 职责说明同步。Project 维护计数达到 `5/5`，复核并更新 `Project_Guide.md` 后重置为 `0/5`。
+
 ## 2026-11-19：错误输出限定编辑器，场景加载回调拆开
 
 - 各组件与网络管理入口的错误输出统一包在 `#if UNITY_EDITOR` 内，发行版不再打印这些诊断信息，逻辑分支保持不变。

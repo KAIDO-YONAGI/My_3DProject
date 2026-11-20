@@ -45,8 +45,12 @@ namespace Core.Scripts.VoxelPlatform.Rendering
         // 方块在平台局部空间中的包围盒半尺寸，用于把世界爆炸范围保守扩张到方块覆盖范围。
         internal static Vector3 LocalHalfSize(VoxelPlatformBlock block)
         {
-            Vector3 extents = block.Mesh.bounds.extents;
-            Matrix4x4 matrix = block.Matrix;
+            return TransformExtents(block.Matrix, block.Mesh.bounds.extents);
+        }
+
+        // 3×3 线性部分取绝对值后变换半尺寸，局部与世界空间的轴对齐包围盒共用同一段数学。
+        internal static Vector3 TransformExtents(Matrix4x4 matrix, Vector3 extents)
+        {
             return new Vector3(
                 Mathf.Abs(matrix.m00) * extents.x + Mathf.Abs(matrix.m01) * extents.y + Mathf.Abs(matrix.m02) * extents.z,
                 Mathf.Abs(matrix.m10) * extents.x + Mathf.Abs(matrix.m11) * extents.y + Mathf.Abs(matrix.m12) * extents.z,
@@ -79,7 +83,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
         }
 
         internal static int VisibleMask(VoxelPlatformBlock block,
-            Dictionary<Vector3Int, VoxelPlatformBlock> occupied)
+            IReadOnlyDictionary<Vector3Int, VoxelPlatformBlock> occupied)
         {
             int mask = 0;
             for (int index = 0; index < Directions.Length; index++)

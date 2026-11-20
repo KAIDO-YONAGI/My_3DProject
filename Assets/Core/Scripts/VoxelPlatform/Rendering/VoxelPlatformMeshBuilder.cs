@@ -11,7 +11,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
     class VoxelPlatformMeshBuilder
     {
         private readonly VoxelPlatformRenderer owner;
-        private readonly VoxelPlatformRuntime runtime;
+        private readonly VoxelPlatformBlockTable blocks;
         // 几何缓存按平台共享，同一分块重建时能直接命中已生成的变体。
         private readonly VoxelPlatformGeometry geometry = new();
         // 分块到表面对象的映射，清空与替换都以分块为单位进行。
@@ -27,12 +27,12 @@ namespace Core.Scripts.VoxelPlatform.Rendering
         internal int SurfaceRendererCount { get; private set; }
         internal int CollisionColliderCount => Collisions.ColliderCount;
 
-        /// <summary>绑定平台运行状态并创建对应的碰撞构建器。</summary>
-        internal VoxelPlatformMeshBuilder(VoxelPlatformRenderer owner, VoxelPlatformRuntime runtime)
+        /// <summary>绑定平台与方块表，并创建对应的碰撞构建器。</summary>
+        internal VoxelPlatformMeshBuilder(VoxelPlatformRenderer owner, VoxelPlatformBlockTable blocks)
         {
             this.owner = owner;
-            this.runtime = runtime;
-            Collisions = new VoxelPlatformCollisionBuilder(owner, runtime);
+            this.blocks = blocks;
+            Collisions = new VoxelPlatformCollisionBuilder(owner, blocks);
         }
 
         /// <summary>创建并启用表面与碰撞根节点。</summary>
@@ -68,7 +68,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
             }
 
             // 兼容仅保存方块记录的旧烘焙数据：没有表面资产时按数据重生成一遍。
-            if (Surfaces.Count == 0) runtime.ForEachChunk(RebuildChunk);
+            if (Surfaces.Count == 0) blocks.ForEachChunk(RebuildChunk);
 
             ActivateRoots();
             Collisions.UseBakedChunks(bakedChunks);
@@ -80,7 +80,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
             // 先清掉旧表面再生成，否则同一分块会残留上一次的渲染对象。
             ClearChunk(chunk);
             // 分块里没有方块时，清完旧表面就结束，不必生成空网格。
-            if (!runtime.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks))
+            if (!blocks.TryGetChunkBlocks(chunk, out List<VoxelPlatformBlock> chunkBlocks))
                 return;
 
             // 按材质分组：分块的绘制批次数量取决于材质种类，与方块数量无关。
@@ -91,7 +91,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
             {
                 // 已破坏、缺网格或缺材质的方块不产生表面。
                 if (!block.Active || !block.Mesh || !block.Material) continue;
-                int mask = VoxelPlatformGeometry.VisibleMask(block, runtime.Occupied);
+                int mask = VoxelPlatformGeometry.VisibleMask(block, blocks.Occupied);
                 // 掩码为 0 表示六个面都被邻居挡住，整块方块不需要绘制。
                 if (mask == 0) continue;
                 if (!groups.TryGetValue(block.Material, out List<CombineInstance> instances))
