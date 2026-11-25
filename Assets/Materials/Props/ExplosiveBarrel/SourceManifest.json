@@ -1,0 +1,38 @@
+{
+  "name": "Barrel_01",
+  "author": "Jorge Camacho",
+  "license": "CC0-1.0",
+  "source": "https://polyhaven.com/a/Barrel_01",
+  "files": [
+    {
+      "path": "ExplosiveBarrel/Barrel_01_1k.fbx",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/Barrel_01/Barrel_01_1k.fbx",
+      "expectedMd5": "c493537e374d417e976f7509fded43da",
+      "actualMd5": "c493537e374d417e976f7509fded43da"
+    },
+    {
+      "path": "ExplosiveBarrel/textures/Barrel_01_explosive_roughness_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_roughness_1k.png",
+      "expectedMd5": "d5ce4574587ce46bd1e788fd72b3e463",
+      "actualMd5": "d5ce4574587ce46bd1e788fd72b3e463"
+    },
+    {
+      "path": "ExplosiveBarrel/textures/Barrel_01_explosive_metallic_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_metallic_1k.png",
+      "expectedMd5": "c5f9a570f37d8320e80b3313a8fb767a",
+      "actualMd5": "c5f9a570f37d8320e80b3313a8fb767a"
+    },
+    {
+      "path": "ExplosiveBarrel/textures/Barrel_01_explosive_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_diff_1k.png",
+      "expectedMd5": "3226b7797c876525160ebebe0c6f97bb",
+      "actualMd5": "3226b7797c876525160ebebe0c6f97bb"
+    },
+    {
+      "path": "ExplosiveBarrel/textures/Barrel_01_explosive_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.png",
+      "expectedMd5": "8b6cf9bee1f227c9afe40cf181104de7",
+      "actualMd5": "8b6cf9bee1f227c9afe40cf181104de7"
+    }
+  ]
+}
