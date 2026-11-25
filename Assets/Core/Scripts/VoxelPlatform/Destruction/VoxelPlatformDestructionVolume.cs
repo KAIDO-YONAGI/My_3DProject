@@ -6,7 +6,7 @@ namespace Core.Scripts.VoxelPlatform.Destruction
     /// 区域触发器使用的世界空间体积。标记碰撞体按世界包围盒参与判定，球形碰撞体使用缩放后的真实半径。
     /// 方块一侧取旋转后的轴对齐包围盒，整数 90 度旋转时与方块本身完全重合。
     /// </summary>
-    public readonly struct VoxelPlatformBlast
+    public readonly struct VoxelPlatformDestructionVolume
     {
         private readonly Bounds bounds;
         private readonly Vector3 center;
@@ -14,20 +14,20 @@ namespace Core.Scripts.VoxelPlatform.Destruction
         private readonly bool spherical;
 
         /// <summary>按世界空间轴对齐盒构造。</summary>
-        public VoxelPlatformBlast(Bounds worldBounds)
+        public VoxelPlatformDestructionVolume(Bounds worldBounds)
             : this(worldBounds, worldBounds.center, 0f, false)
         {
         }
 
         /// <summary>按世界空间球构造，半径为零时只命中包含该点的方块。</summary>
-        public VoxelPlatformBlast(Vector3 center, float radius)
+        public VoxelPlatformDestructionVolume(Vector3 center, float radius)
             : this(new Bounds(center, Vector3.one * (Mathf.Max(0f, radius) * 2f)),
                 center, Mathf.Max(0f, radius), true)
         {
         }
 
         /// <summary>保存体积包围盒以及可选的球体精确参数。</summary>
-        private VoxelPlatformBlast(Bounds bounds, Vector3 center, float radius, bool spherical)
+        private VoxelPlatformDestructionVolume(Bounds bounds, Vector3 center, float radius, bool spherical)
         {
             this.bounds = bounds;
             this.center = center;
@@ -36,17 +36,17 @@ namespace Core.Scripts.VoxelPlatform.Destruction
         }
 
         /// <summary>由标记碰撞体构造，球形按真实半径，其余形状取世界包围盒。</summary>
-        public static VoxelPlatformBlast FromCollider(Collider marker)
+        public static VoxelPlatformDestructionVolume FromCollider(Collider marker)
         {
             if (marker is SphereCollider sphere)
             {
                 Transform owner = sphere.transform;
                 Vector3 scale = owner.lossyScale;
                 float scaled = Mathf.Max(Mathf.Abs(scale.x), Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
-                return new VoxelPlatformBlast(owner.TransformPoint(sphere.center), sphere.radius * scaled);
+                return new VoxelPlatformDestructionVolume(owner.TransformPoint(sphere.center), sphere.radius * scaled);
             }
 
-            return new VoxelPlatformBlast(marker.bounds);
+            return new VoxelPlatformDestructionVolume(marker.bounds);
         }
 
         /// <summary>体积的世界包围盒，用于把多份体积合并成保守的查询范围。</summary>

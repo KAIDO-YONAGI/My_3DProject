@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace Core.Scripts.SO
 {
-    /// <summary>网络攻击请求与本地爆炸表现共用的数据载荷。</summary>
+    /// <summary>网络攻击请求与本地表现共用的数据载荷。</summary>
     public struct AttackRequestPack
     {
         public AttackType AttackType;
 
-        /// <summary>射线真实命中的平台局部位置，用于爆炸表现。</summary>
+        /// <summary>射线真实命中的平台局部位置，用于表现。</summary>
         public Vector3 PlatformLocalPosition;
 
         /// <summary>命中方块中心的平台局部位置，用于破坏结算。</summary>
@@ -33,15 +33,15 @@ namespace Core.Scripts.SO
     }
 
     /// <summary>通知表现订阅者某种攻击已在本地完成结算。</summary>
-    [CreateAssetMenu(fileName = "BlastEventSO", menuName = "Events/BlastEventSO", order = 0)]
-    public class BlastEventSO : ScriptableObject
+    [CreateAssetMenu(fileName = "DestructionEventSO", menuName = "Events/DestructionEventSO", order = 0)]
+    public class DestructionEventSO : ScriptableObject
     {
-        public event Action<AttackRequestPack> BlastEvent;
+        public event Action<AttackRequestPack> DestructionEvent;
 
-        /// <summary>发布爆炸表现通知，供粒子、音效等订阅者响应。</summary>
+        /// <summary>发布表现通知，供粒子、音效等订阅者响应。</summary>
         public void OnEventRaised(AttackRequestPack request)
         {
-            BlastEvent?.Invoke(request);
+            DestructionEvent?.Invoke(request);
         }
     }
 }

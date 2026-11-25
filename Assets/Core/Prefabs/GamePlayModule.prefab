@@ -51,8 +51,8 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  blastRadius: 0.45
-  blastEventSO: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
+  destructionRadius: 0.45
+  destructionEventSO: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
   gameStartEventSO: {fileID: 11400000, guid: b0d9719209a86864aa23461eb4b0324c, type: 2}
   retryEventSO: {fileID: 11400000, guid: f223c4c8c8ff5932b9f5cf4000d886da, type: 2}
 --- !u!114 &8410000000000000006

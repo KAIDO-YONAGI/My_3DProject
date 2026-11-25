@@ -13,7 +13,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
         private readonly Dictionary<Vector3Int, List<VoxelPlatformBlock>> chunks = new();
         // 遮挡索引只登记启用且能挡住邻居的方块，供接触面剔除与邻块查询使用。
         private readonly Dictionary<Vector3Int, VoxelPlatformBlock> occupied = new();
-        // 方块在平台局部空间中的最大包围盒半尺寸，世界爆炸范围按它扩张后再映射区块。
+        // 方块在平台局部空间中的最大包围盒半尺寸，世界破坏范围按它扩张后再映射区块。
         private Vector3 maxBlockHalfSize;
 
         /// <summary>只读遮挡索引，供接触面剔除与邻块查询使用。</summary>

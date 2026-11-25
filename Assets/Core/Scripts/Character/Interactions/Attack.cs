@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Core.Scripts.Character.Interactions
 {
     /// <summary>
-    /// 准心交互入口：读取攻击输入，沿相机朝向提交射线爆炸并返回命中结果。
+    /// 准心交互入口：读取攻击输入，沿相机朝向提交射线破坏并返回命中结果。
     /// 光标锁定时鼠标坐标恒定在屏幕中心，射线方向因此取相机朝向。
     /// </summary>
     [DisallowMultipleComponent]
@@ -29,12 +29,12 @@ namespace Core.Scripts.Character.Interactions
         [Tooltip("参与破坏检测的层，未勾选的层不会被射线命中。")] [SerializeField]
         private LayerMask hitLayers = ~0;
 
-        [Header("爆炸")] [Tooltip("命中位置的水平爆炸半径，单位为世界单位。")] [SerializeField, Min(0f)]
-        private float blastRadius = 0.45f;
+        [Header("破坏")] [Tooltip("命中位置的水平破坏半径，单位为世界单位。")] [SerializeField, Min(0f)]
+        private float destructionRadius = 0.45f;
 
-        [SerializeField] private BlastEventSO blastEventSO;
+        [SerializeField] private DestructionEventSO destructionEventSO;
 
-        [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformBlastTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
+        [Header("事件")] [Tooltip("开局事件：由 VoxelPlatformDestructionTrigger 广播，事件不带载荷，收到后是否拒绝由下方开关决定。")] [SerializeField]
         private VoidEventSO gameStartEventSO;
 
         [SerializeField] private VoidEventSO retryEventSO;
@@ -49,7 +49,7 @@ namespace Core.Scripts.Character.Interactions
 
         // 以 Mirror 本地玩家身份为键缓存网络组件，玩家切换时再重新查找。
         private NetworkIdentity cachedLocalPlayer;
-        private NetworkBlastManager networkBlastManager;
+        private NetworkDestructionManager networkDestructionManager;
 
         /// <summary>检查事件引用并解析射线参考，用于计算射线距离和排除自身。</summary>
         private void Awake()
@@ -76,8 +76,8 @@ namespace Core.Scripts.Character.Interactions
         {
             Debug.Assert(gameStartEventSO != null,
                 $"{nameof(gameStartEventSO)} 未指定：攻击会一直处于拒绝状态。", this);
-            Debug.Assert(blastEventSO != null,
-                $"{nameof(blastEventSO)} 未指定：本地攻击表现事件不会发布。", this);
+            Debug.Assert(destructionEventSO != null,
+                $"{nameof(destructionEventSO)} 未指定：本地攻击表现事件不会发布。", this);
             Debug.Assert(retryEventSO != null,
                 $"{nameof(retryEventSO)} 未指定：重试后不会恢复拒绝状态。", this);
         }
@@ -109,7 +109,7 @@ namespace Core.Scripts.Character.Interactions
         {
             attackRejected = true;
         }
-        /// <summary>检查攻击状态、输入和光标归属，满足条件时执行一次准心爆炸。</summary>
+        /// <summary>检查攻击状态、输入和光标归属，满足条件时执行一次准心破坏。</summary>
         private void Update()
         {
             // 远程角色的相机与攻击组件同样处于启用状态，但它们共享本机输入设备。
@@ -127,7 +127,7 @@ namespace Core.Scripts.Character.Interactions
                 return;
             //本地构造射线并提交 返回的结果提供给RPC
             AttackResult result = AttackFromCrosshair();
-            if (!result.ExplosionCenter.HasValue || !result.BlockCenter.HasValue || result.PlatformId <= 0)
+            if (!result.HitPoint.HasValue || !result.BlockCenter.HasValue || result.PlatformId <= 0)
                 return;
 
             // 真实命中点用于表现，命中方块中心用于结算，远端按同一份数据复现。
@@ -137,7 +137,7 @@ namespace Core.Scripts.Character.Interactions
             SubmitNetworkAttack(request);
 
             // 本地表现事件放在攻击回路末尾，供特效和音效订阅。
-            blastEventSO.OnEventRaised(request);
+            destructionEventSO.OnEventRaised(request);
         }
  
         // 本地角色指本机控制的那一个：单机模式全部算本地，联机只认本机拥有的网络根。
@@ -154,7 +154,7 @@ namespace Core.Scripts.Character.Interactions
             if (!NetworkClient.isConnected || localPlayer == null)
             {
                 cachedLocalPlayer = null;
-                networkBlastManager = null;
+                networkDestructionManager = null;
             }
             else
             {
@@ -162,22 +162,22 @@ namespace Core.Scripts.Character.Interactions
                 if (cachedLocalPlayer != localPlayer)
                 {
                     cachedLocalPlayer = localPlayer;
-                    networkBlastManager = localPlayer.GetComponentInChildren<NetworkBlastManager>(true);
+                    networkDestructionManager = localPlayer.GetComponentInChildren<NetworkDestructionManager>(true);
                 }
 
-                if (networkBlastManager != null && networkBlastManager.isLocalPlayer && NetworkClient.ready)
+                if (networkDestructionManager != null && networkDestructionManager.isLocalPlayer && NetworkClient.ready)
                 {
-                    networkBlastManager.CommandAttack(request);
+                    networkDestructionManager.CommandAttack(request);
                 }
             }
         }
 
-        /// <summary>从准心提交射线爆炸，并把真实命中点、命中方块中心和破坏数量返回给调用方。</summary>
+        /// <summary>从准心提交射线破坏，并把真实命中点、命中方块中心和破坏数量返回给调用方。</summary>
         public AttackResult AttackFromCrosshair()
         {
             Ray ray = new Ray(aimSource.position, aimSource.forward);
-            return VoxelPlatformDestruction.RequiredInstance.ExplodeFromRay(
-                ray, ResolveMaxDistance(), hitLayers.value, playerRoot, blastRadius);
+            return VoxelPlatformDestruction.RequiredInstance.DestroyFromRay(
+                ray, ResolveMaxDistance(), hitLayers.value, playerRoot, destructionRadius);
         }
 
         // 相机位于角色身后，检测距离从角色位置起算，reachDistance 才是玩家感知到的攻击范围。

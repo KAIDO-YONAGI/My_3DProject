@@ -36,7 +36,6 @@ namespace Core.Scripts.Scene
 
         [SerializeField] private SceneLoadedEventSO sceneLoadedEvent;
         [SerializeField] private Animator[] transitionImagesDuringFade;
-        [SerializeField] private Object[] objectsToUnableWhileMenuOrReset;
 
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
         private readonly List<LoadedScene> currentScenes = new();
@@ -136,15 +135,6 @@ namespace Core.Scripts.Scene
                 }
             }
 
-            // 菜单与重置期间需要启停的对象允许留空；配置后每一项都必须是场景对象。
-            if (objectsToUnableWhileMenuOrReset != null)
-            {
-                for (int index = 0; index < objectsToUnableWhileMenuOrReset.Length; index++)
-                {
-                    Debug.Assert(objectsToUnableWhileMenuOrReset[index] is GameObject,
-                        $"{nameof(objectsToUnableWhileMenuOrReset)}[{index}] 不是场景对象：该条目不会参与启停。", this);
-                }
-            }
         }
 
         /// <summary>
@@ -350,11 +340,6 @@ namespace Core.Scripts.Scene
                     continue;
                 }
 
-                if (scene.sceneType == SceneType.Menu)
-                    SetObjects(false);
-                else if (scene.sceneType == SceneType.Location)
-                    SetObjects(true);
-
                 UnityEngine.SceneManagement.Scene loaded = default;
                 UnityEngine.Events.UnityAction<UnityEngine.SceneManagement.Scene, LoadSceneMode> onSceneLoaded =
                     (instance, mode) =>
@@ -397,18 +382,6 @@ namespace Core.Scripts.Scene
             OnLoadCompleted(firstLoaded, targetFade, targetPosition);
         }
 
-        private void SetObjects(bool state)
-        {
-            if (objectsToUnableWhileMenuOrReset == null)
-            {
-                return;
-            }
-
-            foreach (Object obj in objectsToUnableWhileMenuOrReset)
-            {
-                ((GameObject)obj).SetActive(state);
-            }
-        }
 
         /// <summary>
         /// 场景组加载完成回调

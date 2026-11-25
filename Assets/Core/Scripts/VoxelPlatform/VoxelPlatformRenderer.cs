@@ -9,30 +9,30 @@ namespace Core.Scripts.VoxelPlatform
 {
     /// <summary>
     /// 平台的生命周期和局部方块状态入口。ExecuteAlways 使编辑视图也维护合并表面；
-    /// 世界爆炸由 VoxelPlatformDestruction 统一结算。
+    /// 世界破坏由 VoxelPlatformDestruction 统一结算。
     /// </summary>
     [ExecuteAlways, DisallowMultipleComponent]
     public class VoxelPlatformRenderer : MonoBehaviour
     {
         // 碎块实例统一使用的专属层，破坏检测按层整体排除这些碰撞体。
-        public const string DebrisLayerName = "Debris";
+        public const string FragmentLayerName = "Fragment";
 
         // MonoBehaviour 的静态字段初始化发生在反序列化期间，那里不能调用 Unity API，
         // 所以静态构造只写常量，层索引推迟到第一次访问时解析。
-        private static int debrisLayer = -1;
+        private static int fragmentLayer = -1;
 
         /// <summary>碎块层索引，首次访问时解析；工程里没有该层时为 -1。</summary>
-        public static int DebrisLayer
+        public static int FragmentLayer
         {
             get
             {
-                if (debrisLayer < 0) debrisLayer = LayerMask.NameToLayer(DebrisLayerName);
-                return debrisLayer;
+                if (fragmentLayer < 0) fragmentLayer = LayerMask.NameToLayer(FragmentLayerName);
+                return fragmentLayer;
             }
         }
 
         /// <summary>碎块层的位掩码，层不存在时为零。</summary>
-        public static int DebrisMask => DebrisLayer >= 0 ? 1 << DebrisLayer : 0;
+        public static int FragmentMask => FragmentLayer >= 0 ? 1 << FragmentLayer : 0;
 
         // 三个根节点由平台自己创建和维护；序列化是为了烘焙后仍能直接引用同一批对象。
         [SerializeField, HideInInspector] private Transform surfaceRoot;

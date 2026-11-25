@@ -313,7 +313,7 @@ GameObject:
   - component: {fileID: 6312316}
   - component: {fileID: 6312315}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1280,7 +1280,7 @@ GameObject:
   m_Component:
   - component: {fileID: 80928441}
   m_Layer: 0
-  m_Name: VoxelBlastBox
+  m_Name: VoxelDestructionBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1610,7 +1610,7 @@ GameObject:
   - component: {fileID: 93549084}
   - component: {fileID: 93549083}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1769,7 +1769,7 @@ GameObject:
   - component: {fileID: 103101688}
   - component: {fileID: 103101687}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2341,7 +2341,7 @@ GameObject:
   - component: {fileID: 172678654}
   - component: {fileID: 172678653}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2794,7 +2794,7 @@ GameObject:
   - component: {fileID: 210254728}
   - component: {fileID: 210254727}
   m_Layer: 0
-  m_Name: BlastAreaBox (6)
+  m_Name: DestructionAreaBox (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3436,7 +3436,7 @@ GameObject:
   - component: {fileID: 244281939}
   - component: {fileID: 244281938}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4035,7 +4035,7 @@ GameObject:
   - component: {fileID: 293158734}
   - component: {fileID: 293158733}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5046,7 +5046,7 @@ GameObject:
   - component: {fileID: 372580906}
   - component: {fileID: 372580905}
   m_Layer: 0
-  m_Name: BlastAreaBox (5)
+  m_Name: DestructionAreaBox (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5280,7 +5280,7 @@ GameObject:
   - component: {fileID: 397544182}
   - component: {fileID: 397544181}
   m_Layer: 0
-  m_Name: BlastAreaBox (7)
+  m_Name: DestructionAreaBox (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5579,7 +5579,7 @@ GameObject:
   - component: {fileID: 409023549}
   - component: {fileID: 409023548}
   m_Layer: 0
-  m_Name: BlastAreaBox (7)
+  m_Name: DestructionAreaBox (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5754,7 +5754,7 @@ GameObject:
   - component: {fileID: 420248955}
   - component: {fileID: 420248954}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6091,7 +6091,7 @@ GameObject:
   - component: {fileID: 447199066}
   - component: {fileID: 447199065}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6196,7 +6196,7 @@ GameObject:
   - component: {fileID: 458230038}
   - component: {fileID: 458230037}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7984,7 +7984,7 @@ GameObject:
   - component: {fileID: 595398063}
   - component: {fileID: 595398062}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8367,7 +8367,7 @@ GameObject:
   - component: {fileID: 621961401}
   - component: {fileID: 621961400}
   m_Layer: 0
-  m_Name: BlastAreaBox (4)
+  m_Name: DestructionAreaBox (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8472,7 +8472,7 @@ GameObject:
   - component: {fileID: 629800425}
   - component: {fileID: 629800424}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8685,7 +8685,7 @@ GameObject:
   - component: {fileID: 635340862}
   - component: {fileID: 635340861}
   m_Layer: 0
-  m_Name: BlastAreaBox (4)
+  m_Name: DestructionAreaBox (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8790,7 +8790,7 @@ GameObject:
   - component: {fileID: 639625039}
   - component: {fileID: 639625038}
   m_Layer: 0
-  m_Name: BlastAreaBox (2)
+  m_Name: DestructionAreaBox (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9219,7 +9219,7 @@ GameObject:
   - component: {fileID: 690836428}
   - component: {fileID: 690836427}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11087,7 +11087,7 @@ GameObject:
   - component: {fileID: 867504774}
   - component: {fileID: 867504773}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11246,7 +11246,7 @@ GameObject:
   - component: {fileID: 869848570}
   - component: {fileID: 869848569}
   m_Layer: 0
-  m_Name: BlastAreaBox (5)
+  m_Name: DestructionAreaBox (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13887,7 +13887,7 @@ GameObject:
   - component: {fileID: 1140061593}
   - component: {fileID: 1140061592}
   m_Layer: 0
-  m_Name: BlastAreaBox (7)
+  m_Name: DestructionAreaBox (7)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -15413,7 +15413,7 @@ GameObject:
   - component: {fileID: 1273586532}
   - component: {fileID: 1273586531}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16145,7 +16145,7 @@ GameObject:
   - component: {fileID: 1321392853}
   - component: {fileID: 1321392852}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16595,7 +16595,7 @@ GameObject:
   - component: {fileID: 1360731661}
   - component: {fileID: 1360731660}
   m_Layer: 0
-  m_Name: BlastAreaBox (5)
+  m_Name: DestructionAreaBox (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17048,7 +17048,7 @@ GameObject:
   - component: {fileID: 1402386958}
   - component: {fileID: 1402386957}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17635,7 +17635,7 @@ GameObject:
   - component: {fileID: 1452939316}
   - component: {fileID: 1452939315}
   m_Layer: 0
-  m_Name: BlastAreaBox (6)
+  m_Name: DestructionAreaBox (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18134,7 +18134,7 @@ GameObject:
   - component: {fileID: 1515472330}
   - component: {fileID: 1515472329}
   m_Layer: 0
-  m_Name: BlastAreaBox (4)
+  m_Name: DestructionAreaBox (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18587,7 +18587,7 @@ GameObject:
   - component: {fileID: 1567507534}
   - component: {fileID: 1567507533}
   m_Layer: 0
-  m_Name: BlastAreaBox (6)
+  m_Name: DestructionAreaBox (6)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19067,7 +19067,7 @@ GameObject:
   - component: {fileID: 1596721271}
   - component: {fileID: 1596721270}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19582,7 +19582,7 @@ GameObject:
   - component: {fileID: 1659814837}
   - component: {fileID: 1659814836}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22140,7 +22140,7 @@ GameObject:
   - component: {fileID: 1873131573}
   - component: {fileID: 1873131572}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22585,7 +22585,7 @@ GameObject:
   - component: {fileID: 1913458824}
   - component: {fileID: 1913458823}
   m_Layer: 0
-  m_Name: BlastAreaBox (3)
+  m_Name: DestructionAreaBox (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22860,7 +22860,7 @@ GameObject:
   - component: {fileID: 1933440978}
   - component: {fileID: 1933440977}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23445,7 +23445,7 @@ GameObject:
   - component: {fileID: 1971473672}
   - component: {fileID: 1971473671}
   m_Layer: 0
-  m_Name: BlastAreaBox
+  m_Name: DestructionAreaBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23620,7 +23620,7 @@ GameObject:
   - component: {fileID: 1986244904}
   - component: {fileID: 1986244903}
   m_Layer: 0
-  m_Name: BlastAreaBox (1)
+  m_Name: DestructionAreaBox (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

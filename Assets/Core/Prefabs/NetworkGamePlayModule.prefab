@@ -67,7 +67,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  blastEvent: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
+  destructionEvent: {fileID: 11400000, guid: a38fca01d65d4f42a7bfb4469e6cf7cb, type: 2}
 --- !u!114 &8410000000000000005
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -9,7 +9,7 @@ using UnityEditor;
 
 namespace Core.Scripts.VoxelPlatform.Fragments
 {
-    /// <summary>按需创建、复用和回收方块碎片实例，并管理碎片相对平台的装配位置。</summary>
+    /// <summary>按需创建、复用和回收方块碎块实例，并管理碎块相对平台的装配位置。</summary>
     class VoxelPlatformFragments
     {
         // 闲置实例上限按来源 Prefab 分别计算，超出上限的实例直接销毁，避免长期驻留占用内存。
@@ -53,7 +53,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             if (!instance) return;
             instance.name = "Fragments_" + block.Position;
             // 碎块整体换到专属层，废墟里瞄准时射线不会被这些碰撞体占满。
-            ApplyLayer(instance.transform, VoxelPlatformRenderer.DebrisLayer);
+            ApplyLayer(instance.transform, VoxelPlatformRenderer.FragmentLayer);
             // 先挂到容器再摆位，变换计算始终在平台局部空间里进行。
             instance.transform.SetParent(owner.FragmentRoot, false);
             ApplyLocalMatrix(instance.transform, ResolveFragmentMatrix(block));
@@ -233,7 +233,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
         }
 
 #if UNITY_EDITOR
-        // 烘焙记录指向同目录的纯碎片 Prefab：Cube_stone → Fragments_stone。
+        // 烘焙记录指向同目录的纯碎块 Prefab：Cube_stone → Fragments_stone。
         private static GameObject PureFragmentPrefab(GameObject cubePrefab)
         {
             string path = AssetDatabase.GetAssetPath(cubePrefab);
@@ -243,7 +243,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             string fragmentPath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty,
                 "Fragments_" + name.Substring("Cube_".Length) + ".prefab");
             GameObject fragmentPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(fragmentPath);
-            // 纯碎片 Prefab 缺失时退回原 Cube，旧资源仍可完成烘焙。
+            // 纯碎块 Prefab 缺失时退回原 Cube，旧资源仍可完成烘焙。
             return fragmentPrefab ? fragmentPrefab : cubePrefab;
         }
 #endif

@@ -6,8 +6,8 @@ using UnityEngine;
 
 namespace Core.Scripts.VoxelPlatform.Runtime
 {
-    /// <summary>把世界空间的爆炸范围映射为平台内候选方块。</summary>
-    class VoxelPlatformBlastTargeting
+    /// <summary>把世界空间的破坏范围映射为平台内候选方块。</summary>
+    class VoxelPlatformDestructionTargeting
     {
         private static readonly Vector2Int[] HorizontalDirections =
         {
@@ -24,7 +24,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
         private Matrix4x4 horizontalIndexTransform;
         private bool horizontalIndexInitialized;
 
-        internal VoxelPlatformBlastTargeting(VoxelPlatformRenderer owner, VoxelPlatformBlockTable blocks)
+        internal VoxelPlatformDestructionTargeting(VoxelPlatformRenderer owner, VoxelPlatformBlockTable blocks)
         {
             this.owner = owner;
             this.blocks = blocks;
@@ -50,7 +50,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
             horizontalIndexInitialized = true;
         }
 
-        /// <summary>从爆炸中心向邻接水平 chunk 列扩展并精确筛选命中方块。</summary>
+        /// <summary>从破坏中心向邻接水平 chunk 列扩展并精确筛选命中方块。</summary>
         internal void CollectAroundWorldCenter(Vector3 worldCenter, float worldRadius,
             List<VoxelPlatformBlock> results)
         {
@@ -102,14 +102,14 @@ namespace Core.Scripts.VoxelPlatform.Runtime
         // 先把多份体积合并成保守的局部范围并映射到区块，每区块只扫描一次，
         // 最终仍按世界包围盒精确判定，重叠体积覆盖的同一方块只进入结果一次。
         /// <summary>只在区域体积覆盖的三维 chunk 中收集相交方块，合并重叠体积结果。</summary>
-        internal void CollectInVolumes(IReadOnlyList<VoxelPlatformBlast> blasts, Matrix4x4 localToWorld,
+        internal void CollectInVolumes(IReadOnlyList<VoxelPlatformDestructionVolume> volumes, Matrix4x4 localToWorld,
             List<VoxelPlatformBlock> results)
         {
             results.Clear();
-            if (blasts == null || blasts.Count == 0 || blocks.ChunkCount == 0) return;
+            if (volumes == null || volumes.Count == 0 || blocks.ChunkCount == 0) return;
 
-            Bounds worldRange = blasts[0].WorldBounds;
-            for (int index = 1; index < blasts.Count; index++) worldRange.Encapsulate(blasts[index].WorldBounds);
+            Bounds worldRange = volumes[0].WorldBounds;
+            for (int index = 1; index < volumes.Count; index++) worldRange.Encapsulate(volumes[index].WorldBounds);
 
             // 包围盒角点换到平台局部空间，再按最大方块半尺寸扩张，得到保守的方块覆盖范围。
             Matrix4x4 worldToLocal = localToWorld.inverse;
@@ -145,9 +145,9 @@ namespace Core.Scripts.VoxelPlatform.Runtime
                     VoxelPlatformBlock block = candidates[index];
                     if (!block.Active || !block.Mesh) continue;
                     Bounds bounds = GetWorldBounds(block, localToWorld);
-                    for (int volume = 0; volume < blasts.Count; volume++)
+                    for (int volume = 0; volume < volumes.Count; volume++)
                     {
-                        if (!blasts[volume].Overlaps(bounds)) continue;
+                        if (!volumes[volume].Overlaps(bounds)) continue;
                         results.Add(block);
                         break;
                     }
@@ -188,7 +188,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
                 Mathf.FloorToInt(worldPosition.z / VoxelPlatformGeometry.ChunkSize));
         }
 
-        /// <summary>判断水平 chunk 列的矩形是否与爆炸圆相交。</summary>
+        /// <summary>判断水平 chunk 列的矩形是否与圆形范围相交。</summary>
         private static bool HorizontalColumnIntersectsCircle(Vector2Int column, Vector3 center,
             float radiusSquared)
         {

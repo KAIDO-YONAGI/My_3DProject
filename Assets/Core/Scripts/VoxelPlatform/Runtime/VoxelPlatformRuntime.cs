@@ -16,11 +16,11 @@ namespace Core.Scripts.VoxelPlatform.Runtime
         private readonly VoxelPlatformMeshBuilder meshes;
         private readonly VoxelPlatformBlockTable blocks;
         private readonly VoxelPlatformChunkUpdates chunkUpdates;
-        private readonly VoxelPlatformBlastTargeting blastTargeting;
-        private readonly VoxelPlatformBlockBreaker breaker;
+        private readonly VoxelPlatformDestructionTargeting destructionTargeting;
+        private readonly VoxelPlatformBlockDestroyer destroyer;
         private readonly VoxelPlatformSourceSync sourceSync;
         // 三条破坏入口共用的目标缓冲，填写方在入口先清空再填。
-        private readonly List<VoxelPlatformBlock> breakTargets = new();
+        private readonly List<VoxelPlatformBlock> destroyTargets = new();
 
         /// <summary>网格构建器，供烘焙与平台统计读取分块结果。</summary>
         internal VoxelPlatformMeshBuilder Meshes => meshes;
@@ -33,8 +33,8 @@ namespace Core.Scripts.VoxelPlatform.Runtime
             blocks = new VoxelPlatformBlockTable();
             meshes = new VoxelPlatformMeshBuilder(owner, blocks);
             chunkUpdates = new VoxelPlatformChunkUpdates(blocks, meshes);
-            blastTargeting = new VoxelPlatformBlastTargeting(owner, blocks);
-            breaker = new VoxelPlatformBlockBreaker(blocks, chunkUpdates, fragments);
+            destructionTargeting = new VoxelPlatformDestructionTargeting(owner, blocks);
+            destroyer = new VoxelPlatformBlockDestroyer(blocks, chunkUpdates, fragments);
             sourceSync = new VoxelPlatformSourceSync(owner, blocks, chunkUpdates);
         }
 
@@ -47,7 +47,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
             List<VoxelPlatformBakedBlock> saved = owner.BakedBlocks;
             for (int index = 0; index < saved.Count; index++) blocks.Index(saved[index].ToRuntimeBlock());
             blocks.RebuildOccupancy();
-            blastTargeting.RebuildIndex();
+            destructionTargeting.RebuildIndex();
             meshes.UseBakedChunks(owner.BakedChunks);
         }
 
@@ -68,7 +68,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
             sourceSync.IndexSourceBlocks();
             // 占据关系必须先建好，逐分块重建时才能正确剔除接触面。
             blocks.RebuildOccupancy();
-            blastTargeting.RebuildIndex();
+            destructionTargeting.RebuildIndex();
             blocks.ForEachChunk(meshes.RebuildChunk);
         }
 
@@ -92,10 +92,10 @@ namespace Core.Scripts.VoxelPlatform.Runtime
                 return true;
             }
 
-            breakTargets.Clear();
-            breakTargets.Add(block);
+            destroyTargets.Clear();
+            destroyTargets.Add(block);
             // 单块破坏沿用 Prefab 上的碎块碰撞配置。
-            breaker.Break(breakTargets);
+            destroyer.Destroy(destroyTargets);
             return true;
         }
 
@@ -120,18 +120,18 @@ namespace Core.Scripts.VoxelPlatform.Runtime
         }
 
         /// <summary>按区域体积收集命中方块并执行一次批量破坏。</summary>
-        internal int BreakBlocksIn(IReadOnlyList<VoxelPlatformBlast> blasts, float? collisionDuration)
+        internal int DestroyBlocksIn(IReadOnlyList<VoxelPlatformDestructionVolume> volumes, float? collisionDuration)
         {
-            blastTargeting.CollectInVolumes(blasts, owner.transform.localToWorldMatrix, breakTargets);
-            return breaker.Break(breakTargets, collisionDuration);
+            destructionTargeting.CollectInVolumes(volumes, owner.transform.localToWorldMatrix, destroyTargets);
+            return destroyer.Destroy(destroyTargets, collisionDuration);
         }
 
-        /// <summary>从爆炸中心向邻接水平 chunk 列扩展并精确筛选命中方块。</summary>
-        internal int BreakBlocksAroundWorldCenter(Vector3 worldCenter, float worldRadius,
+        /// <summary>从破坏中心向邻接水平 chunk 列扩展并精确筛选命中方块。</summary>
+        internal int DestroyBlocksAroundWorldCenter(Vector3 worldCenter, float worldRadius,
             float? collisionDuration = null)
         {
-            blastTargeting.CollectAroundWorldCenter(worldCenter, worldRadius, breakTargets);
-            return breaker.Break(breakTargets, collisionDuration);
+            destructionTargeting.CollectAroundWorldCenter(worldCenter, worldRadius, destroyTargets);
+            return destroyer.Destroy(destroyTargets, collisionDuration);
         }
 
         /// <summary>同步源对象的启停与移动，并局部刷新或整体重建平台。</summary>
@@ -152,7 +152,7 @@ namespace Core.Scripts.VoxelPlatform.Runtime
             fragments.Clear();
             blocks.Clear();
             chunkUpdates.Clear();
-            blastTargeting.Clear();
+            destructionTargeting.Clear();
         }
     }
 }

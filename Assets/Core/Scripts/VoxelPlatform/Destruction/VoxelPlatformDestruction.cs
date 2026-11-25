@@ -8,13 +8,13 @@ using UnityScene = UnityEngine.SceneManagement.Scene;
 
 namespace Core.Scripts.VoxelPlatform.Destruction
 {
-    /// <summary>一次攻击爆炸的结算结果。</summary>
+    /// <summary>一次攻击破坏的结算结果。</summary>
     public readonly struct AttackResult
     {
-        /// <summary>本次射线命中的世界坐标点，用作爆炸表现中心；射线未命中有效平台时为空。</summary>
-        public Vector3? ExplosionCenter { get; }
+        /// <summary>本次射线命中的世界坐标点，用作表现中心；射线未命中有效平台时为空。</summary>
+        public Vector3? HitPoint { get; }
 
-        /// <summary>本次爆炸结算使用的命中方块世界中心；射线未解析到方块时为空。</summary>
+        /// <summary>本次破坏结算使用的命中方块世界中心；射线未解析到方块时为空。</summary>
         public Vector3? BlockCenter { get; }
 
         /// <summary>命中点相对目标平台根节点的位置。</summary>
@@ -27,22 +27,22 @@ namespace Core.Scripts.VoxelPlatform.Destruction
         public int PlatformId { get; }
 
         /// <summary>本次结算实际破坏的方块数量。</summary>
-        public int BrokenBlockCount { get; }
+        public int DestroyedBlockCount { get; }
 
-        /// <summary>本次爆炸使用的有效世界空间水平半径。</summary>
+        /// <summary>本次破坏使用的有效世界空间水平半径。</summary>
         public float Radius { get; }
 
         /// <summary>创建包含命中点、命中方块中心与结算数据的攻击结果。</summary>
-        internal AttackResult(Vector3? explosionCenter, Vector3? blockCenter,
+        internal AttackResult(Vector3? hitPoint, Vector3? blockCenter,
             Vector3 platformLocalPosition, Vector3 platformLocalBlockCenter,
-            int platformId, int brokenBlockCount, float radius)
+            int platformId, int destroyedBlockCount, float radius)
         {
-            ExplosionCenter = explosionCenter;
+            HitPoint = hitPoint;
             BlockCenter = blockCenter;
             PlatformLocalPosition = platformLocalPosition;
             PlatformLocalBlockCenter = platformLocalBlockCenter;
             PlatformId = platformId;
-            BrokenBlockCount = brokenBlockCount;
+            DestroyedBlockCount = destroyedBlockCount;
             Radius = radius;
         }
     }
@@ -69,7 +69,7 @@ namespace Core.Scripts.VoxelPlatform.Destruction
         // 查询缓冲和批处理状态属于场景服务实例，不由静态类跨场景共享。
         private RaycastHit[] rayHits = new RaycastHit[InitialRayHitCapacity];
         private readonly List<RegisteredPlatform> platforms = new();
-        private readonly List<VoxelPlatformBlast> blasts = new();
+        private readonly List<VoxelPlatformDestructionVolume> volumes = new();
         private readonly HashSet<VoxelPlatformRenderer> uniquePlatforms = new();
 
         /// <summary>订阅平台注册事件和 Unity 场景卸载事件，建立运行时平台注册表。</summary>
@@ -152,8 +152,8 @@ namespace Core.Scripts.VoxelPlatform.Destruction
             }
         }
 
-        /// <summary>按平台根节点局部爆炸中心、世界水平半径和平台注册 ID 结算爆炸。</summary>
-        public AttackResult ExplodeAt(Vector3 platformLocalPosition, float radius, int platformId)
+        /// <summary>按平台根节点局部破坏中心、世界水平半径和平台注册 ID 结算破坏。</summary>
+        public AttackResult DestroyAt(Vector3 platformLocalPosition, float radius, int platformId)
         {
             if (!IsFinite(platformLocalPosition) || !IsFinite(radius) || platformId <= 0)
                 return default;
@@ -163,22 +163,22 @@ namespace Core.Scripts.VoxelPlatform.Destruction
 
             float effectiveRadius = Mathf.Max(0f, radius);
             Vector3 worldCenter = platform.transform.TransformPoint(platformLocalPosition);
-            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(worldCenter, effectiveRadius);
+            int destroyed = platform.Runtime.DestroyBlocksAroundWorldCenter(worldCenter, effectiveRadius);
             return new AttackResult(worldCenter, worldCenter, platformLocalPosition, platformLocalPosition,
-                platformId, broken, effectiveRadius);
+                platformId, destroyed, effectiveRadius);
         }
 
-        /// <summary>从最近有效的平台射线命中结算爆炸，返回目标平台、表面命中点与命中方块中心。</summary>
+        /// <summary>从最近有效的平台射线命中结算破坏，返回目标平台、表面命中点与命中方块中心。</summary>
         /// <param name="ray">用于查找可破坏平台的世界空间射线。</param>
         /// <param name="maxDistance">射线检测的最大世界距离。</param>
         /// <param name="layerMask">允许射线检测的物理层；碎块层会自动排除。</param>
         /// <param name="ignoredRoot">射线需要忽略的对象根节点及其子层级。</param>
-        /// <param name="radius">以命中方块中心为圆心的世界 XZ 水平爆炸半径。</param>
+        /// <param name="radius">以命中方块中心为圆心的世界 XZ 水平破坏半径。</param>
         /// <returns>包含命中点、命中方块中心、目标平台、实际半径和破坏数量；无有效平台命中时为空结果。</returns>
-        public AttackResult ExplodeFromRay(Ray ray, float maxDistance, int layerMask,
+        public AttackResult DestroyFromRay(Ray ray, float maxDistance, int layerMask,
             Transform ignoredRoot, float radius)
         {
-            // 拒绝无效射线参数，避免无意义的物理查询或非有限坐标进入爆炸筛选。
+            // 拒绝无效射线参数，避免无意义的物理查询或非有限坐标进入破坏筛选。
             if (!IsFinite(ray.origin) || !IsFinite(ray.direction) || !IsFinite(maxDistance) ||
                 !IsFinite(radius) || ray.direction.sqrMagnitude <= Mathf.Epsilon || maxDistance <= 0f)
                 return default;
@@ -187,7 +187,7 @@ namespace Core.Scripts.VoxelPlatform.Destruction
             float effectiveRadius = Mathf.Max(0f, radius);
             ray = new Ray(ray.origin, ray.direction.normalized);
             // 碎块只用于表现，不应遮挡射线寻找可破坏的平台。
-            int queryMask = layerMask & ~VoxelPlatformRenderer.DebrisMask;
+            int queryMask = layerMask & ~VoxelPlatformRenderer.FragmentMask;
 
             // 先用可复用缓冲收集命中，只有缓冲被填满时才扩容重查。
             int count = Physics.RaycastNonAlloc(
@@ -214,39 +214,39 @@ namespace Core.Scripts.VoxelPlatform.Destruction
                 return new AttackResult(null, null, default, default, 0, 0, effectiveRadius);
 
             // 射线命中点常压在方块边界上，只按方块中心距离筛会漏掉命中的那块方块。
-            // 因此破坏结算以命中方块中心为圆心，真实命中点单独保留给爆炸表现。
+            // 因此破坏结算以命中方块中心为圆心，真实命中点单独保留给表现。
             Vector3 worldBlockCenter = platform.transform.TransformPoint(blockLocalPosition);
-            int broken = platform.Runtime.BreakBlocksAroundWorldCenter(worldBlockCenter, effectiveRadius);
+            int destroyed = platform.Runtime.DestroyBlocksAroundWorldCenter(worldBlockCenter, effectiveRadius);
             int platformId = GetRegisteredPlatformId(platform);
             Vector3 platformLocalPosition = platform.transform.InverseTransformPoint(hit.point);
             return new AttackResult(hit.point, worldBlockCenter, platformLocalPosition, blockLocalPosition,
-                platformId, broken, effectiveRadius);
+                platformId, destroyed, effectiveRadius);
         }
 
         /// <summary>把区域标记转换为体积，再只结算与这些体积物理重叠的平台。</summary>
-        public int BreakRegions(IReadOnlyList<Collider> markers, float? collisionDuration = null)
+        public int DestroyInRegions(IReadOnlyList<Collider> markers, float? collisionDuration = null)
         {
             if (markers == null || markers.Count == 0) return 0;
 
-            blasts.Clear();
+            volumes.Clear();
             uniquePlatforms.Clear();
             for (int index = 0; index < markers.Count; index++)
             {
                 Collider marker = markers[index];
                 if (!marker) continue;
 
-                blasts.Add(VoxelPlatformBlast.FromCollider(marker));
+                volumes.Add(VoxelPlatformDestructionVolume.FromCollider(marker));
             }
 
-            int broken = 0;
+            int destroyed = 0;
             for (int index = 0; index < platforms.Count; index++)
             {
                 VoxelPlatformRenderer platform = platforms[index].Renderer;
                 if (platform && platform.isActiveAndEnabled && uniquePlatforms.Add(platform))
-                    broken += platform.Runtime.BreakBlocksIn(blasts, collisionDuration);
+                    destroyed += platform.Runtime.DestroyBlocksIn(volumes, collisionDuration);
             }
 
-            return broken;
+            return destroyed;
         }
 
         /// <summary>从物理命中中选出最近且能解析到活动平台方块的命中，并返回命中方块的平台局部中心。</summary>

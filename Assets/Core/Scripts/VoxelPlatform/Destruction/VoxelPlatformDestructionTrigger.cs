@@ -5,17 +5,17 @@ using UnityEngine;
 namespace Core.Scripts.VoxelPlatform.Destruction
 {
     /// <summary>
-    /// 触发器驱动的破坏入口：本物体上的触发器负责开火，标记碰撞体负责划出破碎区域，
+    /// 触发器驱动的破坏入口：本物体上的触发器负责开火，标记碰撞体负责划出破坏区域，
     /// 触发时同步结算，不依赖每帧轮询。触发器要与静态平台产生物理事件，
     /// 触发器自身或进入它的物体上需要有 Rigidbody。
     /// 玩家进入触发器时同时广播开局事件，订阅方自行决定收到后的行为。
     /// </summary>
-    [DisallowMultipleComponent, AddComponentMenu("Environment/Voxel Platform Blast Trigger")]
-    public class VoxelPlatformBlastTrigger : MonoBehaviour
+    [DisallowMultipleComponent, AddComponentMenu("Environment/Voxel Platform Destruction Trigger")]
+    public class VoxelPlatformDestructionTrigger : MonoBehaviour
     {
         [SerializeField] private Rigidbody platform;
         [SerializeField] private GameObject fence;
-        [Tooltip("划出破碎区域的标记碰撞体，留空时使用子物体上的碰撞体。")]
+        [Tooltip("划出破坏区域的标记碰撞体，留空时使用子物体上的碰撞体。")]
         [SerializeField] private Collider[] regions = System.Array.Empty<Collider>();
         [Tooltip("碎块从生成起保持碰撞的时长，单位为秒，到期后关闭碰撞。")]
         [SerializeField] private float collisionDuration = 0.25f;
@@ -76,7 +76,7 @@ namespace Core.Scripts.VoxelPlatform.Destruction
             if (oneShot && fired) return 0;
             fired = true;
             CollectRegions(resolved);
-            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.RequiredInstance.BreakRegions(resolved, collisionDuration);
+            return resolved.Count == 0 ? 0 : VoxelPlatformDestruction.RequiredInstance.DestroyInRegions(resolved, collisionDuration);
         }
 
         // 留空时退到子物体上的碰撞体；仍然找不到就把触发器自己当成区域。

@@ -42,7 +42,7 @@ namespace Core.Scripts.VoxelPlatform.Rendering
             return ChunkOfPosition(PositionKeyOf(localCenter));
         }
 
-        // 方块在平台局部空间中的包围盒半尺寸，用于把世界爆炸范围保守扩张到方块覆盖范围。
+        // 方块在平台局部空间中的包围盒半尺寸，用于把世界破坏范围保守扩张到方块覆盖范围。
         internal static Vector3 LocalHalfSize(VoxelPlatformBlock block)
         {
             return TransformExtents(block.Matrix, block.Mesh.bounds.extents);

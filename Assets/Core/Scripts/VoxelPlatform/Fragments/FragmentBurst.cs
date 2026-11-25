@@ -5,7 +5,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
 {
     /// <summary>
     /// 破坏后的碎块表现：为每个预切片开启刚体并沿离开容器的方向抛出，寿命结束时交还平台回收。
-    /// 挂在 Cube 或纯碎片 Prefab 的 Fragments 节点上，平台创建实例并启用该节点时触发。
+    /// 挂在 Cube 或纯碎块 Prefab 的 Fragments 节点上，平台创建实例并启用该节点时触发。
     /// </summary>
     [DisallowMultipleComponent]
     public class FragmentBurst : MonoBehaviour
@@ -23,13 +23,13 @@ namespace Core.Scripts.VoxelPlatform.Fragments
         private float lifetime = 6f;
 
         private readonly List<Collider> pieceColliders = new();
-        // 参与碎裂的预切片、初始局部姿态与对应刚体；复用实例每次启用前按这些记录复位。
+        // 参与碎块表现的预切片、初始局部姿态与对应刚体；复用实例每次启用前按这些记录复位。
         private readonly List<Transform> pieces = new();
         private readonly List<Rigidbody> bodies = new();
         private readonly List<Vector3> restPositions = new();
         private readonly List<Quaternion> restRotations = new();
 
-        // 爆破接口按次指定的有碰撞时长；未指定时沿用 escapeTime 的无碰撞窗口。
+        // 破坏接口按次指定的有碰撞时长；未指定时沿用 escapeTime 的无碰撞窗口。
         private float collisionDuration = -1f;
         // 平台回收入口与实例根节点；未绑定时保留自销毁路径。
         private VoxelPlatformFragments recycler;
@@ -48,7 +48,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
             for (int index = 0; index < pieces.Count; index++)
             {
                 Transform node = pieces[index];
-                // 只有带凸 MeshCollider 的预切片参与碎裂，其余子节点保持原样。
+                // 只有带凸 MeshCollider 的预切片参与碎块表现，其余子节点保持原样。
                 MeshCollider pieceCollider = node.GetComponent<MeshCollider>();
                 if (!pieceCollider) continue;
 
@@ -65,7 +65,7 @@ namespace Core.Scripts.VoxelPlatform.Fragments
 
                 body.isKinematic = false;
                 body.useGravity = true;
-                // 外法线取碎片相对容器中心的方向，容器自身不参与物理计算。
+                // 外法线取碎块相对容器中心的方向，容器自身不参与物理计算。
                 Vector3 outward = node.position - origin;
                 if (outward.sqrMagnitude > 0f) outward.Normalize();
                 body.AddForce(outward * outwardSpeed + Vector3.up * upwardSpeed, ForceMode.VelocityChange);
@@ -162,13 +162,13 @@ namespace Core.Scripts.VoxelPlatform.Fragments
                     pieceCollider.enabled = false;
         }
 
-        /// <summary>覆盖本次实例的有碰撞时长，供爆破接口按次指定；须在碎片节点启用前调用。</summary>
+        /// <summary>覆盖本次实例的有碰撞时长，供破坏接口按次指定；须在碎块节点启用前调用。</summary>
         public void OverrideCollisionDuration(float seconds)
         {
             collisionDuration = Mathf.Max(0f, seconds);
         }
 
-        /// <summary>绑定平台回收入口与实例根节点；须在碎片节点启用前调用。</summary>
+        /// <summary>绑定平台回收入口与实例根节点；须在碎块节点启用前调用。</summary>
         internal void Bind(VoxelPlatformFragments owner, GameObject fragmentInstance)
         {
             recycler = owner;
