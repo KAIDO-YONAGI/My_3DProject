@@ -2416,18 +2416,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initialPosition: {x: 0, y: 0, z: 0}
-  fadeDuration: 1
   firstSceneToLoad:
   - {fileID: 11400000, guid: 15f42e871332c6a49b05ad2ef4352d26, type: 2}
-  playerSpawnEvent: {fileID: 11400000, guid: e3296f7b647340afb42dd1896bec5040, type: 2}
-  fadeCanva: {fileID: 906009871}
   loadEventSO: {fileID: 11400000, guid: 2ebef1f8584f5716b6eab623d68a7e99, type: 2}
   retryEventSO: {fileID: 11400000, guid: f223c4c8c8ff5932b9f5cf4000d886da, type: 2}
   sceneLoadedEvent: {fileID: 11400000, guid: 3b7ce0bc051d5615a1b86a2141a76b33, type: 2}
+  playerSpawnEvent: {fileID: 11400000, guid: e3296f7b647340afb42dd1896bec5040, type: 2}
+  fadeDuration: 1
+  fadeCanva: {fileID: 906009871}
   transitionImagesDuringFade:
   - {fileID: 1965765921}
-  objectsToUnableWhileMenuOrReset:
-  - {fileID: 438402677}
 --- !u!1 &1965765917
 GameObject:
   m_ObjectHideFlags: 0

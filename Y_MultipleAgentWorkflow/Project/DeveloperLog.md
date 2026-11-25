@@ -4,6 +4,14 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-25：迁移物品栏 UI 面板资产
+
+- 资产：新增 `Assets/Core/Prefabs/UI/Inventory/` 的 `BackpackCanvas`（42 格滚动背包，含标题、丝带与关闭按钮）、`BackpackInventorySlot`、`InventorySlot`、`HotbarCanvas`（3 格快捷栏）；`Assets/Core/Prefabs/UI/Support/` 的 `Ribbon`、`Scrollbar`、`ESCButton`；`Assets/Core/UI/Sprites/` 的 5 张面板贴图与蘑菇图标；`Assets/Core/UI/Fonts/` 的 `AmountFont` 与 `Electronic Highway Sign SDF` 两个 TMP 字体资产及对应 ttf。复制时保留源工程 `.meta` GUID，嵌套预制体引用直接生效。
+- 代码：新增 `InventoryPanel`（CanvasGroup 显隐、`ToggleCanvasEventSO` 订阅与 Tab 键切换、打开时释放光标）与 `InventoryCloseButton`（点击收起父级面板）；`CanvasToToggle` 新增 `Backpack`；新增 `Assets/Core/SO/Events/ToggleBackpackEvent.asset`。
+- 适配：面板视图由源 `BackpackCanvasView` 与 `HotbarCanvasView` 换为 `InventoryCanvasView`（`showBackpack` 区分槽位来源）；槽位组件换为目标 `InventorySlot`；关闭按钮由源 ESC 脚本换为 `InventoryCloseButton`；剥离拖拽组件 `UIDrag`、`ScrollbarFix` 与金币文本；TMP 字体与着色器引用沿用目标工程 TMP 资源。
+- 验证：`InventoryPanel`、`InventoryCloseButton` 与既有物品模块脚本由 DotNetSdkRoslyn `csc.dll` 编译 `Assembly-CSharp`，退出码 `0`，仅保留既有 `AutoStartClient.autoConnectInPlayer` 警告；新资产引用的 1698 处源工程 GUID 在目标工程全部可解析，目标工程无重复 GUID，7 个预制体的内部 fileID 引用与 ID 唯一性校验通过。Unity 编辑器导入记录显示新增预制体与事件资产导入无缺失脚本，脚本程序集编译通过；首次导入时 6 张贴图与 2 个字体文件因按文本复制损坏、2 个新 `.meta` 因缺少末尾换行解析失败，均已修复，二进制文件与源工程 SHA256 一致，全部新增 `.meta` 以换行结尾。Unity 对修复后文件的重新导入与 UI 实机验证未在本任务内执行，未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Project_Guide.md` 的资产目录布局新增 UI 面板资产条目。Project 维护计数 `3/5 → 4/5`。
+
 ## 2026-11-25：迁移物品栏与物品模块
 
 - 迁移范围：把 `My_ARPG/Assets/Scripts/Gameplay/Inventory/` 的物品栏与物品模块迁移为 `Assets/Core/Scripts/Inventory/` 的 `InventoryManager`、`InventorySlotState`、`InventorySlot`、`InventoryCanvasView`、`Loot`，以及 `Assets/Core/Scripts/SO/` 的 `ItemSO`、`InventoryConfigSO`，并建立对应 `.meta`。源模块约 1200 行，迁移后约 550 行。

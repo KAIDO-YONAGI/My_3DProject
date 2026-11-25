@@ -86,7 +86,8 @@
 - `Assets/Plugins/` 收纳 `Mirror/`、`ParrelSync/`、`TextMesh Pro/`、`AddressableAssetsData/`。Mirror 的脚本模板位于 `Assets/Plugins/Mirror/MirrorScriptTemplates/`。
 - 自写代码包括 `Assets/Core/Shaders/Toon/` 的三渲二着色器与说明，以及 `Assets/ToonEditor/` 的管线与材质迁移工具。
 - 场景与 UI 框架代码按功能域并入 `Assets/Core/Scripts/`：场景加载链路位于 `Scene/`，画布管理器与焦点栈位于 `UI/`，事件通道与场景数据类型位于 `SO/`，音频位于 `Audio/`，单例基类与通用枚举位于 `Common/`。
-- 物品栏与道具模块位于 `Assets/Core/Scripts/Inventory/`：`InventoryManager` 维护快捷栏与背包槽位、堆叠、拾取、丢弃与使用；`Loot` 承担世界掉落物的拾取判定；`InventoryCanvasView` 与 `InventorySlot` 负责槽位显示与左键使用、右键丢弃。道具定义与初始槽位配置的资产类型为 `Assets/Core/Scripts/SO/` 的 `ItemSO` 与 `InventoryConfigSO`。拾取只响应本地玩家，掉落物生成到当前玩法场景，道具效果结算到 `StatsManager`。
+- 物品栏与道具模块位于 `Assets/Core/Scripts/Inventory/`：`InventoryManager` 维护快捷栏与背包槽位、堆叠、拾取、丢弃与使用；`Loot` 承担世界掉落物的拾取判定；`InventoryCanvasView` 与 `InventorySlot` 负责槽位显示与左键使用、右键丢弃；`InventoryPanel` 控制面板显隐（开关事件或 Tab 键，打开时释放光标），`InventoryCloseButton` 触发面板收起。道具定义与初始槽位配置的资产类型为 `Assets/Core/Scripts/SO/` 的 `ItemSO` 与 `InventoryConfigSO`，背包开关事件资产为 `Assets/Core/SO/Events/ToggleBackpackEvent.asset`。拾取只响应本地玩家，掉落物生成到当前玩法场景，道具效果结算到 `StatsManager`。
+- 物品栏面板预制体位于 `Assets/Core/Prefabs/UI/`：`Inventory/` 存放 `BackpackCanvas`、`HotbarCanvas` 与背包/快捷栏槽位预制体，`Support/` 存放 `Ribbon`、`Scrollbar`、`ESCButton`。面板贴图位于 `Assets/Core/UI/Sprites/`，TMP 字体资产位于 `Assets/Core/UI/Fonts/`。
 - 分层状态机框架位于 `Assets/Core/Scripts/Character/StateMachine/`，带运行时程序集 `Core.FrameWork.StateMachine`，纯 C#、不依赖 `UnityEngine`，`autoReferenced: true`。它是工程内唯一的运行时自建程序集：预定义程序集 `Assembly-CSharp` 自动引用它，业务代码可直接 `using Core.Scripts.StateMachine;`；测试程序集必须在自己配置的 `references` 中显式列出，`Core.EditorTests` 已加入该引用。
 - 程序集定义文件不能引用预定义程序集 `Assembly-CSharp`，`Assets/Tests/Editor/` 下多数测试因此通过 `Type.GetType("..., Assembly-CSharp")` 反射访问运行时代码。运行时代码需要被测试直接引用与继承时，把它从 `Assembly-CSharp` 移入自带 asmdef 的程序集。
 - 地形植被与地表贴图素材位于 `Assets/Materials/ForestMaterials/`。
