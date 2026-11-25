@@ -2,16 +2,9 @@ using UnityEngine;
 
 namespace Core.Scripts.Inventory
 {
-    /// <summary>
-    /// 物品栏显示层：把 <see cref="InventoryManager"/> 的槽位状态刷新到控件上。
-    /// 快捷栏与背包共用本组件，由 <see cref="showBackpack"/> 选择数据来源。
-    /// </summary>
+    /// <summary>快捷栏显示层：把 <see cref="InventoryManager"/> 的槽位状态刷新到控件上。</summary>
     public class InventoryCanvasView : MonoBehaviour
     {
-        [Header("数据来源")]
-        [Tooltip("true 显示背包槽位，false 显示快捷栏槽位。")]
-        [SerializeField] private bool showBackpack;
-
         [Header("槽位")]
         [Tooltip("显示用槽位，顺序即管理器中的槽位顺序。")]
         [SerializeField] private InventorySlot[] slots;
@@ -21,7 +14,7 @@ namespace Core.Scripts.Inventory
         private void Awake()
         {
             Debug.Assert(slots != null,
-                $"{nameof(slots)} 未指定：物品栏没有可显示的槽位。", this);
+                $"{nameof(slots)} 未指定：快捷栏没有可显示的槽位。", this);
 
             for (int index = 0; index < slots.Length; index++)
             {
@@ -34,11 +27,10 @@ namespace Core.Scripts.Inventory
         {
             InventoryManager manager = InventoryManager.RequiredInstance;
             for (int index = 0; index < slots.Length; index++)
-                slots[index].ConfigureSlot(showBackpack, index);
+                slots[index].ConfigureSlot(index);
 
-            int slotCount = showBackpack ? manager.BackpackCount : manager.HotbarCount;
-            Debug.Assert(slotCount == slots.Length,
-                $"物品栏槽位数量不一致：管理器 {slotCount} 个，控件 {slots.Length} 个。", this);
+            Debug.Assert(manager.HotbarCount == slots.Length,
+                $"快捷栏槽位数量不一致：管理器 {manager.HotbarCount} 个，控件 {slots.Length} 个。", this);
 
             subscribed = true;
             manager.InventoryChanged += Refresh;
@@ -66,7 +58,7 @@ namespace Core.Scripts.Inventory
 
             for (int index = 0; index < slots.Length; index++)
             {
-                InventorySlotState slot = manager.GetSlot(showBackpack, index);
+                InventorySlotState slot = manager.GetSlot(index);
                 slots[index].RestoreState(slot.item, slot.quantity);
             }
         }

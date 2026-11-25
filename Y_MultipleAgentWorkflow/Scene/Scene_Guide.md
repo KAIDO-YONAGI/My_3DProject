@@ -2,7 +2,7 @@
 
 文档 ID：`SCENE-GUIDE`
 状态：`Active`
-最后核验：`2026-11-20`
+最后核验：`2026-11-26`
 
 ## 维护规则
 
@@ -62,7 +62,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ### PersistentScene
 
-常驻运行层，持有网络管理、角色表现装配、场景切换、时间管理、UI 事件系统，以及单机开发角色与网络出生点。`SceneChanger` 以 Additive 模式加载玩法场景。
+常驻运行层，持有网络管理、角色表现装配、场景切换、时间管理、UI 事件系统，以及单机开发角色与网络出生点；`InventoryManager` 与场景根的 `HotbarCanvas` 实例也位于本层，快捷栏槽位由 `Assets/Core/SO/Inventory/InventoryConfig.asset` 初始化。`SceneChanger` 以 Additive 模式加载玩法场景。
 
 `NetworkCharacterManager` 以 `NetworkClient.isConnected` 判断表现模式：连接尝试期间保留场景中的单机角色和相机，连接完成后收起单机角色，把表现交给 Mirror 创建的网络玩家。单机、联机本地和远程角色使用 `characters` 数组中同一编号的完整角色 Prefab，身份差异由运行时组件启停处理。
 
@@ -88,7 +88,7 @@ Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，�
 
 ### MinecraftClassicPlatform
 
-`Assets/Core/Scenes/VoxelArena.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机与方向光。六层平台作为独立根对象保存，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
+`Assets/Core/Scenes/VoxelArena.unity` 展示随机混铺经典石材的六层圆形平台，包含独立相机与方向光。出生点附近放置 `Assets/Core/Prefabs/Inventory/BarrelLoot.prefab` 油桶拾取物，本地玩家进入触发体后物品进入快捷栏。六层平台作为独立根对象保存，各层保存自身的方块布局、烘焙外表面和分块碰撞，外沿呈现方块轮廓。
 
 `Platforms` 父节点上的 `PlatformRegister` 集中保存六个平台的 `VoxelPlatformRenderer` 引用和跨客户端一致的整数 ID，并在所属场景加载完成后通过 `PlatformRegisterEventSO` 发布平台、ID 和 Unity `Scene`。常驻场景中的 `VoxelPlatformDestruction` 订阅注册事件维护运行时表，并在场景卸载事件中按场景句柄注销该场景的平台。平台根节点的 `VoxelPlatformRenderer` 保存轻量方块数据；`CombinedSurface` 显示编辑器预先合并并剔除紧邻面的网格，`CombinedCollision` 使用分块 MeshCollider。攻击由 `VoxelPlatformDestruction` 的 `DestroyAt` 与 `DestroyFromRay` 两个独立入口处理：位置入口接收平台根节点局部的破坏中心并转换为世界坐标结算，Ray 入口在服务内部筛选最近有效合并碰撞命中并解析命中方块；破坏结算以命中方块的世界中心为圆心，真实命中点单独保留给表现，两个位置分别以平台局部坐标随结果返回。破坏按世界 XZ 水平半径筛选跨高度的方块，并按邻接世界 chunk 列扩展候选。破坏时在当前平台的 `FragmentsRuntime` 下从纯碎块 Prefab 实例池取得或扩容碎块实例，并局部更新外表面和碰撞。碎块按方块记录里的碎块矩阵摆位，该矩阵退化时退回方块自身的网格矩阵。碎块由 `Fragments` 节点上的 `FragmentBurst` 驱动：节点启用时为每个预切片添加或复用刚体，暂时关闭预切片碰撞使其从原方块体积里飞出，脱离窗口结束后恢复碰撞，寿命结束时把实例交还平台停用入池；恢复方块时同样归还实例并恢复完整方块数据。各层独立管理运行状态，停用再启用时加载各自的烘焙布局。
 

@@ -9,7 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4dce314d5725b61b62c0afd63ec2bb1, type: 3}
-  m_Name: ToggleBackpackEvent
+  m_Script: {fileID: 11500000, guid: fcce9ad71cd448abab92fdf0d22ab9cf, type: 3}
+  m_Name: LootEvent
   m_EditorClassIdentifier: 
-  canvasToToggle: 7

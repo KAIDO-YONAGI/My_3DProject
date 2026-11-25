@@ -4,6 +4,19 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-26：物品栏实装（SO 事件链路、油桶物品与常驻场景接入）
+
+- 道具与配置：新增 `Assets/Core/SO/Inventory/BarrelItemSO.asset`（`ItemSO`，名称油桶，图标为 `Assets/Core/UI/Icons/BarrelIcon.png`，堆叠上限 5）与 `InventoryConfig.asset`（快捷栏 3 格，首格 1 个油桶）。
+- 拾取链路：恢复 SO 事件框架，新增 `LootEventSO` 与 `Assets/Core/SO/Events/LootEvent.asset`。`Loot` 在本地玩家进入触发器时广播 `LootEvent`，`InventoryManager` 订阅该事件后写入快捷栏；放不下的数量经 `Loot.SetQuantity` 留在掉落物上，全部拾取后由 `Loot.Collect` 移除掉落物。掉落物的道具与数量在预制体实例上配置。
+- 拾取物：通用掉落物预制体为 `Assets/Core/Prefabs/Inventory/Loot.prefab`（根节点挂 `Loot` 组件、kinematic 刚体与 isTrigger CapsuleCollider，子物体 `Sprite` 在生成时显示道具图标，`InventoryManager.lootPrefab` 引用它）；油桶专用掉落物预制体为 `Assets/Core/Prefabs/Inventory/BarrelLoot.prefab`，在同一根结构上装配油桶模型（`ExplosiveBarrel` 材质）并配置油桶道具与数量，不引用 `Props/ExplosiveBarrelProjectile.prefab`。
+- 物品图标：`Assets/Core/UI/Icons/BarrelIcon.png` 以 Sprite 导入并挂到 `BarrelItemSO.icon`，槽位 `ItemIcon` 内缩 10 像素，显示图标时同时保留白色描边与灰色占位底色。
+- 槽位视觉：`InventorySlot` 预制体的根 Image 去掉底板 sprite 作为白色描边，新增内缩 3 像素的 `Background` 灰色半透明 Image；无图标道具不显示图标块（`InventorySlot.UpdateUI`）。
+- 快捷栏：`HotbarCanvas` 根 RectTransform 缩放由 0 修正为 1，`InventorySlots` 改为屏幕底部居中（600×200、缩放 0.8），`HotBarSlots` 拉伸充满父级，Canvas sortingOrder 10；`InventoryCanvasView` 改为快捷栏专用。
+- 背包清理：删除 `BackpackCanvas`、`BackpackInventorySlot`、`Ribbon`、`Scrollbar`、`ESCButton`、背包专用贴图与字体、`InventoryPanel`、`InventoryCloseButton`、`ToggleBackpackEvent.asset`；`CanvasToToggle` 移除 `Backpack`；`InventoryManager`、`InventorySlot`、`InventoryConfigSO` 移除背包槽位与参数；`Assets/Core/UI/Sprites` 目录删除。
+- 场景接线：`PersistentScene` 的 `Managers` 下新增 `InventoryManager`（引用 `InventoryConfig.asset`、`LootEvent.asset` 与 `Loot.prefab`），场景根新增 `HotbarCanvas` 实例；`VoxelArena` 出生点 (5,7,5) 附近新增 3 个 `BarrelLoot` 实例；两个场景的 `SceneRoots` 同步登记新根。
+- 验证：`Assembly-CSharp` 由 DotNetSdkRoslyn `csc.dll` 编译，退出码 `0`，仅保留既有 `AutoStartClient.autoConnectInPlayer` 警告；两个场景静态校验 0 缺失内部引用、0 重复 ID、`SceneRoots` 完整，新增预制体内部引用完整，已删除资产的 GUID 在 `Assets` 内零残留；Unity 编辑器对新资产的导入与运行期拾取、使用未在本任务内验证，未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Project_Guide.md` 的资产目录布局同步道具资产、SO 事件链、拾取物与场景接线；Project 维护计数 `4/5 → 5/5`，复核 `Project_Guide.md` 与实现一致后重置为 `0/5`；`Scene_Guide.md` 同步常驻场景与 `VoxelArena` 内容。
+
 ## 2026-11-25：迁移物品栏 UI 面板资产
 
 - 资产：新增 `Assets/Core/Prefabs/UI/Inventory/` 的 `BackpackCanvas`（42 格滚动背包，含标题、丝带与关闭按钮）、`BackpackInventorySlot`、`InventorySlot`、`HotbarCanvas`（3 格快捷栏）；`Assets/Core/Prefabs/UI/Support/` 的 `Ribbon`、`Scrollbar`、`ESCButton`；`Assets/Core/UI/Sprites/` 的 5 张面板贴图与蘑菇图标；`Assets/Core/UI/Fonts/` 的 `AmountFont` 与 `Electronic Highway Sign SDF` 两个 TMP 字体资产及对应 ttf。复制时保留源工程 `.meta` GUID，嵌套预制体引用直接生效。

@@ -4,7 +4,7 @@ namespace Core.Scripts.SO
 {
     /// <summary>
     /// 道具定义资产：名称、图标、堆叠上限与使用效果。
-    /// 运行期资产只读，背包槽位保存对资产本身的引用。
+    /// 运行期资产只读，快捷栏槽位保存对资产本身的引用。
     /// </summary>
     [CreateAssetMenu(fileName = "New Item", menuName = "Data/ItemSO")]
     public class ItemSO : ScriptableObject

@@ -4,6 +4,16 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 维护规则
+
+按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
+
+## 2026-11-26：常驻场景接入物品栏与竞技场油桶拾取物
+
+- PersistentScene：Managers 下新增 InventoryManager 节点，引用 Assets/Core/SO/Inventory/InventoryConfig.asset 与 Assets/Core/Prefabs/Inventory/Loot.prefab；场景根新增 HotbarCanvas 预制体实例，SceneRoots 登记两项新根。
+- VoxelArena：出生点 (5,7,5) 附近新增 3 个 BarrelLoot 实例，SceneRoots 登记；拾取物由本地玩家进入触发器后进入快捷栏。
+- 验证：两个场景静态校验 0 缺失内部引用、0 重复 ID、SceneRoots 完整；Project_Guide.md 与 Scene_Guide.md 同步场景内容与物品栏接线。Unity 编辑器导入与运行期拾取未在本任务内验证，未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：Scene_Guide.md 的常驻场景与 VoxelArena 职责已同步。Scene 维护计数 2/5 → 3/5。
 ## 2026-11-25：切场流程拆为卸载与加载两段
 
 - `SceneChanger` 新增 `ChangeScenesRoutine` 作为切场总协程，`UnloadCurrentScenes` 不再接收目标场景参数，卸载完成后由总协程继续加载。

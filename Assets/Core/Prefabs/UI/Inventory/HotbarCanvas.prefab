@@ -32,11 +32,11 @@ RectTransform:
   - {fileID: 530601179852039792}
   m_Father: {fileID: 8368387304136464715}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -790, y: -440}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 60}
+  m_SizeDelta: {x: 600, y: 200}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &32279427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49,7 +49,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6f7489d837542fdbfc52e5966833138, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showBackpack: 0
   slots:
   - {fileID: 104663319}
   - {fileID: 1053575360}
@@ -62,10 +61,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 530601179852039792}
     m_Modifications:
-    - target: {fileID: 333379843938031096, guid: ad3422a7b05d6d042bbe0134510b5282, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 1a6dbca31f062bd4c8056fbff51afc78, type: 3}
     - target: {fileID: 5989014526500856131, guid: ad3422a7b05d6d042bbe0134510b5282, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -407,10 +402,10 @@ RectTransform:
   - {fileID: 1290244503147421342}
   m_Father: {fileID: 32279426}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 410, y: 340}
-  m_SizeDelta: {x: 600, y: 200}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &1290244503147421342 stripped
 RectTransform:
@@ -455,7 +450,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_TargetDisplay: 0
 --- !u!114 &5334124351527285815
 MonoBehaviour:
@@ -549,7 +544,7 @@ RectTransform:
   m_GameObject: {fileID: 7113048779902565387}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 32279426}

@@ -12,8 +12,8 @@ using SceneChanger = Core.Scripts.Scene.SceneChanger;
 namespace Core.Scripts.Inventory
 {
     /// <summary>
-    /// 快捷栏与背包的运行时状态管理器：槽位内容、堆叠、拾取、丢弃与使用都从这里进入。
-    /// 界面通过 <see cref="InventoryChanged"/> 刷新显示。
+    /// 快捷栏的运行时状态管理器：槽位内容、堆叠、拾取、丢弃与使用都从这里进入。
+    /// 界面通过 <see cref="InventoryChanged"/> 刷新显示，拾取请求经 <see cref="LootEventSO"/> 事件资产进入。
     /// </summary>
     /// <remarks>
     /// 槽位在常驻场景初始化时从 <see cref="InventoryConfigSO"/> 复制成运行态，之后只改本类的列表。
@@ -22,18 +22,20 @@ namespace Core.Scripts.Inventory
     public class InventoryManager : YSingleton<InventoryManager>
     {
         [Header("数据配置")]
-        [Tooltip("快捷栏与背包的初始槽位；常驻场景初始化时复制成运行态。")]
+        [Tooltip("快捷栏的初始槽位；常驻场景初始化时复制成运行态。")]
         [SerializeField] private InventoryConfigSO inventoryConfig;
 
         [Header("掉落物")]
         [Tooltip("掉落物预制体；丢弃物品与放不下的物品都用它生成。")]
         [SerializeField] private Loot lootPrefab;
 
+        [Tooltip("拾取请求事件；掉落物被拾取后经该事件进入快捷栏。")]
+        [SerializeField] private LootEventSO lootEvent;
+
         [Tooltip("掉落物生成位置相对本地玩家根节点的高度偏移。")]
         [SerializeField] private float dropHeight = 0.5f;
 
         private readonly List<InventorySlotState> hotbar = new();
-        private readonly List<InventorySlotState> backpack = new();
 
         // 非联网运行时的掉落原点缓存；联机时始终取本地玩家根节点。
         private Transform fallbackPlayerRoot;
@@ -44,70 +46,82 @@ namespace Core.Scripts.Inventory
         /// <summary>快捷栏槽位数量。</summary>
         public int HotbarCount => hotbar.Count;
 
-        /// <summary>背包槽位数量。</summary>
-        public int BackpackCount => backpack.Count;
-
         /// <summary>单例注册后把配置里的槽位复制成运行态。</summary>
         protected override void OnSingletonInitialized()
         {
             Debug.Assert(inventoryConfig != null,
-                $"{nameof(inventoryConfig)} 未指定：快捷栏与背包没有初始槽位。", this);
+                $"{nameof(inventoryConfig)} 未指定：快捷栏没有初始槽位。", this);
             Debug.Assert(lootPrefab != null,
                 $"{nameof(lootPrefab)} 未指定：丢弃的物品无法生成到世界中。", this);
+            Debug.Assert(lootEvent != null,
+                $"{nameof(lootEvent)} 未指定：拾取请求不会进入快捷栏。", this);
+            Debug.Assert(lootPrefab.PickupEvent == lootEvent,
+                "掉落物预制体与物品栏引用的拾取事件不一致：两端要指向同一个事件资产。", this);
 
             hotbar.AddRange(inventoryConfig.HotbarSlots);
-            backpack.AddRange(inventoryConfig.BackpackSlots);
+        }
+
+        private void OnEnable()
+        {
+            lootEvent.LootEvent += OnLootPicked;
+        }
+
+        private void OnDisable()
+        {
+            lootEvent.LootEvent -= OnLootPicked;
         }
 
         /// <summary>读取指定槽位；下标越界时返回空槽。</summary>
-        /// <param name="isBackpack">true 读取背包，false 读取快捷栏。</param>
-        /// <param name="index">槽位下标。</param>
-        public InventorySlotState GetSlot(bool isBackpack, int index)
-        {
-            List<InventorySlotState> slots = isBackpack ? backpack : hotbar;
-            return index >= 0 && index < slots.Count ? slots[index] : default;
-        }
+        public InventorySlotState GetSlot(int index) =>
+            index >= 0 && index < hotbar.Count ? hotbar[index] : default;
 
         /// <summary>
-        /// 把物品放进快捷栏与背包，优先补同类堆叠再占用空格。
+        /// 把物品放进快捷栏，优先补同类堆叠再占用空格。
         /// </summary>
-        /// <returns>仍未放下的数量；调用方据此决定是否保留地上的掉落物。</returns>
+        /// <returns>仍未放下的数量；调用方据此决定掉落物的去留。</returns>
         public int AddItem(ItemSO item, int quantity)
         {
             if (item == null || quantity <= 0) return quantity;
 
             int remaining = AddToSlots(hotbar, item, quantity);
-            remaining = AddToSlots(backpack, item, remaining);
             if (remaining != quantity)
                 InventoryChanged?.Invoke();
             return remaining;
         }
 
         /// <summary>使用指定槽位的一个物品：先结算道具效果，再从槽位移除。</summary>
-        /// <param name="isBackpack">true 操作背包，false 操作快捷栏。</param>
-        /// <param name="index">槽位下标。</param>
-        public void UseSlot(bool isBackpack, int index)
+        public void UseSlot(int index)
         {
-            InventorySlotState slot = GetSlot(isBackpack, index);
+            InventorySlotState slot = GetSlot(index);
             if (slot.item == null || slot.quantity <= 0) return;
 
             ApplyItemEffects(slot.item);
-            RemoveFromSlot(isBackpack, index, 1);
+            RemoveFromSlot(index, 1);
         }
 
         /// <summary>丢弃指定槽位的一个物品到本地玩家脚下。</summary>
-        /// <param name="isBackpack">true 操作背包，false 操作快捷栏。</param>
-        /// <param name="index">槽位下标。</param>
-        public void DropSlot(bool isBackpack, int index)
+        public void DropSlot(int index)
         {
-            InventorySlotState slot = GetSlot(isBackpack, index);
+            InventorySlotState slot = GetSlot(index);
             if (slot.item == null || slot.quantity <= 0) return;
 
             SpawnLoot(slot.item, 1);
-            RemoveFromSlot(isBackpack, index, 1);
+            RemoveFromSlot(index, 1);
         }
 
-        /// <summary>把物品放进一组槽位，返回仍未放下的数量。</summary>
+        /// <summary>拾取事件处理：物品先入快捷栏，放不下的数量留在掉落物上。</summary>
+        private void OnLootPicked(ItemSO item, int quantity, Loot loot)
+        {
+            if (item == null || loot == null || quantity <= 0) return;
+
+            int remaining = AddItem(item, quantity);
+            if (remaining <= 0)
+                loot.Collect();
+            else
+                loot.SetQuantity(remaining);
+        }
+
+        /// <summary>把物品放进槽位列表，返回仍未放下的数量。</summary>
         private static int AddToSlots(List<InventorySlotState> slots, ItemSO item, int quantity)
         {
             int stackLimit = Mathf.Max(1, item.stackableSize);
@@ -130,19 +144,18 @@ namespace Core.Scripts.Inventory
         }
 
         /// <summary>从指定槽位移除数量；返回实际移除的数量。</summary>
-        private int RemoveFromSlot(bool isBackpack, int index, int quantity)
+        private int RemoveFromSlot(int index, int quantity)
         {
-            List<InventorySlotState> slots = isBackpack ? backpack : hotbar;
-            if (index < 0 || index >= slots.Count || quantity <= 0) return 0;
+            if (index < 0 || index >= hotbar.Count || quantity <= 0) return 0;
 
-            InventorySlotState slot = slots[index];
+            InventorySlotState slot = hotbar[index];
             if (slot.item == null) return 0;
 
             int removed = Mathf.Min(slot.quantity, quantity);
             slot.quantity -= removed;
             if (slot.quantity <= 0)
                 slot = new InventorySlotState(null, 0);
-            slots[index] = slot;
+            hotbar[index] = slot;
 
             InventoryChanged?.Invoke();
             return removed;

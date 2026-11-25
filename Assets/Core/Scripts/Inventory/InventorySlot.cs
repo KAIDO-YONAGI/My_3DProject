@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace Core.Scripts.Inventory
 {
     /// <summary>
-    /// 单个物品槽位的显示与点击入口，快捷栏和背包共用本组件。
+    /// 单个物品槽位的显示与点击入口。
     /// 槽位内容由 <see cref="InventoryCanvasView"/> 通过 <see cref="RestoreState"/> 写入，
     /// 左键使用，右键丢弃。
     /// </summary>
@@ -23,7 +23,6 @@ namespace Core.Scripts.Inventory
         private ItemSO item;
         private int quantity;
         private int slotIndex = -1;
-        private bool isBackpackSlot;
 
         private void Awake()
         {
@@ -39,15 +38,14 @@ namespace Core.Scripts.Inventory
 
             InventoryManager manager = InventoryManager.RequiredInstance;
             if (eventData.button == PointerEventData.InputButton.Left)
-                manager.UseSlot(isBackpackSlot, slotIndex);
+                manager.UseSlot(slotIndex);
             else if (eventData.button == PointerEventData.InputButton.Right)
-                manager.DropSlot(isBackpackSlot, slotIndex);
+                manager.DropSlot(slotIndex);
         }
 
-        /// <summary>配置槽位归属与下标；由物品栏视图在初始化时调用。</summary>
-        public void ConfigureSlot(bool backpack, int index)
+        /// <summary>配置槽位下标；由快捷栏视图在初始化时调用。</summary>
+        public void ConfigureSlot(int index)
         {
-            isBackpackSlot = backpack;
             slotIndex = index;
         }
 
@@ -65,10 +63,11 @@ namespace Core.Scripts.Inventory
                 item = null;
 
             bool hasItem = item != null;
-            itemImage.gameObject.SetActive(hasItem);
-            quantityText.text = hasItem ? quantity.ToString() : string.Empty;
-            if (hasItem)
+            bool hasIcon = hasItem && item.icon != null;
+            itemImage.gameObject.SetActive(hasIcon);
+            if (hasIcon)
                 itemImage.sprite = item.icon;
+            quantityText.text = hasItem ? quantity.ToString() : string.Empty;
         }
     }
 }
