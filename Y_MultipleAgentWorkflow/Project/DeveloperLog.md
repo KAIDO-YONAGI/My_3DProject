@@ -4,6 +4,15 @@
 
 按项目约定记录带日期的任务事实、验证证据与维护计数，现行结论同步到对应 Guide。了解现状优先读取 Guide；需要任务历史时，只定位并读取最近一天或两天的相关条目，禁止整份日志载入上下文。只有任务需要追溯历史时才按日期、标题或关键词定向读取更早条目。读取范围不改变存储保留，删除具体历史条目须经用户明确确认。纯文档维护不增加业务计数。
 
+## 2026-11-25：迁移物品栏与物品模块
+
+- 迁移范围：把 `My_ARPG/Assets/Scripts/Gameplay/Inventory/` 的物品栏与物品模块迁移为 `Assets/Core/Scripts/Inventory/` 的 `InventoryManager`、`InventorySlotState`、`InventorySlot`、`InventoryCanvasView`、`Loot`，以及 `Assets/Core/Scripts/SO/` 的 `ItemSO`、`InventoryConfigSO`，并建立对应 `.meta`。源模块约 1200 行，迁移后约 550 行。
+- 保留链路：掉落物实例化、玩家触发器拾取、背包放不下时剩余数量留在地上、快捷栏与背包槽位显示、左键使用、右键丢弃、堆叠上限、道具效果结算到 `StatsManager` 与临时效果到期还原。
+- 剔除链路：存档（`ISaveable`、`SaveDefinition`、`SaveDataManager`、`SaveRegistry`、`SaveableService`）、商店与任务奖励（`ShopManager`、`InventorySlotsStatsSO`）、对话物品记录（`ItemHistoryManager`）、经验与金币结算、对象池（`IPoolable`、`ObjectPool`）、`LootEventSO` 事件通道。
+- 适配：`Loot` 由 2D 触发器改为 3D 触发器并按 `NetworkIdentity.isLocalPlayer` 只响应本地玩家；掉落物实例化后移入 `SceneChanger` 当前玩法场景，随场景卸载销毁，非联网运行时按 `Player` 标签解析并缓存玩家根节点作为掉落原点；`BackpackCanvasView` 与 `HotbarCanvasView` 合并为 `InventoryCanvasView`，用 `showBackpack` 选择槽位来源，视图改由 `InventoryManager.InventoryChanged` 事件刷新。
+- 验证：以 Unity 2022.3.62f3 的 DotNetSdkRoslyn `csc.dll` 和 `Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.rsp` 编译 `Assembly-CSharp`，退出码 `0`，仅保留既有 `AutoStartClient.autoConnectInPlayer` 未使用字段警告；Unity 编辑器重新导入脚本与 `.meta` 后完成程序集编译，`Library/ScriptAssemblies/Assembly-CSharp.dll` 更新于 2026-11-25 23:15:15，控制台无新增编译错误；未运行 EditMode 与 PlayMode 测试。
+- 文档与计数：`Project_Guide.md` 的资产目录布局新增物品栏与道具模块条目。Project 维护计数 `2/5 → 3/5`。
+
 ## 2026-11-20：碎块实例池化与纯碎片 Prefab
 
 - `FragmentBurst` 不再在寿命结束时销毁自身，改为通过 `Bind` 绑定的平台回收入口交还实例；`OnDisable` 取消延迟调用并把刚体停回无运动状态，再次启用时按首次记录的局部姿态复位预切片、清空速度并重新施力。
