@@ -18,23 +18,20 @@ namespace Core.Scripts.Scene
     {
         /// <summary>玩家初始位置</summary>
         [SerializeField] private Vector3 initialPosition = Vector3.zero;
-
-        [SerializeField] private float fadeDuration = 1f;
-
         [Tooltip("启动时自动加载的初始场景组。按列表顺序以 Additive 模式加载，通常配置为菜单场景组。")] [SerializeField]
         private List<GameSceneSO> firstSceneToLoad = new();
 
-        [SerializeField] private PlayerSpawnEventSO playerSpawnEvent;
-        [SerializeField] private CanvasGroup fadeCanva;
-
-        /// <summary>过渡动画播放器数组</summary>
-        ///
-        [Header("Events")] [SerializeField] private SceneLoadEventSO loadEventSO;
-
+        [Header("事件")]
+        [SerializeField] private SceneLoadEventSO loadEventSO;
         /// <summary>重试请求事件：死亡后重载当前场景组，由 RetryButton 广播</summary>
         [SerializeField] private VoidEventSO retryEventSO;
-
         [SerializeField] private SceneLoadedEventSO sceneLoadedEvent;
+        [SerializeField] private PlayerSpawnEventSO playerSpawnEvent;
+        
+        [Header("过渡设置")]
+        [SerializeField] private float fadeDuration = 1f;
+        /// <summary>过渡动画播放器数组</summary>
+        [SerializeField] private CanvasGroup fadeCanva;
         [SerializeField] private Animator[] transitionImagesDuringFade;
 
         /// <summary>当前已加载的内容场景组（不含常驻场景）</summary>
@@ -191,7 +188,8 @@ namespace Core.Scripts.Scene
         }
 
         /// <summary>
-        /// 加载请求的执行段，由 RequestSceneLoad 在广播完成后调用
+        /// 加载请求的执行段，由 RequestSceneLoad 在广播完成后调用。
+        /// 检查请求后锁定切换状态、暂停操作与玩法收尾，并启动切场总协程。
         /// </summary>
         /// <param name="scenes">目标场景组</param>
         /// <param name="newPosition">玩家新位置</param>
@@ -229,7 +227,24 @@ namespace Core.Scripts.Scene
                 PlayLoadingAnimation("FadeIn");
             }
 
-            StartCoroutine(UnloadCurrentScenes(scenes, targetPosition, isToFade)); //卸载当前场景组
+            StartCoroutine(ChangeScenesRoutine(scenes, targetPosition, isToFade)); //启动切场总协程
+        }
+
+        /// <summary>
+        /// 切场总流程：先卸载当前内容场景组，再加载目标场景组。
+        /// 每次 yield return 都等待整个子协程结束，包含子协程内部的跨帧等待。
+        /// </summary>
+        /// <param name="targetScenes">目标场景组</param>
+        /// <param name="targetPosition">目标场景组加载后的玩家位置</param>
+        /// <param name="targetFade">是否在加载完成时播放淡出动画</param>
+        private IEnumerator ChangeScenesRoutine(
+            List<GameSceneSO> targetScenes,
+            Vector3 targetPosition,
+            bool targetFade)
+        {
+            yield return UnloadCurrentScenes(targetFade);
+            yield return LoadScenesRoutine(
+                targetScenes, targetPosition, targetFade);
         }
 
         /// <summary>场景组的默认出生点：取首个有效场景 SO 的初始位置。</summary>
@@ -263,18 +278,13 @@ namespace Core.Scripts.Scene
         }
 
         /// <summary>
-        /// 卸载当前场景组协程
-        /// 等待淡入动画完成后卸载旧内容场景组，然后按顺序加载新场景组
+        /// 卸载当前内容场景组，保留注册的常驻场景。
+        /// 逐个等待异步卸载完成，随后按需补足过渡时长；过渡时长从开始卸载起算。
         /// </summary>
-        /// <param name="targetScenes">要加载的目标场景组</param>
-        /// <param name="targetPosition">玩家在目标场景组中的位置</param>
-        /// <param name="targetFade">是否播放过渡动画</param>
-        private IEnumerator UnloadCurrentScenes(
-            List<GameSceneSO> targetScenes,
-            Vector3 targetPosition,
-            bool targetFade)
+        /// <param name="targetFade">本次切换是否播放过渡动画</param>
+        private IEnumerator UnloadCurrentScenes(bool targetFade)
         {
-            yield return new WaitForSecondsRealtime(fadeDuration);
+            float time = Time.realtimeSinceStartup;
 
             for (int i = currentScenes.Count - 1; i >= 0; i--)
             {
@@ -311,11 +321,16 @@ namespace Core.Scripts.Scene
                 currentScenes.RemoveAt(i);
             }
 
-            yield return LoadScenesRoutine(targetScenes, targetPosition, targetFade);
+            float subTime = Time.realtimeSinceStartup - time;
+
+            // 无过渡的请求（如首次加载）不需要把卸载段补足到过渡时长。
+            if (targetFade)
+                yield return new WaitForSecondsRealtime(fadeDuration - subTime > 0 ? fadeDuration - subTime : 0);
         }
 
         /// <summary>
-        /// 按列表顺序以 Additive 模式加载场景组，全部完成后调用 OnLoadCompleted。
+        /// 由切场总流程在卸载协程结束后调用，按列表顺序以 Additive 模式加载场景组，
+        /// 全部完成后调用 OnLoadCompleted。
         /// 禁止裸调用：必须经 RequestSceneLoad 入口先广播订阅方再执行，
         /// 否则订阅者收不到切换通知。
         /// </summary>
@@ -406,7 +421,7 @@ namespace Core.Scripts.Scene
             TimeManager.RequiredInstance.ForceResumeGame();
             isLoading = false; // 全部完成后才解锁，允许下一次加载请求
             // 出生位置改为事件广播：场景加载完成后由玩家预制件上的接收器自行应用。
-            playerSpawnEvent.OnPlayerSpawn(targetPosition);
+            playerSpawnEvent.OnPlayerSpawn(targetPosition != Vector3.zero?targetPosition:initialPosition);
         }
 
         private void ForbidInput()

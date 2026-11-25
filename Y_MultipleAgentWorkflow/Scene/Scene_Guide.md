@@ -48,6 +48,8 @@ InitialScene
 
 `InitialLoad` 读取 Persistent Scene 配置，向 `PersistentSceneRegistry` 注册常驻场景，再以 Additive 模式加载。`SceneChanger` 负责玩法场景的加载与卸载、过渡动画和玩家落点。
 
+`SceneChanger` 的切换流程分为卸载与加载两段：先逐个异步卸载当前内容场景组，再按目标场景组顺序加载。过渡时长从卸载开始时计算，卸载耗时不足过渡时长时在加载前补足，无过渡的请求不补足。加载完成时广播出生位置，请求位置为零向量时使用组件配置的初始位置。
+
 `SceneChanger` 从 `SceneManager.sceneLoaded` 通知取得本次加载的实际 `Scene` 实例，按加载顺序保存 SO 与实例的对应关系。卸载使用记录的实例句柄，确认实例已卸载后移除对应记录。旧实例仍处于加载状态时，切换流程保留记录并终止本次切换。`GetCurrentScene` 返回实际加载的首个内容场景，`GetCurrentScenes` 返回对应的 SO 列表副本。
 
 Mirror 的 `onlineScene` 为空，在线场景切换不经过 NetworkManager，客户端和服务器使用相同的 Additive 场景结构。场景切换由 `SceneChanger` 与 `SceneToggler` 驱动。

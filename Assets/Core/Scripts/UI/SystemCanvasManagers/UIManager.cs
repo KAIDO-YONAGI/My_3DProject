@@ -14,7 +14,7 @@ namespace Core.Scripts.UI.SystemCanvasManagers
         public const int FocusOrder = CanvasFocusStack.FocusOrder;
         public const int DefaultOrder = CanvasFocusStack.DefaultOrder;
 
-        [Header("Events")] [SerializeField] private SceneLoadEventSO loadEventSO;
+        [Header("事件")] [SerializeField] private SceneLoadEventSO loadEventSO;
 
         [Tooltip(
             "可由 UIManager 主动控制的画布开关事件资产。列表中的画布可通过对应按键切换、由 ESC 关闭、在场景切换时复位，并参与互斥面板的自动关闭；未注册的画布只能上报状态和刷新层级，不会被 UIManager 主动关闭。")]
