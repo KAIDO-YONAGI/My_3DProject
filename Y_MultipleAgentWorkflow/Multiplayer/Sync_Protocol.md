@@ -10,7 +10,7 @@
 
 ### 维护触发
 
-修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频或爆炸事件、序列化字段或兼容规则时更新本文档。
+修改传输参数、Mirror 消息流程、Command、SyncVar、NetworkTransform、网络音频或破坏事件、序列化字段或兼容规则时更新本文档。
 
 ## 文档内目录
 
@@ -22,7 +22,7 @@
   - [角色编号](#角色编号)
   - [运动表现](#运动表现)
   - [音频事件](#音频事件)
-  - [爆炸事件](#爆炸事件)
+  - [破坏事件](#破坏事件)
 - [兼容性规则](#兼容性规则)
 
 先读目录，再按任务读取相关章节，避免整份指南载入上下文。
@@ -39,7 +39,7 @@ UDP Datagram
   → CharacterIdSync 角色编号
   → CharacterMotionSync 运动快照
   → NetworkAudioPlayer 音频事件
-  → NetworkBlastManager 爆炸事件
+  → NetworkDestructionManager 破坏事件
 ```
 
 ## 传输层
@@ -115,26 +115,26 @@ Host 和远端客户端通过同一个 `CommandSetCharacter` 入口提交角色�
 
 `AudioPlayerManager` 是音频事件的唯一订阅者，网络组件不持有事件资产或订阅生命周期。`NetworkAudioPlayer` 只允许本地拥有者在客户端 Ready 后发送 Command；远端 ClientRpc 保持拥有者排除，避免本地即时播放重复。无世界坐标的请求远端仍按 2D 音效播放。
 
-### 爆炸事件
+### 破坏事件
 
-`Attack` 在本地执行 `ExplodeFromRay` 并取得有效爆炸中心与正平台 ID 后，直接调用缓存的 `NetworkBlastManager.CommandAttack` 提交网络请求。网络请求与表现事件共用 `AttackRequestPack`，字段包括攻击类型、相对目标平台根节点的真实命中点、相对目标平台根节点的命中方块中心、伤害值、世界水平半径和平台 ID。平台 ID 来自 `VoxelPlatformDestruction` 的运行时登记表，客户端与服务器的取值必须一致，远端据此确定平台，并按命中方块中心转换为世界坐标结算；真实命中点留给爆炸表现。`BlastEventSO` 仍是表现通知管线，载荷复用该请求包，供粒子和音效订阅者使用。
+`Attack` 在本地执行 `DestroyFromRay` 并取得有效破坏中心与正平台 ID 后，直接调用缓存的 `NetworkDestructionManager.CommandAttack` 提交网络请求。网络请求与表现事件共用 `AttackRequestPack`，字段包括攻击类型、相对目标平台根节点的真实命中点、相对目标平台根节点的命中方块中心、伤害值、世界水平半径和平台 ID。平台 ID 来自 `VoxelPlatformDestruction` 的运行时登记表，客户端与服务器的取值必须一致，远端据此确定平台，并按命中方块中心转换为世界坐标结算；真实命中点留给表现。`DestructionEventSO` 仍是表现通知管线，载荷复用该请求包，供粒子和音效订阅者使用。
 
 ```text
 本地攻击
   → 本地 VoxelPlatformDestruction.Instance 按射线命中立即结算
-  → 本地 Attack 直接调用缓存的 NetworkBlastManager.CommandAttack
-  → 本地 Attack 在回路末尾发布 BlastEventSO
+  → 本地 Attack 直接调用缓存的 NetworkDestructionManager.CommandAttack
+  → 本地 Attack 在回路末尾发布 DestructionEventSO
   → 服务器
   → RpcRequestAttack(includeOwner = false)
   → 远端按平台 ID、命中方块中心与世界半径结算
-  → 远端结算有效时发布 BlastEventSO
+  → 远端结算有效时发布 DestructionEventSO
 ```
 
-`NetworkBlastManager` 位于 `NetworkPlayer` 根节点下的 `NetworkGamePlayModule` 子对象，网络身份由根节点提供。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、命中方块中心与世界半径完成爆炸，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `BlastEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
+`NetworkDestructionManager` 位于 `NetworkPlayer` 根节点下的 `NetworkGamePlayModule` 子对象，网络身份由根节点提供。`Attack` 只在网络已连接、组件属于本地玩家且客户端 Ready 时调用 `CommandAttack`。RPC 排除拥有者，避免本地即时结算重复；RPC 接收端先按请求的平台 ID、命中方块中心与世界半径完成破坏，结算结果有有效中心时才将同一 `AttackRequestPack` 发布到 `DestructionEventSO`。该 SO 是表现通知管线，不承担网络请求路由。
 
 ## 兼容性规则
 
 客户端与服务器使用相同的玩家 Prefab 组件布局、NetworkBehaviour 顺序、同步字段和序列化配置。网络组件或同步字段发生变化时，同时构建并部署客户端与服务器。
 
-`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`PlayerSpawnPointReceiver`；`NetworkAudioPlayer` 与 `NetworkBlastManager` 位于根节点下的 `NetworkGamePlayModule` 子对象。追加网络行为组件时保持原 NetworkBehaviour 顺序，网络行为追加到 `NetworkGamePlayModule` 的组件末尾。
+`NetworkPlayer.prefab` 的根节点组件顺序为 `Transform`、`NetworkIdentity`、`NetworkTransformReliable`、`CharacterController`、`PlayerCharacterController`、`CharacterIdSync`、`CharacterMotionSync`、`PlayerSpawnPointReceiver`；`NetworkAudioPlayer` 与 `NetworkDestructionManager` 位于根节点下的 `NetworkGamePlayModule` 子对象。追加网络行为组件时保持原 NetworkBehaviour 顺序，网络行为追加到 `NetworkGamePlayModule` 的组件末尾。
 

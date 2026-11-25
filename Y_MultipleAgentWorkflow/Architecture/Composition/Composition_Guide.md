@@ -68,7 +68,7 @@ Debug.Assert(loadEventSO != null,
 校验入口按组件类型划分：
 
 - 单例组件在 `OnSingletonInitialized` 校验：`SceneChanger`、`UIManager`、`AudioPlayerManager`、`NetworkCharacterManager`、`VoxelPlatformDestruction`。
-- 普通组件在 `Awake` 校验：`SceneToggler`、`InitialLoad`、`VoxelPlatformRegister`、`VoxelPlatformBlastTrigger`、`NetworkBlastManager`、`NetworkAudioPlayer`、`CharacterMotionSync`、`AudioTriggerManager`、`Attack`，以及画布管理器与按钮组件。
+- 普通组件在 `Awake` 校验：`SceneToggler`、`InitialLoad`、`VoxelPlatformRegister`、`VoxelPlatformDestructionTrigger`、`NetworkDestructionManager`、`NetworkAudioPlayer`、`CharacterMotionSync`、`AudioTriggerManager`、`Attack`，以及画布管理器与按钮组件。
 - 角色视觉在装配期由 `CharacterVisual.TryValidate` 校验。
 
 ### 2.3 空值分类与判定
@@ -78,7 +78,7 @@ Debug.Assert(loadEventSO != null,
 | 类别 | 判定 | 处理 | 示例 |
 |---|---|---|---|
 | 必填配置缺失 | 自有场景或 Prefab 应配置，缺失会让对应功能静默失效 | `Awake`/`OnSingletonInitialized` 断言，调用点直接使用 | `SceneChanger.firstSceneToLoad`、`VoxelPlatformRegister.registerEvent`、`UIManager.toggleCanvasEvents` |
-| 可留空配置 | `Tooltip` 或注释写明留空语义 | 不做断言，保留判空 | `VoxelPlatformBlastTrigger.gameStartEventSO`、`UIManager.inputBindings`、`SceneChanger.transitionImagesDuringFade` |
+| 可留空配置 | `Tooltip` 或注释写明留空语义 | 不做断言，保留判空 | `VoxelPlatformDestructionTrigger.gameStartEventSO`、`UIManager.inputBindings`、`SceneChanger.transitionImagesDuringFade` |
 | 运行时注入 | 由表现层或网络装配在运行时赋值 | 不做断言，按装配时序处理 | `ThirdPersonCamera.target`、`PlayerCharacterController.inputSpace`、`CharacterBoneFollower.headBone` |
 | 运行时状态 | 未连接、玩家未生成、对象池为空、批处理、场景切换中 | 保留判空并注释原因 | `AudioPlayerManager` 的网络转发缓存、`FloatingSignboard` 的 `Camera.main`、`CharacterPresentationService` 的 `manager.isActiveAndEnabled` |
 

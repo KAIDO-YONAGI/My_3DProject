@@ -121,23 +121,23 @@ Cube_<材质名>
 
 碎块由 Blender 官方 Cell Fracture 扩展的 Voronoi 单元算法生成，装配后共同填满原始 Cube。外表面保留完整 Cube 的 UV，切口使用石头材质。FBX 的材质槽顺序随节点变化，Prefab 材质映射按源材质名识别：`stonebrick` 对应当前方块的外表面材质，`stone` 对应切口材质。
 
-同目录的 `Fragments_<材质名>.prefab` 与每个 `Cube_<材质名>` 配对，沿用 Cube 容器根节点、嵌套 `Fragments` 节点与各材质覆盖，去掉 `Intact` 及其渲染与碰撞组件。平台烘焙记录引用纯碎片 Prefab，破坏时不再实例化完整方块部分。
+同目录的 `Fragments_<材质名>.prefab` 与每个 `Cube_<材质名>` 配对，沿用 Cube 容器根节点、嵌套 `Fragments` 节点与各材质覆盖，去掉 `Intact` 及其渲染与碰撞组件。平台烘焙记录引用纯碎块 Prefab，破坏时不再实例化完整方块部分。
 
 ### 圆形平台资源
 
 `Assets/Core/Prefabs/MinecraftClassic/Platform_Circle_R25_Authoring.prefab` 保存编辑用平台，由四种 `Cube_` Prefab 随机混铺组成。根节点下的 `CenterDisk` 收纳中心圆盘内的方块，`OuterDisk` 收纳外围方块。`Cube_X_<x>_Z_<z>` 名称保存网格坐标，各 Cube 保留 `Intact`、`Fragments` 与 `Node_###` 层级和嵌套 Prefab 引用。
 
-`Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和纯碎片 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。完整方块由轻量数据表示，运行版层级由合并视觉与合并碰撞组成，碎块在破坏时从实例池取得或扩容后置于 `FragmentsRuntime` 下。
+`Platform_Circle_R25.prefab` 是运行用平台。根节点的 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs` 保存方块位置、变换、材质、共享网格和纯碎块 Prefab 引用，`CombinedSurface` 承载烘焙外表面，`CombinedCollision` 承载分块非凸 MeshCollider。完整方块由轻量数据表示，运行版层级由合并视觉与合并碰撞组成，碎块在破坏时从实例池取得或扩容后置于 `FragmentsRuntime` 下。
 
 平台入口位于 `Assets/Core/Scripts/VoxelPlatform/VoxelPlatformRenderer.cs`，承担生命周期、序列化入口和公开接口。协作类采用普通类组合，按功能归入 `Assets/Core/Scripts/VoxelPlatform/` 的子目录：
 
 | 子目录 | 职责 |
 |---|---|
 | `Data/` | 方块、烘焙表面、碰撞与分块记录 |
-| `Runtime/` | 运行状态门面、方块表与占据索引、分块重建、重建容器与合并数组复用、爆炸候选筛选、破坏结算、源对象同步 |
+| `Runtime/` | 运行状态门面、方块表与占据索引、分块重建、重建容器与合并数组复用、破坏候选筛选、破坏结算、源对象同步 |
 | `Rendering/` | 单位方块判定、邻面掩码、网格变体与视觉合并 |
 | `Collision/` | 分块碰撞生成、碰撞网格生命周期与命中定位 |
-| `Fragments/` | 纯碎片 Prefab 解析、碎块实例池与容器变换 |
+| `Fragments/` | 纯碎块 Prefab 解析、碎块实例池与容器变换 |
 | `Baking/` | 编辑布局收集、烘焙记录生成与网格结果整理 |
 
 `Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs` 保存编辑器生成的分块网格与平台资源。邻接判断使用平台局部空间中的实际中心与朝向，对齐且紧邻的完整单位方块互相剔除接触面，高度差与方块间隙保留外露面。分块尺度以 `VoxelPlatformGeometry` 源码为准。视觉按分块、按材质合并，碰撞按分块合并完整方块网格。烘焙网格保存在 `Assets/Materials/MinecraftClassic/Generated/`，启用平台时直接复用。
@@ -150,19 +150,19 @@ Cube_<材质名>
 
 Prefab 烘焙读取已保存的配对编辑用资源，输出运行用资源并保留编辑用源布局。场景烘焙直接转换场景实例，各层源布局通过各自的编辑用资源保存，转换结果拥有独立的场景烘焙数据。重新编辑场景烘焙区域时，在原平台根节点下补齐对应的完整合并源布局后生成结果；独立区域沿用其场景编辑内容。公共运行用 Prefab 与独立场景平台分别通过各自的烘焙入口更新。
 
-`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。射线攻击由 `VoxelPlatformDestruction.Instance.ExplodeFromRay(...)` 处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为世界爆炸中心，命中平台的登记 ID 与平台局部位置分别随 `AttackResult.PlatformId`、`AttackResult.PlatformLocalPosition` 返回。
+`VoxelPlatformRenderer.SetBlockActive(Vector3 localPosition, bool active)` 使用平台局部方块中心坐标统一执行单块破坏与恢复。射线攻击由 `VoxelPlatformDestruction.Instance.DestroyFromRay(...)` 处理：接口负责射线查询、过滤角色层级和碎块层、选出最近的有效平台命中，并按 Collider 索引定位碰撞 chunk 后解析方块。攻击查询不遍历平台全量方块，命中点作为世界破坏中心，命中平台的登记 ID 与平台局部位置分别随 `AttackResult.PlatformId`、`AttackResult.PlatformLocalPosition` 返回。
 
-攻击有两个互相独立的公开入口：`ExplodeAt(Vector3 platformLocalPosition, float radius, int platformId)` 按平台局部位置、半径与平台登记 ID 结算单个平台，内部先把局部位置转成世界爆炸中心；`ExplodeFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)` 在该入口内部检测最近有效命中后结算命中平台。两者均返回 `AttackResult`，包含可空世界爆炸中心、平台局部位置、平台 ID、实际半径与破坏数量；位置入口使用给定局部位置，Ray 未命中时爆炸中心为空、平台 ID 为零。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
+攻击有两个互相独立的公开入口：`DestroyAt(Vector3 platformLocalPosition, float radius, int platformId)` 按平台局部位置、半径与平台登记 ID 结算单个平台，内部先把局部位置转成世界破坏中心；`DestroyFromRay(Ray ray, float maxDistance, int layerMask, Transform ignoredRoot, float radius)` 在该入口内部检测最近有效命中后结算命中平台。两者均返回 `AttackResult`，包含可空世界命中点、平台局部位置、平台 ID、实际半径与破坏数量；位置入口使用给定局部位置，Ray 未命中时命中点为空、平台 ID 为零。攻击半径是世界单位的水平 XZ 圆，不限制高度；每个平台按世界水平 chunk 列索引从中心邻接列向外扩展，只检查与圆相交的列，并按方块中心水平距离精确筛选。一次结算每个候选方块最多处理一次，受影响的视觉与碰撞分块统一重建。
 
-`VoxelPlatformDestruction` 是常驻场景上的单例服务，订阅 `PlatformRegisterEventSO` 维护跨场景平台注册表。平台所属场景中的 `PlatformRegister` 在场景加载完成后逐项发布平台组件、网络 ID 与所属场景，注册表按场景句柄记录并在场景卸载时移除该场景的平台；重复 ID 与无效引用在注册时拒绝。该 ID 是对外通信的平台标识，客户端与服务器必须一致。`VoxelPlatformRenderer` 不再自行登记或注销。`BreakRegions(...)` 是独立区域触发器使用的 Collider 体积入口，只结算与标记体积重叠的登记平台，不属于攻击 API。
+`VoxelPlatformDestruction` 是常驻场景上的单例服务，订阅 `PlatformRegisterEventSO` 维护跨场景平台注册表。平台所属场景中的 `PlatformRegister` 在场景加载完成后逐项发布平台组件、网络 ID 与所属场景，注册表按场景句柄记录并在场景卸载时移除该场景的平台；重复 ID 与无效引用在注册时拒绝。该 ID 是对外通信的平台标识，客户端与服务器必须一致。`VoxelPlatformRenderer` 不再自行登记或注销。`DestroyInRegions(...)` 是独立区域触发器使用的 Collider 体积入口，只结算与标记体积重叠的登记平台，不属于攻击 API。
 
-`VoxelPlatformBlastTrigger` 是触发器驱动的区域入口：挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把标记碰撞体交给 `BreakRegions`，同步完成破坏；`regions` 留空时用子物体上的碰撞体，`collisionDuration` 传给区域结算，`oneShot` 打开时只响应第一次触发。触发器要与静态平台产生物理事件，触发器自身或进入它的物体上需要有 Rigidbody。
+`VoxelPlatformDestructionTrigger` 是触发器驱动的区域入口：挂在带触发器碰撞体的物体上，`OnTriggerEnter` 时把标记碰撞体交给 `DestroyInRegions`，同步完成破坏；`regions` 留空时用子物体上的碰撞体，`collisionDuration` 传给区域结算，`oneShot` 打开时只响应第一次触发。触发器要与静态平台产生物理事件，触发器自身或进入它的物体上需要有 Rigidbody。
 
 触发器在 `OnTriggerEnter` 内先广播 `gameStartEventSO`，再调用 `Fire()`，订阅方在平台状态改变前收到通知；字段留空时只做区域结算。`Assets/Core/Scenes/VoxelArena.unity` 的 `GameStartTrigger` 引用 `Assets/Core/SO/Events/GameStartEventSO.asset`。
 
-破坏从纯碎片 Prefab 取得碎块实例：实例按来源 Prefab 分池，池空时实例化扩容，按 Cube 容器变换放置后启用 `Fragments`；恢复方块、寿命结束与平台清理都归还实例，平台停用销毁整池。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Debris` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。破碎表现脚本挂在碎块 Prefab 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复；寿命结束通过平台绑定的回收入口交还实例，复用时按首次记录复位预切片姿态与刚体状态。组件停用时清理临时网格并销毁碎块池，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
+破坏从纯碎块 Prefab 取得碎块实例：实例按来源 Prefab 分池，池空时实例化扩容，按 Cube 容器变换放置后启用 `Fragments`；恢复方块、寿命结束与平台清理都归还实例，平台停用销毁整池。碎块保留封闭网格、独立渲染器与凸 MeshCollider。碎块实例整体位于 `Fragment` 层，层名由 `VoxelPlatformRenderer` 提供，破坏检测按层排除这些碰撞体；层缺失时碎块保持原有层。碎块表现脚本挂在碎块 Prefab 的 `Fragments` 节点，通过 `OnEnable` 接管已就位的碎块，负责刚体分组、受力和寿命；指定 `collisionDuration` 时碎块生成即有碰撞并在到期后关闭，未指定时按 `escapeTime` 先关闭再恢复；寿命结束通过平台绑定的回收入口交还实例，复用时按首次记录复位预切片姿态与刚体状态。组件停用时清理临时网格并销毁碎块池，再次启用时恢复烘焙状态。源对象编辑流程通过 `Rebuild()` 收集完整方块，`RefreshChangedBlocks()` 刷新显示状态与变换；运行用平台的 `Rebuild()` 复用烘焙数据。
 
-两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和破碎脚本接法见 [平台合批、碰撞与破碎接入](../../docs/VoxelPlatformRenderer.md)。
+两种平台的编辑步骤、源布局保存、Prefab 与场景烘焙细节、算法说明和碎块表现脚本接法见 [平台合批、碰撞与碎块表现接入](../../docs/VoxelPlatformRenderer.md)。
 
 平台场景入口为 `Assets/Core/Scenes/VoxelArena.unity`，场景职责见 `../Scene/Scene_Guide.md`。平台范围与方块配置以 Prefab 为准。
 
@@ -186,7 +186,7 @@ Blender 启用 `BlenderMCP` 与 `Cell Fracture`，交互使用 `Industry_Compati
 
 `FeedbackEventSO` 是跨模块的音效请求入口，`AudioRequest` 携带音效类型和可选世界坐标。`AudioPlayerManager` 统一订阅并负责本地播放；联网时再将请求交给本地玩家的 `NetworkAudioPlayer`，由其通过 Command 和排除拥有者的 ClientRpc 转发给其他观察者。省略坐标的请求在所有客户端都按 2D 音效播放。
 
-音效请求事件资产为 `Assets/Core/SO/Events/FeedbackEventSO.asset`，常驻场景将其配置在 `AudioPlayerManager`。`Assets/Core/SO/Events/BlastEventSO.asset` 是攻击结算后的表现通知，由 `Attack` 在本地结算后及 `NetworkBlastManager` 在远端 RPC 结算后发布，载荷包括攻击类型、世界位置和水平半径，供粒子与音效订阅者使用；`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkBlastManager` 并直接调用 `CommandAttack`。链路见 `../Multiplayer/Sync_Protocol.md` 的「爆炸事件」一节。
+音效请求事件资产为 `Assets/Core/SO/Events/FeedbackEventSO.asset`，常驻场景将其配置在 `AudioPlayerManager`。`Assets/Core/SO/Events/DestructionEventSO.asset` 是攻击结算后的表现通知，由 `Attack` 在本地结算后及 `NetworkDestructionManager` 在远端 RPC 结算后发布，载荷包括攻击类型、世界位置和水平半径，供粒子与音效订阅者使用；`Attack` 以 `NetworkClient.localPlayer` 为键缓存 `NetworkDestructionManager` 并直接调用 `CommandAttack`。链路见 `../Multiplayer/Sync_Protocol.md` 的「破坏事件」一节。
 
 `Assets/Tests/Editor/AudioPlayerTests.cs` 覆盖世界原点、带位移与旋转的管理器下的世界坐标、不同位置间复用、3D 切回 2D、重复停止与播放结束回收。
 
@@ -238,7 +238,7 @@ Rider 的 Lua 编辑支持由 EmmyLua2 提供，并依赖 LSP4IJ。本机 Rider 
 7. `CharacterMotionSync`
 8. `PlayerSpawnPointReceiver`
 
-`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；根节点下嵌套 `NetworkGamePlayModule.prefab` 实例，其中的 `NetworkAudioPlayer` 和 `NetworkBlastManager` 分别转发音效请求和攻击爆炸请求，并在远端爆炸结算后发布表现通知；`Attack` 所在的 `GamePlayModule.prefab` 由组装链路只为本地拥有者装配。
+`NetworkTransformReliable` 使用 `ClientToServer`，同步位置和旋转，启用变化检测、旋转压缩和插值。根节点承担网络身份、网络同步与碰撞，`PlayerCharacterController` 持有移动参数；根节点下嵌套 `NetworkGamePlayModule.prefab` 实例，其中的 `NetworkAudioPlayer` 和 `NetworkDestructionManager` 分别转发音效请求和破坏请求，并在远端破坏结算后发布表现通知；`Attack` 所在的 `GamePlayModule.prefab` 由组装链路只为本地拥有者装配。
 
 ## 角色表现资源
 

@@ -171,7 +171,7 @@ Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少
 
 烘焙阶段完成源几何采集、可见面处理、网格合并，并保存方块记录与分块网格；运行时恢复索引、复用已保存网格，不重新采集源 Cube。依据：[烘焙保存](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Baking/VoxelPlatformBaking.cs:34)、[运行时恢复](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs:42)。
 
-源层级剥离会移除参与烘焙的 Cube 容器及其预切碎块，带排除标记的对象保留。碎块实例和 `FragmentsRuntime` 容器在首次破坏时才创建，实例来自纯碎片 Prefab，所以未破坏平台无需保留每块 Cube 的预切碎块实例层级。依据：[剥离与排除规则](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)、[碎块按需创建与实例池](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:43)。
+源层级剥离会移除参与烘焙的 Cube 容器及其预切碎块，带排除标记的对象保留。碎块实例和 `FragmentsRuntime` 容器在首次破坏时才创建，实例来自纯碎块 Prefab，所以未破坏平台无需保留每块 Cube 的预切碎块实例层级。依据：[剥离与排除规则](D:/Unity/Projects/My_3DProject/Assets/Editor/PlatformOptimization/VoxelPlatformRendererBaker.cs:149)、[碎块按需创建与实例池](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:43)。
 
 这些机制把几何生成工作移到编辑器，减少运行场景需要承载的源对象层级；资源加载、索引恢复与碰撞初始化仍有成本。启动时长、对象数量和驻留内存的实际降幅在本次数据中没查到，不能由稳态标记均值代替。依据：上述保存、恢复和剥离代码；CSV 导出字段。
 
@@ -181,7 +181,7 @@ Shadow casters 从 2,886 降至 547，支持“参与投影的物体数量减少
 |---|---|---|
 | 无源对象时跳过变换与启停轮询 | 有短路逻辑；`VoxelPlatformRenderer.LateUpdate` 两侧中位数均为 0.0015 ms，未显示可量化下降 | [轮询短路](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformRuntime.cs:138)，U:280 / D:277 |
 | 网格变体缓存 | 能复用相同网格、掩码的结果；独立生成计时没查到 | [缓存命中](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Rendering/VoxelPlatformGeometry.cs:61)，CSV 字段 |
-| 脏分块去重、受影响区域局部重建 | 属于变化和破坏后的更新机制；本次没有破坏，不能宣称破坏性能提高了多少 | [脏分块集合](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformChunkUpdates.cs:14)、[统一重建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformBlockBreaker.cs:25)，测试者说明 |
+| 脏分块去重、受影响区域局部重建 | 属于变化和破坏后的更新机制；本次没有破坏，不能宣称破坏性能提高了多少 | [脏分块集合](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformChunkUpdates.cs:14)、[统一重建](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Runtime/VoxelPlatformBlockDestroyer.cs:25)，测试者说明 |
 | 碎块延迟实例化与池复用 | 未破坏时不创建碎块实例；破坏瞬间的实例化、刚体模拟与实例池复用收益未测 | [按需创建与实例池](D:/Unity/Projects/My_3DProject/Assets/Core/Scripts/VoxelPlatform/Fragments/VoxelPlatformFragments.cs:43)，测试者说明 |
 
 ## 6. GC 与结论边界
