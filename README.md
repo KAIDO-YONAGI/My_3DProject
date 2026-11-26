@@ -41,8 +41,7 @@
 
 | 文档 | 内容 |
 |---|---|
-| [文档索引](docs/README.md) | 上手指南、系统说明、性能基准与专题材料 |
-| [角色控制图示](docs/diagrams/character-control/README.md) | 移动状态、逐帧数据流与同步边界 |
+| [项目上手与构建](docs/项目上手与构建.md) | Unity 版本、依赖解析、首次运行、多人联调与客户端与服务器构建 |
 | [体素平台实现](docs/VoxelPlatformRenderer.md) | 烘焙、网格合并、局部破坏与碎块接入 |
 | [体素平台烘焙基准](docs/performance/VoxelPlatformBakingBenchmark.md) | 平台烘焙前后的性能数据与测量条件 |
 | [多人联机配置](Y_MultipleAgentWorkflow/Project/Mirror_KCP_Config.md) | Mirror、KCP、玩家装配与联机验证 |
